@@ -831,30 +831,11 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 20.1
+            Desenvolvido por Geovane Modena | Versão 20.2
         </footer>
     </div>
 
-    <!-- Modal para mensagens -->
-    <div id="modal-overlay" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 id="modal-title" class="text-xl font-bold mb-3 text-red-600"></h3>
-            <p id="modal-message" class="text-gray-700 mb-4 whitespace-pre-wrap"></p>
-            <button onclick="closeModal()" class="btn-primario w-full">OK</button>
-        </div>
-    </div>
-
-    <!-- Modal de confirmação -->
-    <div id="confirm-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-3 text-red-600">Confirmar Exclusão</h3>
-            <p id="confirm-message" class="text-gray-700 mb-4"></p>
-            <div class="flex space-x-4">
-                <button id="confirm-cancel" class="btn-secundario flex-1">Cancelar</button>
-                <button id="confirm-delete" class="btn-primario flex-1">Excluir</button>
-            </div>
-        </div>
-    </div>
+    <!-- ... (modais) ... -->
 
     <script>
     // ==================== CONFIGURAÇÃO E CONSTANTES ====================
@@ -1348,14 +1329,23 @@
         loginForm: () => {
             return `
                 <div id="login" class="max-w-md mx-auto p-6">
-                    <h2 class="text-2xl font-bold text-center text-red-700 mb-6">Login - Versão 20</h2>
+                    <h2 class="text-2xl font-bold text-center text-red-700 mb-6">Login</h2>
                     <div id="loginErro" class="text-red-500 mb-4 hidden text-center font-semibold"></div>
 
                     <form id="login-form" class="space-y-4">
                         <div class="form-group">
                             <label for="email" class="form-label">E-mail</label>
-                            <input type="email" id="email" name="email" required placeholder="seu.email@portalsesisp.org.br" 
-                                   class="w-full p-3 border rounded-lg">
+                            <div class="email-container">
+                                <div class="email-prefix">
+                                    <input type="text" id="email-prefix" name="email-prefix" required 
+                                           placeholder="nome.sobrenome" 
+                                           class="w-full p-3 border rounded-lg rounded-r-none">
+                                </div>
+                                <div class="email-suffix">
+                                    @portalsesisp.org.br
+                                </div>
+                            </div>
+                            <input type="hidden" id="email" name="email">
                         </div>
                         <div class="form-group">
                             <label for="senha" class="form-label">Senha</label>
@@ -1381,7 +1371,7 @@
     // Função de inicialização
     async function init() {
         try {
-            console.log('Inicializando sistema v20.0...');
+            console.log('Inicializando sistema v20.2...');
             renderLogin();
         } catch (error) {
             console.error('Erro ao inicializar:', error);
@@ -1395,6 +1385,14 @@
 
         // Configurar evento de toggle de senha
         document.getElementById('toggleSenha').addEventListener('click', toggleRmVisibility);
+
+        // Configurar evento de input para o email
+        const emailPrefix = document.getElementById('email-prefix');
+        const emailHidden = document.getElementById('email');
+
+        emailPrefix.addEventListener('input', function() {
+            emailHidden.value = this.value.trim() + '@portalsesisp.org.br';
+        });
 
         // Configurar evento de submit do formulário
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -1415,61 +1413,68 @@
 
     // Manipular login
     async function handleLogin(event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const senha = document.getElementById('senha').value.trim();
-    
-    const loginErro = document.getElementById('loginErro');
-    const loginButton = document.getElementById('login-button');
-    const loginText = document.getElementById('login-text');
-    
-    Utils.setButtonLoading(loginButton, true);
-    loginText.textContent = "Entrando...";
-    loginErro.style.display = 'none';
-    
-    try {
-        console.log('Tentando login com:', { email, senha: '***' });
+        event.preventDefault();
+        const emailPrefix = document.getElementById('email-prefix').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const senha = document.getElementById('senha').value.trim();
         
-        const response = await apiPost('login', { email, senha });
+        const loginErro = document.getElementById('loginErro');
+        const loginButton = document.getElementById('login-button');
+        const loginText = document.getElementById('login-text');
         
-        if (response.success && response.data && response.data.success) {
-            STATE.usuarioLogado = response.data.user;
-            loginErro.style.display = 'none';
-            
-            UIManager.elements.contentArea.innerHTML = UIManager.renderLoading('Carregando painel...');
-            
-            // Carregar tarefas
-            try {
-                const tarefasResponse = await apiGet('getTarefas', {}, true);
-                STATE.tarefas = tarefasResponse.data || tarefasResponse;
-                console.log('Tarefas carregadas:', STATE.tarefas.length);
-            } catch (error) {
-                console.error('Erro ao carregar tarefas:', error);
-                STATE.tarefas = [];
-                UIManager.showModal('Aviso', 'Algumas funcionalidades podem estar limitadas devido a problemas de conexão.');
-            }
-
-            AuthManager.updateUserInfo();
-
-            // Redirecionar para o painel apropriado
-            if (STATE.usuarioLogado.Perfil === "Professor") {
-                await mostrarPainelProfessor();
-            } else {
-                await mostrarPainelAluno();
-            }
-        } else {
-            throw new Error(response.data?.error || response.error || 'Erro desconhecido no login');
+        if (!emailPrefix) {
+            loginErro.textContent = 'Por favor, insira seu nome e sobrenome.';
+            loginErro.style.display = 'block';
+            return;
         }
+
+        Utils.setButtonLoading(loginButton, true);
+        loginText.textContent = "Entrando...";
+        loginErro.style.display = 'none';
         
-    } catch (error) {
-        console.error('Erro no login:', error);
-        loginErro.textContent = error.message;
-        loginErro.style.display = 'block';
-    } finally {
-        Utils.setButtonLoading(loginButton, false);
-        loginText.textContent = "Entrar";
+        try {
+            console.log('Tentando login com:', { email, senha: '***' });
+            
+            const response = await apiPost('login', { email, senha });
+            
+            if (response.success && response.data && response.data.success) {
+                STATE.usuarioLogado = response.data.user;
+                loginErro.style.display = 'none';
+                
+                UIManager.elements.contentArea.innerHTML = UIManager.renderLoading('Carregando painel...');
+                
+                // Carregar tarefas
+                try {
+                    const tarefasResponse = await apiGet('getTarefas', {}, true);
+                    STATE.tarefas = tarefasResponse.data || tarefasResponse;
+                    console.log('Tarefas carregadas:', STATE.tarefas.length);
+                } catch (error) {
+                    console.error('Erro ao carregar tarefas:', error);
+                    STATE.tarefas = [];
+                    UIManager.showModal('Aviso', 'Algumas funcionalidades podem estar limitadas devido a problemas de conexão.');
+                }
+
+                AuthManager.updateUserInfo();
+
+                // Redirecionar para o painel apropriado
+                if (STATE.usuarioLogado.Perfil === "Professor") {
+                    await mostrarPainelProfessor();
+                } else {
+                    await mostrarPainelAluno();
+                }
+            } else {
+                throw new Error(response.data?.error || response.error || 'Erro desconhecido no login');
+            }
+            
+        } catch (error) {
+            console.error('Erro no login:', error);
+            loginErro.textContent = error.message;
+            loginErro.style.display = 'block';
+        } finally {
+            Utils.setButtonLoading(loginButton, false);
+            loginText.textContent = "Entrar";
+        }
     }
-}
 
     // ==================== PAINEL DO PROFESSOR ====================
     async function mostrarPainelProfessor() {
@@ -1487,39 +1492,43 @@
                 <div class="card p-6 border-t-4 border-red-600">
                     <h3 class="text-2xl font-bold mb-4 text-red-700" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Criar Nova Tarefa'}</h3>
                     
-                    <div class="form-row">
-                        <label class="block text-sm font-medium text-gray-700" style="font-size: 1rem;">Turma:</label>
-                        <select id="turma" class="mt-1" required>
-                            <option value="">Selecione uma turma</option>
-                            ${CONFIG.TURMAS.map(t => `<option value="${t}">${t}</option>`).join('')}
-                        </select>
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Turmas:</label>
+                        <div class="checkbox-group">
+                            ${CONFIG.TURMAS.map(t => `
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="turma-${t}" value="${t}" class="turma-checkbox">
+                                    <label for="turma-${t}">${t}</label>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                     
-                    <div class="form-row">
-                        <label for="tema" class="block text-sm font-medium text-gray-700" style="font-size: 1rem;">Tema da Tarefa</label>
+                    <div class="form-group">
+                        <label for="tema" class="block text-sm font-medium text-gray-700">Tema da Tarefa</label>
                         <input type="text" id="tema" placeholder="Ex: Matemática - Frações" class="mt-1" required maxlength="${CONFIG.MAX_TEMA_LEN}">
                     </div>
                     
-                    <div class="form-row">
-                        <label for="dataAula" class="block text-sm font-medium text-gray-700" style="font-size: 1rem;">Data da Aula</label>
+                    <div class="form-group">
+                        <label for="dataAula" class="block text-sm font-medium text-gray-700">Data da Aula</label>
                         <input type="date" id="dataAula" class="mt-1" required>
                     </div>
                     
                     <div class="mt-4 space-y-4">
                         <div>
-                            <label for="parte1" class="block text-sm font-medium text-gray-700 mb-2" style="font-size: 1rem;">Parte 1 (dia da aula, 13h–22h) <span class="retencao-aviso retencao-50">50% retenção</span></label>
+                            <label for="parte1" class="block text-sm font-medium text-gray-700 mb-2">Parte 1 (dia da aula, 13h–22h) <span class="retencao-aviso retencao-50">50% retenção</span></label>
                             <textarea id="parte1" placeholder="Descreva a parte 1 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                         </div>
                         <div>
-                            <label for="parte2" class="block text-sm font-medium text-gray-700 mb-2" style="font-size: 1rem;">Parte 2 (7º dia, 13h–22h) <span class="retencao-aviso retencao-25">25% retenção</span></label>
+                            <label for="parte2" class="block text-sm font-medium text-gray-700 mb-2">Parte 2 (7º dia, 13h–22h) <span class="retencao-aviso retencao-25">25% retenção</span></label>
                             <textarea id="parte2" placeholder="Descreva a parte 2 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                         </div>
                         <div>
-                            <label for="parte3" class="block text-sm font-medium text-gray-700 mb-2" style="font-size: 1rem;">Parte 3 (14º dia, 13h–22h) <span class="retencao-aviso retencao-15">15% retenção</span></label>
+                            <label for="parte3" class="block text-sm font-medium text-gray-700 mb-2">Parte 3 (14º dia, 13h–22h) <span class="retencao-aviso retencao-15">15% retenção</span></label>
                             <textarea id="parte3" placeholder="Descreva a parte 3 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                         </div>
                         <div>
-                            <label for="parte4" class="block text-sm font-medium text-gray-700 mb-2" style="font-size: 1rem;">Parte 4 (28º dia, 13h–22h) <span class="retencao-aviso retencao-10">9.99% retenção</span></label>
+                            <label for="parte4" class="block text-sm font-medium text-gray-700 mb-2">Parte 4 (28º dia, 13h–22h) <span class="retencao-aviso retencao-10">9.99% retenção</span></label>
                             <textarea id="parte4" placeholder="Descreva a parte 4 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                         </div>
                     </div>
@@ -1570,13 +1579,18 @@
         if (!STATE.tarefaEditando) return;
         
         document.getElementById('titulo-formulario').textContent = 'Editar Tarefa';
-        document.getElementById('turma').value = STATE.tarefaEditando.Turma;
         document.getElementById('tema').value = STATE.tarefaEditando.Tema;
         document.getElementById('dataAula').value = String(STATE.tarefaEditando.DataAula).split('T')[0];
         document.getElementById('parte1').value = STATE.tarefaEditando.Parte1 || '';
         document.getElementById('parte2').value = STATE.tarefaEditando.Parte2 || '';
         document.getElementById('parte3').value = STATE.tarefaEditando.Parte3 || '';
         document.getElementById('parte4').value = STATE.tarefaEditando.Parte4 || '';
+        
+        // Marcar a turma da tarefa sendo editada
+        const checkbox = document.getElementById(`turma-${STATE.tarefaEditando.Turma}`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
         
         window.scrollTo(0, 0);
     }
@@ -1654,10 +1668,11 @@
         try {
             Utils.setButtonLoading(btnSalvar, true);
             
-            const turma = document.getElementById('turma').value;
+            const turmasSelecionadas = Array.from(document.querySelectorAll('.turma-checkbox:checked'))
+                .map(cb => cb.value);
             
-            if (!turma) {
-                UIManager.showModal('Atenção', 'Selecione uma turma.');
+            if (turmasSelecionadas.length === 0) {
+                UIManager.showModal('Atenção', 'Selecione pelo menos uma turma.');
                 return;
             }
 
@@ -1689,23 +1704,29 @@
                 return;
             }
 
-            const dados = {
-                Turma: turma,
-                Tema: tema,
-                Parte1: parte1,
-                Parte2: parte2,
-                Parte3: parte3,
-                Parte4: parte4,
-                DataAula: dataAula,
-                professor: STATE.usuarioLogado.NomeCompleto
-            };
+            // Para cada turma selecionada, criar uma tarefa
+            for (const turma of turmasSelecionadas) {
+                const dados = {
+                    Turma: turma,
+                    Tema: tema,
+                    Parte1: parte1,
+                    Parte2: parte2,
+                    Parte3: parte3,
+                    Parte4: parte4,
+                    DataAula: dataAula,
+                    professor: STATE.usuarioLogado.NomeCompleto
+                };
 
-            await apiPost('criarTarefa', dados);
-            UIManager.showModal('Sucesso', 'Tarefa criada com sucesso!');
+                await apiPost('criarTarefa', dados);
+            }
+            
+            UIManager.showModal('Sucesso', `Tarefa criada com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
             
             CacheManager.remove('painel_professor');
             CacheManager.remove('tarefas_professor_lista');
-            CacheManager.remove(`relatorio_${turma}`);
+            turmasSelecionadas.forEach(turma => {
+                CacheManager.remove(`relatorio_${turma}`);
+            });
             
             limparFormulario();
             await carregarTarefasProfessor();
@@ -1840,6 +1861,11 @@
         if (p3) p3.value = '';
         if (p4) p4.value = '';
         
+        // Desmarcar todas as turmas
+        document.querySelectorAll('.turma-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        
         if (STATE.tarefaEditando) {
             STATE.tarefaEditando = null;
             document.getElementById('titulo-formulario').textContent = 'Criar Nova Tarefa';
@@ -1863,7 +1889,7 @@
         UIManager.elements.contentArea.innerHTML = `
             <div id="painelAluno" class="space-y-6">
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Minhas Tarefas - V20</h3>
+                    <h3 class="text-2xl font-bold text-red-700 mb-4">Minhas Tarefas</h3>
                     
                     <div class="instrucoes-box">
                         <div class="instrucoes-title">Instruções para entrega:</div>
@@ -2345,7 +2371,7 @@
     async function mostrarRelatorioProfessor() {
         UIManager.elements.contentArea.innerHTML = `
             <div class="card p-6">
-                <h3 class="text-2xl font-bold text-red-700 mb-4">Relatório por Turma - V20</h3>
+                <h3 class="text-2xl font-bold text-red-700 mb-4">Relatório por Turma</h3>
                 <div class="turmas-container">
                     <div class="turmas-buttons">
                         ${CONFIG.TURMAS.map(turma => `
@@ -2409,84 +2435,113 @@
                         <p class="text-gray-500 mb-4">Nenhum aluno encontrado na turma ${Utils.escapeHTML(turma)}.</p>
                     </div>
                 `;
-            } else if (!relatorio.tarefas || relatorio.tarefas.length === 0) {
-                relatorioTurmaHTML += `
-                    <div class="text-center py-8">
-                        <p class="text-gray-500 mb-4">Nenhuma tarefa encontrada para a turma ${Utils.escapeHTML(turma)}.</p>
-                    </div>
-                `;
             } else {
-                relatorioTurmaHTML += `
-                    <div class="overflow-x-auto border rounded-lg mt-4">
-                        <table class="min-w-full compact-table table-header-white" id="tabela-relatorio">
-                            <thead>
-                                <tr>
-                                    <th class="px-4 py-3 text-center font-semibold border-b numero-coluna">Nº</th>
-                                    <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
-                                    <th class="px-4 py-3 text-center font-semibold border-b media-coluna">Média</th>
-                `;
-                
-                relatorio.tarefas.forEach((tarefa, index) => {
+                // Se não houver tarefas, mostrar apenas a lista de alunos
+                if (!relatorio.tarefas || relatorio.tarefas.length === 0) {
                     relatorioTurmaHTML += `
-                        <th class="px-2 py-3 text-center font-semibold border-b header-tarefa tarefa-group" colspan="4">
-                            ${Utils.escapeHTML(tarefa.Tema)}
-                        </th>
+                        <div class="overflow-x-auto border rounded-lg mt-4">
+                            <table class="min-w-full compact-table">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3 text-center font-semibold border-b numero-coluna">Nº</th>
+                                        <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
+                                        <th class="px-4 py-3 text-center font-semibold border-b media-coluna">Média</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${relatorio.alunos.map(aluno => `
+                                        <tr>
+                                            <td class="px-4 py-3 text-center border-b numero-coluna">${aluno.Numero || ''}</td>
+                                            <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                            <td class="px-4 py-3 text-center border-b media-coluna">
+                                                <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                                    ${aluno.Media || '0.0'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     `;
-                });
-                
-                relatorioTurmaHTML += `</tr><tr>`;
-                
-                relatorio.tarefas.forEach(() => {
+                } else {
+                    // Se houver tarefas, mostrar a tabela completa
                     relatorioTurmaHTML += `
-                        <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P1</th>
-                        <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P2</th>
-                        <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P3</th>
-                        <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P4</th>
+                        <div class="overflow-x-auto border rounded-lg mt-4">
+                            <table class="min-w-full compact-table table-header-white" id="tabela-relatorio">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3 text-center font-semibold border-b numero-coluna">Nº</th>
+                                        <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
+                                        <th class="px-4 py-3 text-center font-semibold border-b media-coluna">Média</th>
                     `;
-                });
-                
-                relatorioTurmaHTML += `
+                    
+                    // Cabeçalho das tarefas
+                    relatorio.tarefas.forEach((tarefa, index) => {
+                        relatorioTurmaHTML += `
+                            <th class="px-2 py-3 text-center font-semibold border-b header-tarefa tarefa-group" colspan="4">
+                                ${Utils.escapeHTML(tarefa.Tema)}
+                            </th>
+                        `;
+                    });
+                    
+                    relatorioTurmaHTML += `</tr><tr>`;
+                    
+                    // Subcabeçalho das partes (P1, P2, P3, P4) para cada tarefa
+                    relatorio.tarefas.forEach(() => {
+                        relatorioTurmaHTML += `
+                            <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P1</th>
+                            <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P2</th>
+                            <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P3</th>
+                            <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P4</th>
+                        `;
+                    });
+                    
+                    relatorioTurmaHTML += `
                                 </tr>
                             </thead>
                             <tbody>
-                `;
-                
-                relatorio.alunos.forEach((aluno) => {
-                    relatorioTurmaHTML += `
-                        <tr>
-                            <td class="px-4 py-3 text-center border-b numero-coluna">${aluno.Numero || ''}</td>
-                            <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                            <td class="px-4 py-3 text-center border-b media-coluna">
-                                <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
-                                    ${aluno.Media || '0.0'}
-                                </span>
-                            </td>
                     `;
                     
-                    relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
-                        for (let parte = 1; parte <= 4; parte++) {
-                            const notaParte = aluno[`NotaParte${(tarefaIndex * 4) + parte}`] || 0;
-                            let classeNota = 'text-gray-600';
-                            if (notaParte > 0) {
-                                if (notaParte >= 2.5) {
-                                    classeNota = 'text-green-600 font-semibold';
-                                } else {
-                                    classeNota = 'text-red-600';
+                    // Dados dos alunos
+                    relatorio.alunos.forEach((aluno) => {
+                        relatorioTurmaHTML += `
+                            <tr>
+                                <td class="px-4 py-3 text-center border-b numero-coluna">${aluno.Numero || ''}</td>
+                                <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                <td class="px-4 py-3 text-center border-b media-coluna">
+                                    <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                        ${aluno.Media || '0.0'}
+                                    </span>
+                                </td>
+                        `;
+                        
+                        // Notas das partes para cada tarefa
+                        relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
+                            for (let parte = 1; parte <= 4; parte++) {
+                                const notaParte = aluno[`NotaParte${(tarefaIndex * 4) + parte}`] || 0;
+                                let classeNota = 'text-gray-600';
+                                if (notaParte > 0) {
+                                    if (notaParte >= 2.5) {
+                                        classeNota = 'text-green-600 font-semibold';
+                                    } else {
+                                        classeNota = 'text-red-600';
+                                    }
                                 }
+                                
+                                relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
                             }
-                            
-                            relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
-                        }
+                        });
+                        
+                        relatorioTurmaHTML += `</tr>`;
                     });
                     
-                    relatorioTurmaHTML += `</tr>`;
-                });
-                
-                relatorioTurmaHTML += `
+                    relatorioTurmaHTML += `
                             </tbody>
                         </table>
                     </div>
-                `;
+                    `;
+                }
             }
             
             document.getElementById('relatorio-turma-container').innerHTML = relatorioTurmaHTML;
@@ -2537,7 +2592,7 @@
             const doc = new jsPDF();
 
             doc.setFontSize(16);
-            doc.text(`Relatório da Turma ${turma} - V20`, 14, 15);
+            doc.text(`Relatório da Turma ${turma}`, 14, 15);
 
             doc.setFontSize(10);
             doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, 14, 22);
@@ -2560,40 +2615,35 @@
     async function mostrarPainelDiagnostico() {
         UIManager.elements.contentArea.innerHTML = `
             <div class="card p-6">
-                <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - V20</h3>
+                <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico</h3>
                 
                 <div class="diagnostico-grid">
                     <div class="diagnostico-card">
-                        <h4 class="font-semibold mb-3">Teste de Conexão</h4>
-                        <button onclick="testarConexaoCompleta()" class="btn-primario w-full mb-3">Testar Conexão Completa</button>
-                        <div id="resultado-conexao"></div>
-                    </div>
-                    
-                    <div class="diagnostico-card">
                         <h4 class="font-semibold mb-3">Status do Cache</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span>Itens em Cache:</span>
-                                <span class="font-semibold">${Object.keys(localStorage).filter(k => k.startsWith('task_')).length}</span>
+                        <div id="status-cache">
+                            <div class="text-center py-4">
+                                <div class="spinner"></div>
+                                <p class="mt-2 text-gray-600">Carregando...</p>
                             </div>
                         </div>
-                        <button onclick="limparCache()" class="btn-primario w-full mt-3" style="background-color: #ef4444;">Limpar Cache</button>
                     </div>
                     
                     <div class="diagnostico-card">
                         <h4 class="font-semibold mb-3">Estatísticas do Sistema</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span>Usuário Logado:</span>
-                                <span class="font-semibold">${STATE.usuarioLogado?.NomeCompleto || 'Nenhum'}</span>
+                        <div id="estatisticas-sistema">
+                            <div class="text-center py-4">
+                                <div class="spinner"></div>
+                                <p class="mt-2 text-gray-600">Carregando...</p>
                             </div>
-                            <div class="flex justify-between">
-                                <span>Tarefas Carregadas:</span>
-                                <span class="font-semibold">${STATE.tarefas.length}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Versão:</span>
-                                <span class="font-semibold">20.0 - Nova Estrutura</span>
+                        </div>
+                    </div>
+                    
+                    <div class="diagnostico-card">
+                        <h4 class="font-semibold mb-3">Métricas de Performance</h4>
+                        <button onclick="coletarMetricasPerformance()" class="btn-primario w-full mb-3">Coletar Métricas</button>
+                        <div id="metricas-performance">
+                            <div class="text-center py-4">
+                                <p class="text-gray-500">Clique em "Coletar Métricas" para ver as métricas de performance.</p>
                             </div>
                         </div>
                     </div>
@@ -2604,35 +2654,189 @@
                 </div>
             </div>
         `;
+
+        carregarStatusCache();
+        carregarEstatisticasSistema();
     }
 
-    async function testarConexaoCompleta() {
-        const resultado = document.getElementById('resultado-conexao');
-        resultado.innerHTML = UIManager.renderLoading('Testando conexão...');
+    function carregarStatusCache() {
+        const container = document.getElementById('status-cache');
         
         try {
-            const [usersResponse, tarefasResponse] = await Promise.all([
-                apiGet('getUsers', {}, true),
-                apiGet('getTarefas', {}, true)
-            ]);
+            const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('task_'));
+            const totalItens = cacheKeys.length;
+            
+            // Calcular tamanho aproximado do cache
+            let tamanhoTotal = 0;
+            cacheKeys.forEach(key => {
+                try {
+                    const item = localStorage.getItem(key);
+                    if (item) {
+                        tamanhoTotal += new Blob([item]).size;
+                    }
+                } catch (e) {
+                    console.warn('Erro ao calcular tamanho do item:', e);
+                }
+            });
+            
+            const tamanhoKB = (tamanhoTotal / 1024).toFixed(2);
+            
+            // Calcular eficiência
+            const totalRequests = STATE.performanceMetrics.cacheHits + STATE.performanceMetrics.cacheMisses;
+            const eficiencia = totalRequests > 0 ? 
+                ((STATE.performanceMetrics.cacheHits / totalRequests) * 100).toFixed(1) : 0;
+            
+            container.innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span>Itens em Cache:</span>
+                        <span class="font-semibold">${totalItens}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Tamanho do Cache:</span>
+                        <span class="font-semibold">${tamanhoKB} KB</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Eficiência do Cache:</span>
+                        <span class="font-semibold">${eficiencia}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Cache Hits:</span>
+                        <span class="font-semibold">${STATE.performanceMetrics.cacheHits}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Cache Misses:</span>
+                        <span class="font-semibold">${STATE.performanceMetrics.cacheMisses}</span>
+                    </div>
+                </div>
+                <button onclick="limparCache()" class="btn-primario w-full mt-3" style="background-color: #ef4444;">Limpar Cache</button>
+            `;
+        } catch (error) {
+            container.innerHTML = `<p class="text-red-500">Erro ao carregar status do cache: ${error.message}</p>`;
+        }
+    }
 
-            const users = usersResponse.data || usersResponse;
-            const tarefas = tarefasResponse.data || tarefasResponse;
-
-            resultado.innerHTML = `
-                <div class="test-result test-success">
-                    <strong>✓ Conexão bem-sucedida!</strong><br>
-                    - Usuários: ${users.length} registros<br>
-                    - Tarefas: ${tarefas.length} registros<br>
-                    - Status: Operacional com segurança v20.0
+    function carregarEstatisticasSistema() {
+        const container = document.getElementById('estatisticas-sistema');
+        
+        try {
+            const tempoTotal = ((performance.now() - STATE.performanceMetrics.startTime) / 1000).toFixed(1);
+            const chamadasAPI = STATE.performanceMetrics.apiCalls;
+            
+            container.innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span>Usuários Carregados:</span>
+                        <span class="font-semibold">${STATE.usuarios.length}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Tarefas Carregadas:</span>
+                        <span class="font-semibold">${STATE.tarefas.length}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Chamadas API:</span>
+                        <span class="font-semibold">${chamadasAPI}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Tempo Total:</span>
+                        <span class="font-semibold">${tempoTotal}s</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Usuário Logado:</span>
+                        <span class="font-semibold">${STATE.usuarioLogado?.NomeCompleto || 'Nenhum'}</span>
+                    </div>
                 </div>
             `;
         } catch (error) {
-            resultado.innerHTML = `
-                <div class="test-result test-error">
-                    <strong>✗ Erro na conexão:</strong> ${Utils.escapeHTML(error.message)}
+            container.innerHTML = `<p class="text-red-500">Erro ao carregar estatísticas: ${error.message}</p>`;
+        }
+    }
+
+    async function coletarMetricasPerformance() {
+        const container = document.getElementById('metricas-performance');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner"></div>
+                <p class="mt-2 text-gray-600">Coletando métricas...</p>
+            </div>
+        `;
+        
+        try {
+            // Teste de performance da API
+            const startTime = performance.now();
+            let statusAPI = 'Erro';
+            let tempoAPI = 0;
+            
+            try {
+                const response = await apiGet('testBackend', {}, true);
+                statusAPI = response.data ? 'OK' : 'Erro';
+                tempoAPI = performance.now() - startTime;
+            } catch (error) {
+                statusAPI = 'Erro: ' + error.message;
+            }
+            
+            // Coletar métricas de memória (se disponível)
+            let memoriaUsada = 'N/A';
+            let memoriaTotal = 'N/A';
+            let recomendacoes = [];
+            
+            if (performance.memory) {
+                memoriaUsada = (performance.memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB';
+                memoriaTotal = (performance.memory.totalJSHeapSize / 1048576).toFixed(2) + ' MB';
+                
+                // Recomendações baseadas nas métricas
+                if (performance.memory.usedJSHeapSize > 50000000) { // 50MB
+                    recomendacoes.push('Considere limpar o cache para liberar memória.');
+                }
+            } else {
+                recomendacoes.push('Navegador não suporta medição de memória.');
+            }
+            
+            if (tempoAPI > 1000) {
+                recomendacoes.push('A API está respondendo lentamente. Verifique a conexão.');
+            }
+            
+            if (STATE.performanceMetrics.cacheMisses > STATE.performanceMetrics.cacheHits) {
+                recomendacoes.push('Alta taxa de cache misses. Considere ajustar o TTL do cache.');
+            }
+            
+            if (recomendacoes.length === 0) {
+                recomendacoes.push('Sistema funcionando dentro dos parâmetros normais.');
+            }
+            
+            container.innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span>Tempo API:</span>
+                        <span class="font-semibold">${tempoAPI.toFixed(2)}ms</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Status API:</span>
+                        <span class="font-semibold ${statusAPI === 'OK' ? 'text-green-600' : 'text-red-600'}">${statusAPI}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Chamadas API:</span>
+                        <span class="font-semibold">${STATE.performanceMetrics.apiCalls}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Memória Usada:</span>
+                        <span class="font-semibold">${memoriaUsada}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Memória Total:</span>
+                        <span class="font-semibold">${memoriaTotal}</span>
+                    </div>
+                </div>
+                <div class="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    <strong>Recomendações:</strong>
+                    <ul class="list-disc list-inside mt-1">
+                        ${recomendacoes.map(rec => `<li class="text-xs">${rec}</li>`).join('')}
+                    </ul>
                 </div>
             `;
+            
+        } catch (error) {
+            container.innerHTML = `<p class="text-red-500">Erro ao coletar métricas: ${error.message}</p>`;
         }
     }
 
@@ -2640,7 +2844,7 @@
         CacheManager.clear();
         UIManager.showModal('Sucesso', 'Cache limpo com sucesso!');
         setTimeout(() => {
-            mostrarPainelDiagnostico();
+            carregarStatusCache();
         }, 1000);
     }
 
@@ -2658,7 +2862,7 @@
 
     window.toggleRmVisibility = toggleRmVisibility;
     window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
-    window.testarConexaoCompleta = testarConexaoCompleta;
+    window.coletarMetricasPerformance = coletarMetricasPerformance;
     window.limparCache = limparCache;
     window.mostrarPainelProfessor = mostrarPainelProfessor;
     window.mostrarPainelAluno = mostrarPainelAluno;
