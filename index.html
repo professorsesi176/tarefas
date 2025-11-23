@@ -1415,28 +1415,33 @@
 
     // Manipular login
     async function handleLogin(event) {
-        event.preventDefault();
-        const email = document.getElementById('email').value.trim();
-        const senha = document.getElementById('senha').value.trim();
+    event.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+    
+    const loginErro = document.getElementById('loginErro');
+    const loginButton = document.getElementById('login-button');
+    const loginText = document.getElementById('login-text');
+    
+    Utils.setButtonLoading(loginButton, true);
+    loginText.textContent = "Entrando...";
+    loginErro.style.display = 'none';
+    
+    try {
+        console.log('Tentando login com:', { email, senha: '***' });
         
-        const loginErro = document.getElementById('loginErro');
-        const loginButton = document.getElementById('login-button');
-        const loginText = document.getElementById('login-text');
+        const response = await apiPost('login', { email, senha });
         
-        Utils.setButtonLoading(loginButton, true);
-        loginText.textContent = "Entrando...";
-        
-        try {
-            const user = await AuthManager.login({ email, senha });
-            STATE.usuarioLogado = user;
+        if (response.success && response.data && response.data.success) {
+            STATE.usuarioLogado = response.data.user;
             loginErro.style.display = 'none';
             
             UIManager.elements.contentArea.innerHTML = UIManager.renderLoading('Carregando painel...');
             
             // Carregar tarefas
             try {
-                const response = await apiGet('getTarefas', {}, true);
-                STATE.tarefas = response.data || response;
+                const tarefasResponse = await apiGet('getTarefas', {}, true);
+                STATE.tarefas = tarefasResponse.data || tarefasResponse;
                 console.log('Tarefas carregadas:', STATE.tarefas.length);
             } catch (error) {
                 console.error('Erro ao carregar tarefas:', error);
@@ -1447,21 +1452,24 @@
             AuthManager.updateUserInfo();
 
             // Redirecionar para o painel apropriado
-            if (user.Perfil === "Professor") {
+            if (STATE.usuarioLogado.Perfil === "Professor") {
                 await mostrarPainelProfessor();
             } else {
                 await mostrarPainelAluno();
             }
-            
-        } catch (error) {
-            loginErro.textContent = error.message;
-            loginErro.style.display = 'block';
-            console.error('Erro no login:', error);
-        } finally {
-            Utils.setButtonLoading(loginButton, false);
-            loginText.textContent = "Entrar";
+        } else {
+            throw new Error(response.data?.error || response.error || 'Erro desconhecido no login');
         }
+        
+    } catch (error) {
+        console.error('Erro no login:', error);
+        loginErro.textContent = error.message;
+        loginErro.style.display = 'block';
+    } finally {
+        Utils.setButtonLoading(loginButton, false);
+        loginText.textContent = "Entrar";
     }
+}
 
     // ==================== PAINEL DO PROFESSOR ====================
     async function mostrarPainelProfessor() {
