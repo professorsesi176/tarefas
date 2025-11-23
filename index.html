@@ -179,7 +179,7 @@
             border-radius: 4px;
             font-size: 0.75rem;
             margin-left: 8px;
-            min-width: 80px;
+            min-width: 120px;
             text-align: center;
         }
         
@@ -724,7 +724,7 @@
             100% { background-color: transparent; }
         }
 
-        /* Novos estilos para a versão 20.7 */
+        /* Novos estilos para a versão 20.8 */
         .aluno-relatorio-card {
             background-color: #f8fafc;
             border: 2px solid #e2e8f0;
@@ -827,7 +827,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 20.7
+            Desenvolvido por Geovane Modena | Versão 20.8
         </footer>
     </div>
 
@@ -976,6 +976,18 @@
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
+            },
+
+            formatarTempoRestante: (dias, horas, minutos) => {
+                let texto = '';
+                if (dias > 0) {
+                    texto += `${dias}d `;
+                }
+                if (horas > 0 || dias > 0) {
+                    texto += `${horas}h `;
+                }
+                texto += `${minutos}m`;
+                return texto.trim();
             }
         };
 
@@ -1220,9 +1232,9 @@
             }
         };
 
-        // ==================== SISTEMA DE TEMPO E PRAZOS ====================
+        // ==================== SISTEMA DE TEMPO E PRAZOS CORRIGIDO ====================
         const TimeManager = {
-            calcularStatusParteDiaUnico(dataAula, diasOffset) {
+            calcularStatusParte(dataAula, diasOffset) {
                 const agora = new Date();
                 const base = new Date(dataAula);
 
@@ -1236,29 +1248,26 @@
                     };
                 }
 
-                base.setHours(0, 0, 0, 0);
+                // Ajustar para o dia de entrega correto
                 const diaEntrega = new Date(base);
                 diaEntrega.setDate(diaEntrega.getDate() + diasOffset);
 
+                // Definir horário de entrega (13h às 22h)
                 const inicio = new Date(diaEntrega);
                 inicio.setHours(13, 0, 0, 0);
 
                 const fim = new Date(diaEntrega);
                 fim.setHours(22, 0, 0, 0);
 
+                // Verificar se ainda não chegou no dia de entrega
                 if (agora < inicio) {
                     const diff = inicio - agora;
                     const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
                     const horas = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-                    let texto = '';
-                    if (dias > 0) texto = `Libera em ${dias}d ${horas}h`;
-                    else if (horas > 0) texto = `Libera em ${horas}h ${minutos}m`;
-                    else texto = `Libera em ${minutos}m`;
-
                     return {
-                        texto,
+                        texto: `Libera em ${Utils.formatarTempoRestante(dias, horas, minutos)}`,
                         classe: 'aguardando',
                         liberada: false,
                         expirado: false,
@@ -1266,6 +1275,7 @@
                     };
                 }
 
+                // Verificar se já passou do dia de entrega
                 if (agora > fim) {
                     return {
                         texto: 'Expirado',
@@ -1276,16 +1286,14 @@
                     };
                 }
 
-                // Dentro do único dia de entrega (13h–22h)
+                // Dentro do período de entrega
                 const diffFim = fim - agora;
-                const horasFim = Math.floor(diffFim / (1000 * 60 * 60));
+                const diasFim = Math.floor(diffFim / (1000 * 60 * 60 * 24));
+                const horasFim = Math.floor((diffFim % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutosFim = Math.floor((diffFim % (1000 * 60 * 60)) / (1000 * 60));
-                let texto = '';
-                if (horasFim > 0) texto = `Termina em ${horasFim}h ${minutosFim}m`;
-                else texto = `Termina em ${minutosFim}m`;
 
                 return {
-                    texto,
+                    texto: `Termina em ${Utils.formatarTempoRestante(diasFim, horasFim, minutosFim)}`,
                     classe: 'disponivel',
                     liberada: true,
                     expirado: false,
@@ -1295,10 +1303,10 @@
 
             calcularContadoresOtimizado(dataAula) {
                 return {
-                    parte1: TimeManager.calcularStatusParteDiaUnico(dataAula, 0),
-                    parte2: TimeManager.calcularStatusParteDiaUnico(dataAula, 7),
-                    parte3: TimeManager.calcularStatusParteDiaUnico(dataAula, 14),
-                    parte4: TimeManager.calcularStatusParteDiaUnico(dataAula, 28)
+                    parte1: TimeManager.calcularStatusParte(dataAula, 0),   // Dia da aula
+                    parte2: TimeManager.calcularStatusParte(dataAula, 7),   // 7 dias depois
+                    parte3: TimeManager.calcularStatusParte(dataAula, 14),  // 14 dias depois
+                    parte4: TimeManager.calcularStatusParte(dataAula, 28)   // 28 dias depois
                 };
             },
 
@@ -1362,7 +1370,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v20.7...');
+                console.log('Inicializando sistema v20.8...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1587,9 +1595,8 @@
         }
 
         async function carregarTarefasProfessor() {
-            const tbody = document.getElementById('tabelaTarefasBody');
-            
-            tbody.innerHTML = `
+            const
+                            tbody.innerHTML = `
                 <tr>
                     <td colspan="4" class="text-center py-4 text-gray-500">
                         <div class="spinner"></div>
@@ -1739,6 +1746,31 @@
             }
         }
 
+        // ==================== FUNÇÃO CORRIGIDA PARA EXCLUIR TAREFA ====================
+        async function excluirTarefaCorrigida(idTarefa) {
+            try {
+                console.log('Excluindo tarefa:', idTarefa);
+                const response = await apiPost('excluirTarefa', { ID: idTarefa });
+                console.log('Resposta da exclusão:', response);
+                
+                UIManager.showModal('Sucesso', 'Tarefa excluída com sucesso.');
+                
+                // Limpar caches
+                CacheManager.remove('painel_professor');
+                CacheManager.remove('tarefas_professor_lista');
+                CONFIG.TURMAS.forEach(turma => {
+                    CacheManager.remove(`relatorio_${turma}`);
+                });
+                
+                // Recarregar a lista de tarefas
+                await carregarTarefasProfessor();
+                
+            } catch (error) {
+                console.error('Erro detalhado ao excluir tarefa:', error);
+                UIManager.showModal('Erro', `Erro ao excluir tarefa: ${error.message}`);
+            }
+        }
+
         const atualizarTarefa = Utils.debounce(async function() {
             const btnSalvar = document.getElementById('btnSalvarTarefa');
             
@@ -1810,7 +1842,7 @@
             const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
             STATE.tarefaParaExcluir = idTarefa;
             UIManager.showConfirmModal(`Tem certeza que deseja excluir a tarefa "${tarefa?.Tema}" da turma ${tarefa?.Turma}?`, () => {
-                excluirTarefa(idTarefa);
+                excluirTarefaCorrigida(idTarefa);
             });
         }
 
@@ -1825,23 +1857,6 @@
             CacheManager.remove('painel_professor');
             CacheManager.remove('tarefas_professor_lista');
             await mostrarPainelProfessor();
-        }
-
-        async function excluirTarefa(idTarefa) {
-            try {
-                await apiPost('excluirTarefa', { ID: idTarefa });
-                UIManager.showModal('Sucesso', 'Tarefa excluída com sucesso.');
-                
-                CacheManager.remove('painel_professor');
-                CacheManager.remove('tarefas_professor_lista');
-                CONFIG.TURMAS.forEach(turma => {
-                    CacheManager.remove(`relatorio_${turma}`);
-                });
-                
-                await carregarTarefasProfessor();
-            } catch (error) {
-                UIManager.showModal('Erro', `Erro ao excluir tarefa: ${error.message}`);
-            }
         }
 
         function limparFormulario() {
@@ -1932,7 +1947,7 @@
                                     <li>O cérebro consolida melhor a memória entre 6h e 9h após o aprendizado inicial.</li>
                                     <li>O sono tem papel essencial — é durante o sono que ocorre a consolidação sináptica (transformar memórias de curto em longo prazo).</li>
                                     <li>A atenção sustentada é máxima no período entre 8h e 11h da manhã e tem uma segunda faixa ótima entre 17h e 20h.</li>
-                                    <li>À noite, atividades reflexivas e criativas têm melhor rendimento, porque o córtex pré-frontal está menos sobrecarregado de estímulos novos.</li>
+                                    <li>À noite, atividades reflexivas e creativas têm melhor rendimento, porque o córtex pré-frontal está menos sobrecarregado de estímulos novos.</li>
                                     <li>Sono de 7h a 9h por noite.</li>
                                     <li>Evitar telas nos 30 min antes de dormir.</li>
                                     <li>Fazer revisão leve antes do sono.</li>
@@ -1941,7 +1956,7 @@
                                 <div class="flex justify-center my-4">
                                     <img src="https://blog-static.infra.grancursosonline.com.br/wp-content/uploads/2017/01/curva-do-esquecimento-1.png" 
                                          alt="Curva do Esquecimento de Ebbinghaus" 
-                                         class="imagem-curva">
+                                         class="imagem-curva" style="max-width: 100%; height: auto;">
                                 </div>
                                 
                                 <div class="referencias">
@@ -2054,82 +2069,57 @@
 
             container.innerHTML = tarefasLocal.map((tarefa, index) => {
                 const entregaTarefa = entregas.filter(e => e.ID_Tarefa === `TAREFA_${index + 1}`);
+                const contadores = TimeManager.calcularContadoresOtimizado(tarefa.DataAula);
                 
                 return `
                 <div class="border border-gray-200 rounded-lg p-4 mb-4">
                     <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
                     <p class="text-sm text-gray-600 mt-1">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
                     
-                    ${renderParteAluno(tarefa, 1, entregaTarefa, index)}
-                    ${renderParteAluno(tarefa, 2, entregaTarefa, index)}
-                    ${renderParteAluno(tarefa, 3, entregaTarefa, index)}
-                    ${renderParteAluno(tarefa, 4, entregaTarefa, index)}
+                    ${renderParteAluno(tarefa, 1, entregaTarefa, index, contadores.parte1)}
+                    ${renderParteAluno(tarefa, 2, entregaTarefa, index, contadores.parte2)}
+                    ${renderParteAluno(tarefa, 3, entregaTarefa, index, contadores.parte3)}
+                    ${renderParteAluno(tarefa, 4, entregaTarefa, index, contadores.parte4)}
                 </div>
                 `;
             }).join('');
         }
 
-        function renderParteAluno(tarefa, numeroParte, entregas, tarefaIndex) {
+        function renderParteAluno(tarefa, numeroParte, entregas, tarefaIndex, contador) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
             const linkSalvo = entrega ? entrega.Link : '';
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             const temLinkSalvo = linkSalvo && String(linkSalvo).trim() !== '';
             
-            // Calcular status baseado na data atual
-            const agora = new Date();
-            const dataAula = new Date(tarefa.DataAula);
-            let status = 'aguardando';
-            let textoStatus = 'Aguardando';
-            
-            // Calcular data de entrega para cada parte
-            const diasOffset = (numeroParte - 1) * 7; // Parte 1: 0 dias, Parte 2: 7 dias, etc.
-            const dataEntrega = new Date(dataAula);
-            dataEntrega.setDate(dataEntrega.getDate() + diasOffset);
-            
-            if (agora > dataEntrega) {
-                // Verificar se já passou do dia de entrega
-                const umDiaDepois = new Date(dataEntrega);
-                umDiaDepois.setDate(umDiaDepois.getDate() + 1);
-                
-                if (agora > umDiaDepois) {
-                    status = 'expirado';
-                    textoStatus = 'Expirado';
-                } else {
-                    status = 'disponivel';
-                    textoStatus = 'Disponível hoje';
-                }
-            } else {
-                const diffTempo = dataEntrega.getTime() - agora.getTime();
-                const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
-                
-                if (diffDias <= 7) {
-                    status = 'disponivel';
-                    textoStatus = `Libera em ${diffDias} dias`;
-                } else {
-                    status = 'aguardando';
-                    textoStatus = `Libera em ${diffDias} dias`;
-                }
-            }
-            
+            // Informações sobre a nota baseada no horário
+            const infoNota = `
+                <div class="horario-info mt-2">
+                    <strong>Notas por horário:</strong><br>
+                    <span class="horario-maxima">17h-20h: 2,5 pontos</span> | 
+                    <span class="horario-fora">13h-17h ou 20h-22h: 2,0 pontos</span>
+                </div>
+            `;
+
             return `
             <div class="mt-3 p-3 bg-gray-50 rounded border">
                 <div class="flex justify-between items-center">
                     <strong>Parte ${numeroParte}</strong>
-                    <span class="contador ${status}">${textoStatus}</span>
+                    <span class="contador ${contador.classe}">${contador.texto}</span>
                 </div>
                 <div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>
+                ${contador.liberada ? infoNota : ''}
                 <div class="link-container mt-2">
                     <input type="text" 
                            class="link-input ${temLinkSalvo ? 'link-salvo' : ''}" 
                            placeholder="${temLinkSalvo ? 'Link já enviado' : 'Cole o link da atividade aqui'}" 
                            id="${inputId}"
                            value="${linkSalvo || ''}"
-                           ${temLinkSalvo || status !== 'disponivel' ? 'disabled' : ''}>
+                           ${temLinkSalvo || !contador.liberada ? 'disabled' : ''}>
                     ${!temLinkSalvo ? `
                         <button class="btn-primario btn-link" 
                                 onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte})"
-                                ${status !== 'disponivel' ? 'disabled' : ''}>
+                                ${!contador.liberada ? 'disabled' : ''}>
                             Salvar
                         </button>
                     ` : ''}
@@ -2139,7 +2129,12 @@
                         Excluir
                     </button>
                 </div>
-                ${temLinkSalvo ? '<p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>' : ''}
+                ${temLinkSalvo ? `
+                    <p class="text-green-600 text-sm mt-1">
+                        ✓ Link salvo com sucesso 
+                        ${entrega?.Nota ? `- Nota: ${entrega.Nota}` : ''}
+                    </p>
+                ` : ''}
             </div>`;
         }
 
@@ -2297,7 +2292,6 @@
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b">Nº</th>
                                             <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b">Email</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b">Média</th>
                                         </tr>
                                     </thead>
@@ -2306,7 +2300,6 @@
                                             <tr>
                                                 <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                                 <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                                <td class="px-4 py-3 text-center border-b">${Utils.escapeHTML(aluno.Email)}</td>
                                                 <td class="px-4 py-3 text-center border-b">
                                                     <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                                         ${aluno.Media || '0.0'}
@@ -2327,7 +2320,6 @@
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Nº</th>
                                             <th class="px-4 py-3 text-left font-semibold border-b" rowspan="2">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Email</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Média</th>
                         `;
                         
@@ -2364,7 +2356,6 @@
                                 <tr>
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                    <td class="px-4 py-3 text-center border-b">${Utils.escapeHTML(aluno.Email)}</td>
                                     <td class="px-4 py-3 text-center border-b">
                                         <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                             ${aluno.Media || '0.0'}
@@ -2677,7 +2668,7 @@
         window.carregarRelatorioTurma = carregarRelatorioTurma;
         window.salvarTarefaCorrigida = salvarTarefaCorrigida;
         window.atualizarTarefa = atualizarTarefa;
-        window.excluirTarefa = excluirTarefa;
+        window.excluirTarefaCorrigida = excluirTarefaCorrigida;
         window.solicitarExclusaoTarefa = solicitarExclusaoTarefa;
         window.editarTarefa = editarTarefa;
         window.limparFormulario = limparFormulario;
