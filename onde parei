@@ -1,0 +1,27 @@
+1 é possível deixar todos os style, seria o CSS, né? em outra página/ficheiro do git ou outro lugar e ser deixado com link, tipo sendo exportado? para acelerar a produção do código.
+
+2.tela inicial
+Remova: o título login 
+
+3.Tela de Criação de Tarefas
+o botão excluir não está excluindo a tarefa e as colunas criadas no excel. Deve aparecer um aviso de confirmação antes de conlcuir o processo.
+Na criação das tarefas a ordem de criação das colunas deve ser essa:
+Nota1	
+Link1	DataHora1	Parte1	Link2	DataHora2	Parte2	
+Link3	DataHora3	Parte3     Link4	DataHora4	Parte4
+
+Nota2	
+Link5	DataHora5	Parte5	Link6	DataHora6	Parte6	
+Link7	DataHora7	Parte7     Link8	DataHora8	Parte8
+
+Nota3	
+Link9	DataHora9	Parte9	Link10	DataHora10	Parte10	
+Link11	DataHora11	Parte11     Link12	DataHora12	Parte12
+
+4.Tela Diagnóstico
+em Estatísticas do Sistema remover Usuário Logado
+
+5.Corrija a tela de relatório do professor, as notas Parciais P1, P2, P3 e P4 devem estar subdivididas debaixo de cada tarefa
+
+Se necessário mudanças no back, mostre ele completo na versão 20.4
+Se necessário mudanças no front, mostre ele completo na versão 20.4
