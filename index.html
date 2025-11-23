@@ -724,7 +724,7 @@
             100% { background-color: transparent; }
         }
 
-        /* Novos estilos para a versão 20.6 */
+        /* Novos estilos para a versão 20.7 */
         .aluno-relatorio-card {
             background-color: #f8fafc;
             border: 2px solid #e2e8f0;
@@ -827,7 +827,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 20.6
+            Desenvolvido por Geovane Modena | Versão 20.7
         </footer>
     </div>
 
@@ -1043,7 +1043,7 @@
                         url += `&_=${Date.now()}`;
                     }
                     
-                    console.log('Fazendo requisição para:', url.replace(/(rm|senha)=[^&]*/g, '$1=***'));
+                    console.log('Fazendo requisição para:', url.replace(/(email|senha)=[^&]*/g, '$1=***'));
                     
                     ApiManager.requestJSONP(url, (error, data) => {
                         if (error) {
@@ -1072,7 +1072,7 @@
                         }
                     }
                     
-                    console.log('Fazendo POST para:', url.replace(/(rm|senha)=[^&]*/g, '$1=***'));
+                    console.log('Fazendo POST para:', url.replace(/(email|senha)=[^&]*/g, '$1=***'));
                     
                     ApiManager.requestJSONP(url, (error, data) => {
                         if (error) {
@@ -1208,7 +1208,8 @@
                         <div class="user-info-text">
                             Logado como: <span class="font-semibold text-red-700">${Utils.escapeHTML(user.NomeCompleto)} (${user.Perfil})</span> | 
                             Turma: ${Utils.escapeHTML(user.Turma || 'N/A')} | 
-                            Nº: ${Utils.escapeHTML(user.Numero || 'N/A')}
+                            Nº: ${Utils.escapeHTML(user.Numero || 'N/A')} |
+                            Email: ${Utils.escapeHTML(user.Email || 'N/A')}
                         </div>
                     `;
                     UIManager.elements.relatorioBtn.classList.add('hidden');
@@ -1361,7 +1362,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v20.6...');
+                console.log('Inicializando sistema v20.7...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1524,7 +1525,7 @@
                         </div>
                         
                         <div class="mt-6 flex space-x-4">
-                            <button onclick="${STATE.tarefaEditando ? 'atualizarTarefa()' : 'salvarTarefa()'}" class="btn-primario flex-1" id="btnSalvarTarefa">
+                            <button onclick="salvarTarefaCorrigida()" class="btn-primario flex-1" id="btnSalvarTarefa">
                                 ${STATE.tarefaEditando ? 'Atualizar Tarefa' : 'Salvar Tarefa'}
                             </button>
                             <button onclick="limparFormulario()" class="btn-secundario flex-1">
@@ -1652,7 +1653,8 @@
             elemento.classList.toggle('expandido');
         }
 
-        const salvarTarefa = Utils.debounce(async function() {
+        // ==================== FUNÇÃO CORRIGIDA PARA SALVAR TAREFA ====================
+        async function salvarTarefaCorrigida() {
             const btnSalvar = document.getElementById('btnSalvarTarefa');
             
             try {
@@ -1694,8 +1696,10 @@
                     return;
                 }
 
+                console.log('Iniciando criação de tarefas para turmas:', turmasSelecionadas);
+                
                 // Para cada turma selecionada, criar uma tarefa
-                for (const turma of turmasSelecionadas) {
+                const promises = turmasSelecionadas.map(async (turma) => {
                     const dados = {
                         Turma: turma,
                         Tema: tema,
@@ -1707,11 +1711,17 @@
                         professor: STATE.usuarioLogado.NomeCompleto
                     };
 
-                    await apiPost('criarTarefa', dados);
-                }
+                    console.log(`Enviando dados para turma ${turma}:`, dados);
+                    return await apiPost('criarTarefa', dados);
+                });
+
+                // Aguardar todas as promises
+                const results = await Promise.all(promises);
+                console.log('Resultados da criação:', results);
                 
                 UIManager.showModal('Sucesso', `Tarefa criada com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
                 
+                // Limpar caches
                 CacheManager.remove('painel_professor');
                 CacheManager.remove('tarefas_professor_lista');
                 turmasSelecionadas.forEach(turma => {
@@ -1721,16 +1731,13 @@
                 limparFormulario();
                 await carregarTarefasProfessor();
                 
-                document.querySelectorAll('.tarefa-item').forEach(item => {
-                    item.classList.add('tarefa-atualizada');
-                });
-                
             } catch (error) {
+                console.error('Erro detalhado ao criar tarefa:', error);
                 UIManager.showModal('Erro', `Erro ao criar tarefa: ${error.message}`);
             } finally {
                 Utils.setButtonLoading(btnSalvar, false);
             }
-        }, 500);
+        }
 
         const atualizarTarefa = Utils.debounce(async function() {
             const btnSalvar = document.getElementById('btnSalvarTarefa');
@@ -1861,13 +1868,13 @@
                 document.getElementById('titulo-formulario').textContent = 'Criar Nova Tarefa';
                 const btn = document.getElementById('btnSalvarTarefa');
                 btn.textContent = 'Salvar Tarefa';
-                btn.setAttribute('onclick', 'salvarTarefa()');
+                btn.setAttribute('onclick', 'salvarTarefaCorrigida()');
             }
         }
 
         // ==================== PAINEL DO ALUNO ====================
         async function mostrarPainelAluno() {
-            const cacheKey = `painel_aluno_${STATE.usuarioLogado.RM}`;
+            const cacheKey = `painel_aluno_${STATE.usuarioLogado.Email}`;
             const cached = CacheManager.get(cacheKey);
             
             if (cached) {
@@ -1979,7 +1986,7 @@
         }
 
         async function carregarTarefasAluno() {
-            const cacheKey = `tarefas_aluno_${STATE.usuarioLogado.RM}_dados`;
+            const cacheKey = `tarefas_aluno_${STATE.usuarioLogado.Email}_dados`;
             const cached = CacheManager.get(cacheKey);
             
             if (cached) {
@@ -2002,7 +2009,7 @@
                 let entregas = [];
                 try {
                     const entregasResponse = await apiGet('getEntregasAluno', { 
-                        rm: STATE.usuarioLogado.RM, 
+                        email: STATE.usuarioLogado.Email, 
                         turma: STATE.usuarioLogado.Turma 
                     }, true);
                     entregas = entregasResponse.data || [];
@@ -2136,6 +2143,7 @@
             </div>`;
         }
 
+        // ==================== FUNÇÕES DE ENTREGA ATUALIZADAS PARA EMAIL ====================
         async function salvarLinkAluno(idTarefa, parte) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             const link = input ? input.value.trim() : '';
@@ -2148,7 +2156,7 @@
             try {
                 await apiPost('entregarTarefa', {
                     ID_Tarefa: idTarefa,
-                    RM_Aluno: STATE.usuarioLogado.RM,
+                    Email_Aluno: STATE.usuarioLogado.Email,
                     NomeAluno: STATE.usuarioLogado.NomeCompleto,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte,
@@ -2157,8 +2165,8 @@
                 
                 UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!`);
                 
-                CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.RM}`);
-                CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.RM}_dados`);
+                CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
+                CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                 
                 await carregarTarefasAluno();
             } catch (error) {
@@ -2170,15 +2178,15 @@
             try {
                 await apiPost('excluirEntrega', {
                     ID_Tarefa: idTarefa,
-                    RM_Aluno: STATE.usuarioLogado.RM,
+                    Email_Aluno: STATE.usuarioLogado.Email,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte
                 });
                 
                 UIManager.showModal('Sucesso', `Link da parte ${parte} excluído com sucesso!`);
                 
-                CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.RM}`);
-                CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.RM}_dados`);
+                CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
+                CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                 
                 await carregarTarefasAluno();
             } catch (error) {
@@ -2289,6 +2297,7 @@
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b">Nº</th>
                                             <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">Email</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b">Média</th>
                                         </tr>
                                     </thead>
@@ -2297,6 +2306,7 @@
                                             <tr>
                                                 <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                                 <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                                <td class="px-4 py-3 text-center border-b">${Utils.escapeHTML(aluno.Email)}</td>
                                                 <td class="px-4 py-3 text-center border-b">
                                                     <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                                         ${aluno.Media || '0.0'}
@@ -2317,6 +2327,7 @@
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Nº</th>
                                             <th class="px-4 py-3 text-left font-semibold border-b" rowspan="2">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Email</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Média</th>
                         `;
                         
@@ -2353,6 +2364,7 @@
                                 <tr>
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                    <td class="px-4 py-3 text-center border-b">${Utils.escapeHTML(aluno.Email)}</td>
                                     <td class="px-4 py-3 text-center border-b">
                                         <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                             ${aluno.Media || '0.0'}
@@ -2460,7 +2472,7 @@
             
             try {
                 const entregasResponse = await apiGet('getEntregasAluno', { 
-                    rm: STATE.usuarioLogado.RM, 
+                    email: STATE.usuarioLogado.Email, 
                     turma: STATE.usuarioLogado.Turma 
                 }, true);
                 const entregas = entregasResponse.data || [];
@@ -2593,6 +2605,10 @@
                             <span>Usuário Logado:</span>
                             <span class="font-semibold">${STATE.usuarioLogado?.NomeCompleto || 'Nenhum'}</span>
                         </div>
+                        <div class="flex justify-between">
+                            <span>Email:</span>
+                            <span class="font-semibold">${STATE.usuarioLogado?.Email || 'Nenhum'}</span>
+                        </div>
                     </div>
                     <button onclick="limparCache()" class="btn-primario w-full mt-3" style="background-color: #ef4444;">Limpar Cache</button>
                 `;
@@ -2618,6 +2634,10 @@
                         <div class="flex justify-between">
                             <span>Perfil:</span>
                             <span class="font-semibold">${STATE.usuarioLogado?.Perfil || 'Nenhum'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Identificação:</span>
+                            <span class="font-semibold">Por Email</span>
                         </div>
                     </div>
                 `;
@@ -2655,7 +2675,7 @@
         window.exportarParaExcel = exportarParaExcel;
         window.exportarParaPDF = exportarParaPDF;
         window.carregarRelatorioTurma = carregarRelatorioTurma;
-        window.salvarTarefa = salvarTarefa;
+        window.salvarTarefaCorrigida = salvarTarefaCorrigida;
         window.atualizarTarefa = atualizarTarefa;
         window.excluirTarefa = excluirTarefa;
         window.solicitarExclusaoTarefa = solicitarExclusaoTarefa;
