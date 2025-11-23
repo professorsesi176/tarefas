@@ -724,32 +724,7 @@
             100% { background-color: transparent; }
         }
 
-        /* Informações do sistema */
-        .system-info {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-        
-        .system-good {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        
-        .system-warning {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .system-info-blue {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-
-        /* Novos estilos para a versão 20.5 */
+        /* Novos estilos para a versão 20.6 */
         .aluno-relatorio-card {
             background-color: #f8fafc;
             border: 2px solid #e2e8f0;
@@ -802,60 +777,6 @@
             display: block;
         }
         
-        /* Indicadores de status */
-        .status-indicators {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .status-item {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .status-good {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        
-        .status-warning {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .status-error {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-        
-        /* Health check */
-        .health-check-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .health-check-item {
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .health-check-healthy {
-            background-color: #d1fae5;
-            border: 1px solid #a7f3d0;
-        }
-        
-        .health-check-unhealthy {
-            background-color: #fee2e2;
-            border: 1px solid #fecaca;
-        }
-        
         /* Para melhorar a responsividade em telas menores */
         @media (max-width: 640px) {
             .checkbox-group {
@@ -865,20 +786,27 @@
             .checkbox-item label {
                 font-size: 0.9rem;
             }
-            
-            .status-indicators {
-                flex-direction: column;
-            }
-            
-            .health-check-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         /* Garantir que modais estejam escondidos na tela de login */
         body:not(.logged-in) .modal-overlay,
         body:not(.logged-in) .modal-confirmacao {
             display: none !important;
+        }
+        
+        /* Relatório melhorado */
+        .relatorio-tarefa-header {
+            background-color: #CC0000;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .relatorio-parte-header {
+            background-color: #e53e3e;
+            color: white;
+            font-size: 0.7rem;
+            text-align: center;
         }
     </style>
 </head>
@@ -899,7 +827,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 20.5 - Sistema de Mapeamento
+            Desenvolvido por Geovane Modena | Versão 20.6
         </footer>
     </div>
 
@@ -931,118 +859,21 @@
             CACHE_TTL: 5 * 60 * 1000, // 5 minutos
             MAX_TEMA_LEN: 200,
             MAX_PARTE_LEN: 4000,
-            TURMAS: ["1A", "1B", "2A", "2B", "3A", "3B"],
-            RATE_LIMIT_INFO: {
-                login: "5 tentativas por minuto",
-                criar_tarefa: "3 tarefas por minuto", 
-                entregas: "10 entregas por minuto",
-                relatorios: "5 relatórios por minuto",
-                geral: "30 requisições por minuto"
-            }
+            TURMAS: ["1A", "1B", "2A", "2B", "3A", "3B"]
         };
 
-        // ==================== GERENCIADOR DE ESTADO ROBUSTO ====================
-        const StateManager = {
-            state: {
-                usuarioLogado: null,
-                tarefas: [],
-                tarefaEditando: null,
-                tarefaParaExcluir: null,
-                contadoresAtivos: [],
-                rmVisible: false,
-                relatorioAlunoVisivel: false,
-                performanceMetrics: {
-                    apiCalls: 0,
-                    cacheHits: 0,
-                    cacheMisses: 0,
-                    startTime: performance.now()
-                }
-            },
-
-            resetState() {
-                this.state = {
-                    usuarioLogado: null,
-                    tarefas: [],
-                    tarefaEditando: null,
-                    tarefaParaExcluir: null,
-                    contadoresAtivos: [],
-                    rmVisible: false,
-                    relatorioAlunoVisivel: false,
-                    performanceMetrics: {
-                        apiCalls: 0,
-                        cacheHits: 0,
-                        cacheMisses: 0,
-                        startTime: performance.now()
-                    }
-                };
-
-                // Fechar todos os modais
-                ModalManager.closeAll();
-            },
-
-            setState(newState) {
-                this.state = { ...this.state, ...newState };
-            }
+        // ==================== ESTADO GLOBAL ====================
+        const STATE = {
+            usuarioLogado: null,
+            tarefas: [],
+            tarefaEditando: null,
+            tarefaParaExcluir: null,
+            contadoresAtivos: [],
+            rmVisible: false,
+            relatorioAlunoVisivel: false
         };
 
-        // Estado global (para compatibilidade)
-        const STATE = StateManager.state;
-
-        // ==================== GERENCIADOR DE MODAIS SEGURO ====================
-        const ModalManager = {
-            modals: {},
-
-            init() {
-                this.modals = {
-                    main: document.getElementById('modal-overlay'),
-                    confirm: document.getElementById('confirm-modal')
-                };
-            },
-
-            closeAll() {
-                Object.values(this.modals).forEach(modal => {
-                    if (modal) modal.classList.add('hidden');
-                });
-                StateManager.setState({ tarefaParaExcluir: null });
-            },
-
-            showModal(title, message) {
-                if (this.modals.main) {
-                    document.getElementById('modal-title').textContent = title;
-                    document.getElementById('modal-message').textContent = message;
-                    this.modals.main.classList.remove('hidden');
-                }
-            },
-
-            showConfirm(message, onConfirm) {
-                if (!this.modals.confirm) return;
-
-                this.modals.confirm.classList.remove('hidden');
-                document.getElementById('confirm-message').textContent = message;
-
-                const confirmBtn = document.getElementById('confirm-delete');
-                const cancelBtn = document.getElementById('confirm-cancel');
-
-                // Clonar e substituir botões para remover event listeners anteriores
-                const newConfirmBtn = confirmBtn.cloneNode(true);
-                const newCancelBtn = cancelBtn.cloneNode(true);
-
-                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-
-                newConfirmBtn.onclick = () => {
-                    this.closeAll();
-                    if (onConfirm) onConfirm();
-                };
-
-                newCancelBtn.onclick = () => {
-                    this.closeAll();
-                    StateManager.setState({ tarefaParaExcluir: null });
-                };
-            }
-        };
-
-        // ==================== SISTEMA DE CACHE COM EXPIRAÇÃO ====================
+        // ==================== SISTEMA DE CACHE ====================
         const CacheManager = {
             get: (key) => {
                 try {
@@ -1051,19 +882,16 @@
                         const { data, expiry } = JSON.parse(item);
                         if (Date.now() > expiry) {
                             localStorage.removeItem(`task_${key}`);
-                            STATE.performanceMetrics.cacheMisses++;
                             return null;
                         }
-                        STATE.performanceMetrics.cacheHits++;
                         return data;
                     }
                 } catch (e) {
                     console.warn('Erro ao acessar cache:', e);
                 }
-                STATE.performanceMetrics.cacheMisses++;
                 return null;
             },
-
+            
             set: (key, data, ttl = CONFIG.CACHE_TTL) => {
                 try {
                     const item = {
@@ -1077,7 +905,7 @@
                     return false;
                 }
             },
-
+            
             remove: (key) => {
                 try {
                     localStorage.removeItem(key.startsWith('task_') ? key : `task_${key}`);
@@ -1085,7 +913,7 @@
                     console.warn('Erro ao remover do cache:', e);
                 }
             },
-
+            
             clear: () => {
                 try {
                     const keys = Object.keys(localStorage).filter(k => k.startsWith('task_'));
@@ -1093,36 +921,6 @@
                 } catch (e) {
                     console.warn('Erro ao limpar cache:', e);
                 }
-            },
-
-            // Limpar cache expirado automaticamente
-            cleanupExpired() {
-                try {
-                    const keys = Object.keys(localStorage).filter(k => k.startsWith('task_'));
-                    const now = Date.now();
-
-                    keys.forEach(key => {
-                        try {
-                            const item = localStorage.getItem(key);
-                            if (item) {
-                                const { expiry } = JSON.parse(item);
-                                if (now > expiry) {
-                                    localStorage.removeItem(key);
-                                }
-                            }
-                        } catch (e) {
-                            // Item corrompido - remover
-                            localStorage.removeItem(key);
-                        }
-                    });
-                } catch (error) {
-                    console.warn('Erro na limpeza do cache:', error);
-                }
-            },
-
-            // Executar limpeza a cada 5 minutos
-            startAutoCleanup() {
-                setInterval(() => this.cleanupExpired(), 5 * 60 * 1000);
             }
         };
 
@@ -1187,14 +985,14 @@
 
             requestJSONP: (url, callback) => {
                 const callbackName = 'jsonp_callback_' + ApiManager.jsonpCallbackId++;
-
+                
                 const timeout = setTimeout(() => {
                     if (window[callbackName]) {
                         delete window[callbackName];
                         callback(new Error('Timeout: A requisição demorou muito para responder'));
                     }
                 }, 15000);
-
+                
                 window[callbackName] = function(data) {
                     clearTimeout(timeout);
                     delete window[callbackName];
@@ -1203,7 +1001,7 @@
                     }
                     callback(null, data);
                 };
-
+                
                 const script = document.createElement('script');
                 script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
                 script.onerror = function() {
@@ -1214,43 +1012,40 @@
                     }
                     callback(new Error('Falha ao carregar o script. Verifique sua conexão.'));
                 };
-
+                
                 document.body.appendChild(script);
             },
 
             get: async (func, params = {}, forceRefresh = false) => {
                 const cacheKey = `api_${func}_${JSON.stringify(params)}`;
-
+                
                 if (!forceRefresh) {
                     const cached = CacheManager.get(cacheKey);
                     if (cached) {
                         return cached;
                     }
                 }
-
+                
                 return new Promise((resolve, reject) => {
-                    const startTime = performance.now();
                     let url = `${CONFIG.API_URL}?`;
-
+                    
                     if (func) {
                         url += `func=${func}`;
                     }
-
+                    
                     for (const key in params) {
                         if (params[key] !== undefined && params[key] !== null) {
                             url += `&${key}=${encodeURIComponent(params[key])}`;
                         }
                     }
-
+                    
                     if (forceRefresh) {
                         url += `&_=${Date.now()}`;
                     }
-
+                    
                     console.log('Fazendo requisição para:', url.replace(/(rm|senha)=[^&]*/g, '$1=***'));
-
+                    
                     ApiManager.requestJSONP(url, (error, data) => {
-                        const duration = performance.now() - startTime;
-
                         if (error) {
                             reject(error);
                         } else if (data && data.success === false) {
@@ -1265,9 +1060,8 @@
 
             post: async (action, dados) => {
                 return new Promise((resolve, reject) => {
-                    const startTime = performance.now();
                     let url = `${CONFIG.API_URL}?action=${action}`;
-
+                    
                     for (const key in dados) {
                         if (dados[key] !== undefined && dados[key] !== null) {
                             if (Array.isArray(dados[key])) {
@@ -1277,12 +1071,10 @@
                             }
                         }
                     }
-
+                    
                     console.log('Fazendo POST para:', url.replace(/(rm|senha)=[^&]*/g, '$1=***'));
-
+                    
                     ApiManager.requestJSONP(url, (error, data) => {
-                        const duration = performance.now() - startTime;
-
                         if (error) {
                             reject(error);
                         } else if (data && data.success === false) {
@@ -1299,24 +1091,6 @@
         const apiGet = ApiManager.get;
         const apiPost = ApiManager.post;
 
-        // ==================== SISTEMA DE RETRY PARA REQUISIÇÕES ====================
-        const ApiManagerWithRetry = {
-            requestWithRetry: async (func, params, maxRetries = 3) => {
-                for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                    try {
-                        return await ApiManager.get(func, params);
-                    } catch (error) {
-                        if (attempt === maxRetries) throw error;
-                        
-                        // Esperar tempo exponencial antes de retry
-                        const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        console.log(`Tentativa ${attempt + 1} após ${delay}ms`);
-                    }
-                }
-            }
-        };
-
         // ==================== GERENCIADOR DE INTERFACE ====================
         const UIManager = {
             elements: {
@@ -1324,19 +1098,40 @@
                 userInfo: document.getElementById('user-info'),
                 logoutBtn: document.getElementById('logoutBtn'),
                 relatorioBtn: document.getElementById('relatorioBtn'),
-                diagnosticoBtn: document.getElementById('diagnosticoBtn')
+                diagnosticoBtn: document.getElementById('diagnosticoBtn'),
+                modalOverlay: document.getElementById('modal-overlay'),
+                modalTitle: document.getElementById('modal-title'),
+                modalMessage: document.getElementById('modal-message'),
+                confirmModal: document.getElementById('confirm-modal'),
+                confirmMessage: document.getElementById('confirm-message'),
+                confirmCancel: document.getElementById('confirm-cancel'),
+                confirmDelete: document.getElementById('confirm-delete')
             },
 
             showModal: (title, message) => {
-                ModalManager.showModal(title, message);
+                UIManager.elements.modalTitle.textContent = title;
+                UIManager.elements.modalMessage.textContent = message;
+                UIManager.elements.modalOverlay.classList.remove('hidden');
             },
 
             closeModal: () => {
-                ModalManager.closeAll();
+                UIManager.elements.modalOverlay.classList.add('hidden');
             },
 
             showConfirmModal: (message, onConfirm) => {
-                ModalManager.showConfirm(message, onConfirm);
+                UIManager.elements.confirmMessage.textContent = message;
+                UIManager.elements.confirmModal.classList.remove('hidden');
+                
+                UIManager.elements.confirmCancel.onclick = () => {
+                    UIManager.elements.confirmModal.classList.add('hidden');
+                    STATE.tarefaParaExcluir = null;
+                };
+                
+                UIManager.elements.confirmDelete.onclick = () => {
+                    UIManager.elements.confirmModal.classList.add('hidden');
+                    if (onConfirm) onConfirm();
+                    STATE.tarefaParaExcluir = null;
+                };
             },
 
             renderLoading: (message = 'Carregando...') => {
@@ -1358,266 +1153,16 @@
             }
         };
 
-        // ==================== TRATAMENTO DE ERROS GRANULAR ====================
-        const ErrorHandler = {
-            handleApiError: (error) => {
-                const msg = error.message || String(error);
-                
-                if (msg.includes('Credenciais inválidas')) {
-                    UIManager.showModal('Erro de Login', 'E-mail ou senha incorretos.');
-                } else if (msg.includes('Fora do período')) {
-                    UIManager.showModal('Fora do Prazo', 'Esta parte só pode ser entregue no dia específico, entre 13h e 22h.');
-                } else if (msg.includes('Timeout')) {
-                    UIManager.showModal('Erro de Conexão', 'Servidor demorou para responder. Tente novamente.');
-                } else if (msg.includes('Muitas requisições')) {
-                    UIManager.showModal('Atenção', 'Muitas tentativas. Aguarde alguns minutos.');
-                } else {
-                    UIManager.showModal('Erro', msg);
-                }
-                
-                // Log para diagnóstico
-                console.error('Erro da API:', error);
-            }
-        };
-
-        // ==================== MONITORAMENTO DE PERFORMANCE ====================
-        const PerformanceMonitor = {
-            metrics: {
-                navigation: [],
-                apiCalls: [],
-                renderTimes: [],
-                apiCallsCount: 0,
-                cacheHits: 0,
-                cacheMisses: 0,
-                errors: 0,
-                startTime: performance.now()
-            },
-            
-            startNavigation(route) {
-                const navigation = {
-                    route,
-                    startTime: performance.now(),
-                    end: () => {
-                        const duration = performance.now() - navigation.startTime;
-                        this.metrics.navigation.push({ route, duration });
-                        console.log(`🎯 Navegação para ${route}: ${duration.toFixed(2)}ms`);
-                        
-                        // Alertar se muito lento
-                        if (duration > 3000) {
-                            console.warn(`⚠️  Navegação lenta para ${route}: ${duration.toFixed(2)}ms`);
-                        }
-                    }
-                };
-                return navigation;
-            },
-            
-            trackApiCall(endpoint, startTime) {
-                const duration = performance.now() - startTime;
-                this.metrics.apiCalls.push({ endpoint, duration });
-                this.metrics.apiCallsCount++;
-                
-                if (duration > 5000) {
-                    console.warn(`🐌 API call lenta: ${endpoint} - ${duration.toFixed(2)}ms`);
-                }
-            },
-
-            trackCacheHit() {
-                this.metrics.cacheHits++;
-            },
-
-            trackCacheMiss() {
-                this.metrics.cacheMisses++;
-            },
-
-            trackError() {
-                this.metrics.errors++;
-            },
-            
-            getReport() {
-                const navAvg = this.metrics.navigation.length > 0 ? 
-                    this.metrics.navigation.reduce((acc, curr) => acc + curr.duration, 0) / this.metrics.navigation.length : 0;
-                const apiAvg = this.metrics.apiCalls.length > 0 ? 
-                    this.metrics.apiCalls.reduce((acc, curr) => acc + curr.duration, 0) / this.metrics.apiCalls.length : 0;
-                
-                return {
-                    navegacao: {
-                        total: this.metrics.navigation.length,
-                        media: navAvg.toFixed(2) + 'ms',
-                        maisLento: this.metrics.navigation.length > 0 ? 
-                            Math.max(...this.metrics.navigation.map(n => n.duration)).toFixed(2) + 'ms' : '0ms'
-                    },
-                    api: {
-                        total: this.metrics.apiCallsCount,
-                        media: apiAvg.toFixed(2) + 'ms',
-                        maisLento: this.metrics.apiCalls.length > 0 ? 
-                            Math.max(...this.metrics.apiCalls.map(a => a.duration)).toFixed(2) + 'ms' : '0ms'
-                    },
-                    cache: {
-                        hits: this.metrics.cacheHits,
-                        misses: this.metrics.cacheMisses,
-                        eficiencia: this.metrics.cacheHits + this.metrics.cacheMisses > 0 ? 
-                            ((this.metrics.cacheHits / (this.metrics.cacheHits + this.metrics.cacheMisses)) * 100).toFixed(1) + '%' : '0%'
-                    },
-                    erros: this.metrics.errors,
-                    tempoTotal: ((performance.now() - this.metrics.startTime) / 1000).toFixed(1) + 's'
-                };
-            }
-        };
-
-        // ==================== HEALTH CHECK ====================
-        const HealthCheck = {
-            async run() {
-                const checks = {
-                    api: await this.checkAPI(),
-                    cache: this.checkCache(),
-                    storage: this.checkStorage(),
-                    connectivity: this.checkConnectivity()
-                };
-                
-                const allHealthy = Object.values(checks).every(check => check.healthy);
-                
-                return {
-                    healthy: allHealthy,
-                    checks,
-                    timestamp: new Date().toISOString()
-                };
-            },
-            
-            async checkAPI() {
-                try {
-                    const start = performance.now();
-                    await apiGet('testBackend', {}, true);
-                    const duration = performance.now() - start;
-                    
-                    return {
-                        healthy: true,
-                        duration: duration.toFixed(2) + 'ms',
-                        message: 'API respondendo normalmente'
-                    };
-                } catch (error) {
-                    return {
-                        healthy: false,
-                        error: error.message,
-                        message: 'API não está respondendo'
-                    };
-                }
-            },
-            
-            checkCache() {
-                try {
-                    const testKey = 'health_check_' + Date.now();
-                    CacheManager.set(testKey, 'test', 60000);
-                    const retrieved = CacheManager.get(testKey);
-                    CacheManager.remove(testKey);
-                    
-                    return {
-                        healthy: retrieved === 'test',
-                        message: retrieved === 'test' ? 'Cache funcionando' : 'Cache corrompido'
-                    };
-                } catch (error) {
-                    return {
-                        healthy: false,
-                        error: error.message,
-                        message: 'Erro no sistema de cache'
-                    };
-                }
-            },
-            
-            checkStorage() {
-                try {
-                    const test = 'test';
-                    localStorage.setItem('health_check', test);
-                    const retrieved = localStorage.getItem('health_check');
-                    localStorage.removeItem('health_check');
-                    
-                    return {
-                        healthy: retrieved === test,
-                        message: retrieved === test ? 'LocalStorage OK' : 'LocalStorage corrompido'
-                    };
-                } catch (error) {
-                    return {
-                        healthy: false,
-                        error: error.message,
-                        message: 'Erro no LocalStorage'
-                    };
-                }
-            },
-            
-            checkConnectivity() {
-                return {
-                    healthy: navigator.onLine,
-                    message: navigator.onLine ? 'Online' : 'Offline'
-                };
-            }
-        };
-
-        // ==================== ERROR BOUNDARY ====================
-        const ErrorBoundary = {
-            handleComponentError(componentName, error) {
-                console.error(`Erro no componente ${componentName}:`, error);
-                
-                // Exibir fallback UI
-                if (UIManager.elements.contentArea) {
-                    UIManager.elements.contentArea.innerHTML = `
-                        <div class="card p-6 text-center">
-                            <h3 class="text-xl text-red-600 mb-4">Erro no sistema</h3>
-                            <p class="text-gray-600 mb-4">O componente ${componentName} encontrou um erro.</p>
-                            <button onclick="location.reload()" class="btn-primario">
-                                Recarregar Página
-                            </button>
-                        </div>
-                    `;
-                }
-                
-                // Reportar erro
-                this.reportError(error, { component: componentName });
-            },
-            
-            reportError(error, context = {}) {
-                const errorInfo = {
-                    message: error.message,
-                    stack: error.stack,
-                    timestamp: new Date().toISOString(),
-                    userAgent: navigator.userAgent,
-                    url: window.location.href,
-                    ...context
-                };
-                
-                // Tentar enviar para o backend (se disponível)
-                try {
-                    apiPost('logError', errorInfo).catch(() => {
-                        // Fallback: salvar no localStorage
-                        const errors = JSON.parse(localStorage.getItem('app_errors') || '[]');
-                        errors.push(errorInfo);
-                        localStorage.setItem('app_errors', JSON.stringify(errors.slice(-10)));
-                    });
-                } catch (e) {
-                    console.warn('Não foi possível reportar o erro:', e);
-                }
-            },
-            
-            wrapComponent(componentName, componentFunction) {
-                return async (...args) => {
-                    try {
-                        return await componentFunction(...args);
-                    } catch (error) {
-                        this.handleComponentError(componentName, error);
-                        throw error;
-                    }
-                };
-            }
-        };
-
         // ==================== SISTEMA DE AUTENTICAÇÃO ====================
         const AuthManager = {
             async login(credenciais) {
                 const { email, senha } = credenciais;
-
+                
                 console.log('Tentando login com:', { email, senha: '***' });
 
                 try {
                     const response = await apiPost('login', { email, senha });
-
+                    
                     if (response.success && response.user) {
                         console.log('Usuário logado com sucesso:', response.user.NomeCompleto);
                         return response.user;
@@ -1631,18 +1176,22 @@
             },
 
             logout() {
-                StateManager.resetState();
+                STATE.usuarioLogado = null;
+                STATE.tarefaEditando = null;
+                STATE.relatorioAlunoVisivel = false;
                 UIManager.elements.logoutBtn.classList.add('hidden');
                 UIManager.elements.relatorioBtn.classList.add('hidden');
                 UIManager.elements.diagnosticoBtn.classList.add('hidden');
                 UIManager.elements.userInfo.innerHTML = '';
+                STATE.contadoresAtivos.forEach(interval => clearInterval(interval));
+                STATE.contadoresAtivos = [];
                 CacheManager.clear();
                 renderLogin();
             },
 
             updateUserInfo() {
                 if (!STATE.usuarioLogado) return;
-
+                
                 const user = STATE.usuarioLogado;
                 if (user.Perfil === "Professor") {
                     UIManager.elements.userInfo.innerHTML = `
@@ -1665,7 +1214,7 @@
                     UIManager.elements.relatorioBtn.classList.add('hidden');
                     UIManager.elements.diagnosticoBtn.classList.add('hidden');
                 }
-
+                
                 UIManager.elements.logoutBtn.classList.remove('hidden');
             }
         };
@@ -1755,13 +1304,13 @@
             iniciarAtualizacaoContadores() {
                 STATE.contadoresAtivos.forEach(interval => clearInterval(interval));
                 STATE.contadoresAtivos = [];
-
+                
                 const interval = setInterval(() => {
                     if (STATE.usuarioLogado && STATE.usuarioLogado.Perfil === 'Aluno') {
                         atualizarContadoresAluno();
                     }
                 }, 1000);
-
+                
                 STATE.contadoresAtivos.push(interval);
             }
         };
@@ -1771,7 +1320,6 @@
             loginForm: () => {
                 return `
                     <div id="login" class="max-w-md mx-auto p-6">
-                        <h2 class="text-2xl font-bold text-center text-red-700 mb-6">Login</h2>
                         <div id="loginErro" class="text-red-500 mb-4 hidden text-center font-semibold"></div>
 
                         <form id="login-form" class="space-y-4">
@@ -1813,9 +1361,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v20.5...');
-                ModalManager.init();
-                CacheManager.startAutoCleanup();
+                console.log('Inicializando sistema v20.6...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1849,7 +1395,7 @@
         function toggleRmVisibility() {
             const senhaInput = document.getElementById('senha');
             const toggleButton = document.getElementById('toggleSenha');
-
+            
             STATE.rmVisible = !STATE.rmVisible;
             senhaInput.type = STATE.rmVisible ? 'text' : 'password';
             toggleButton.textContent = STATE.rmVisible ? '🙈' : '👁️';
@@ -1858,18 +1404,14 @@
         // Manipular login
         async function handleLogin(event) {
             event.preventDefault();
-            
-            // Fechar modais abertos
-            ModalManager.closeAll();
-
             const emailPrefix = document.getElementById('email-prefix').value.trim();
             const email = document.getElementById('email').value.trim();
             const senha = document.getElementById('senha').value.trim();
-
+            
             const loginErro = document.getElementById('loginErro');
             const loginButton = document.getElementById('login-button');
             const loginText = document.getElementById('login-text');
-
+            
             if (!emailPrefix) {
                 loginErro.textContent = 'Por favor, insira seu nome e sobrenome.';
                 loginErro.style.display = 'block';
@@ -1879,18 +1421,18 @@
             Utils.setButtonLoading(loginButton, true);
             loginText.textContent = "Entrando...";
             loginErro.style.display = 'none';
-
+            
             try {
                 console.log('Tentando login com:', { email, senha: '***' });
-
+                
                 const response = await apiPost('login', { email, senha });
-
+                
                 if (response.success && response.data && response.data.success) {
                     STATE.usuarioLogado = response.data.user;
                     loginErro.style.display = 'none';
-
+                    
                     UIManager.elements.contentArea.innerHTML = UIManager.renderLoading('Carregando painel...');
-
+                    
                     // Carregar tarefas
                     try {
                         const tarefasResponse = await apiGet('getTarefas', {}, true);
@@ -1913,10 +1455,11 @@
                 } else {
                     throw new Error(response.data?.error || response.error || 'Erro desconhecido no login');
                 }
-
+                
             } catch (error) {
                 console.error('Erro no login:', error);
-                ErrorHandler.handleApiError(error);
+                loginErro.textContent = error.message;
+                loginErro.style.display = 'block';
             } finally {
                 Utils.setButtonLoading(loginButton, false);
                 loginText.textContent = "Entrar";
@@ -1925,36 +1468,20 @@
 
         // ==================== PAINEL DO PROFESSOR ====================
         async function mostrarPainelProfessor() {
-            const navigation = PerformanceMonitor.startNavigation('PainelProfessor');
-            
             const cacheKey = 'painel_professor';
             const cached = CacheManager.get(cacheKey);
-
+            
             if (cached && !STATE.tarefaEditando) {
                 UIManager.elements.contentArea.innerHTML = cached;
                 await carregarTarefasProfessor();
-                navigation.end();
                 return;
             }
-
+            
             UIManager.elements.contentArea.innerHTML = `
                 <div id="painelProfessor" class="space-y-6">
-                    <div class="status-indicators">
-                        <div class="status-item ${PerformanceMonitor.metrics.apiCallsCount > 100 ? 'status-warning' : 'status-good'}">
-                            API Calls: ${PerformanceMonitor.metrics.apiCallsCount}
-                        </div>
-                        <div class="status-item ${PerformanceMonitor.metrics.cacheHits < PerformanceMonitor.metrics.cacheMisses ? 'status-warning' : 'status-good'}">
-                            Cache: ${PerformanceMonitor.metrics.apiCallsCount > 0 ? 
-                                ((PerformanceMonitor.metrics.cacheHits / PerformanceMonitor.metrics.apiCallsCount) * 100).toFixed(1) + '%' : '0%'}
-                        </div>
-                        <div class="status-item ${!navigator.onLine ? 'status-error' : 'status-good'}">
-                            Online: ${navigator.onLine ? '✅' : '❌'}
-                        </div>
-                    </div>
-
                     <div class="card p-6 border-t-4 border-red-600">
                         <h3 class="text-2xl font-bold mb-4 text-red-700" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Criar Nova Tarefa'}</h3>
-
+                        
                         <div class="form-group">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Turmas:</label>
                             <div class="checkbox-group">
@@ -1966,17 +1493,17 @@
                                 `).join('')}
                             </div>
                         </div>
-
+                        
                         <div class="form-group">
                             <label for="tema" class="block text-sm font-medium text-gray-700">Tema da Tarefa</label>
                             <input type="text" id="tema" placeholder="Ex: Matemática - Frações" class="mt-1" required maxlength="${CONFIG.MAX_TEMA_LEN}">
                         </div>
-
+                        
                         <div class="form-group">
                             <label for="dataAula" class="block text-sm font-medium text-gray-700">Data da Aula</label>
                             <input type="date" id="dataAula" class="mt-1" required>
                         </div>
-
+                        
                         <div class="mt-4 space-y-4">
                             <div>
                                 <label for="parte1" class="block text-sm font-medium text-gray-700 mb-2">Parte 1 (dia da aula, 13h–22h) <span class="retencao-aviso retencao-50">50% retenção</span></label>
@@ -1995,7 +1522,7 @@
                                 <textarea id="parte4" placeholder="Descreva a parte 4 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                             </div>
                         </div>
-
+                        
                         <div class="mt-6 flex space-x-4">
                             <button onclick="${STATE.tarefaEditando ? 'atualizarTarefa()' : 'salvarTarefa()'}" class="btn-primario flex-1" id="btnSalvarTarefa">
                                 ${STATE.tarefaEditando ? 'Atualizar Tarefa' : 'Salvar Tarefa'}
@@ -2034,8 +1561,7 @@
             }
 
             await carregarTarefasProfessor();
-            navigation.end();
-
+            
             CacheManager.set(cacheKey, UIManager.elements.contentArea.innerHTML, 2 * 60 * 1000);
         }
 
@@ -2072,14 +1598,10 @@
             `;
             
             try {
-                const startTime = performance.now();
                 const response = await apiGet('getTarefas', {}, true);
-                PerformanceMonitor.trackApiCall('getTarefas', startTime);
-                
                 STATE.tarefas = response.data || [];
                 renderizarTabelaTarefas();
             } catch (error) {
-                ErrorHandler.handleApiError(error);
                 tbody.innerHTML = 
                     `<tr><td colspan="4" class="text-center py-4 text-red-500">Erro ao carregar tarefas: ${Utils.escapeHTML(error.message || String(error))}</td></tr>`;
             }
@@ -2204,7 +1726,7 @@
                 });
                 
             } catch (error) {
-                ErrorHandler.handleApiError(error);
+                UIManager.showModal('Erro', `Erro ao criar tarefa: ${error.message}`);
             } finally {
                 Utils.setButtonLoading(btnSalvar, false);
             }
@@ -2271,7 +1793,7 @@
                 await carregarTarefasProfessor();
                 
             } catch (error) {
-                ErrorHandler.handleApiError(error);
+                UIManager.showModal('Erro', `Erro ao atualizar tarefa: ${error.message}`);
             } finally {
                 Utils.setButtonLoading(btnSalvar, false);
             }
@@ -2311,7 +1833,7 @@
                 
                 await carregarTarefasProfessor();
             } catch (error) {
-                ErrorHandler.handleApiError(error);
+                UIManager.showModal('Erro', `Erro ao excluir tarefa: ${error.message}`);
             }
         }
 
@@ -2345,33 +1867,17 @@
 
         // ==================== PAINEL DO ALUNO ====================
         async function mostrarPainelAluno() {
-            const navigation = PerformanceMonitor.startNavigation('PainelAluno');
-            
             const cacheKey = `painel_aluno_${STATE.usuarioLogado.RM}`;
             const cached = CacheManager.get(cacheKey);
             
             if (cached) {
                 UIManager.elements.contentArea.innerHTML = cached;
                 TimeManager.iniciarAtualizacaoContadores();
-                navigation.end();
                 return;
             }
             
             UIManager.elements.contentArea.innerHTML = `
                 <div id="painelAluno" class="space-y-6">
-                    <div class="status-indicators">
-                        <div class="status-item ${PerformanceMonitor.metrics.apiCallsCount > 100 ? 'status-warning' : 'status-good'}">
-                            API Calls: ${PerformanceMonitor.metrics.apiCallsCount}
-                        </div>
-                        <div class="status-item ${PerformanceMonitor.metrics.cacheHits < PerformanceMonitor.metrics.cacheMisses ? 'status-warning' : 'status-good'}">
-                            Cache: ${PerformanceMonitor.metrics.apiCallsCount > 0 ? 
-                                ((PerformanceMonitor.metrics.cacheHits / PerformanceMonitor.metrics.apiCallsCount) * 100).toFixed(1) + '%' : '0%'}
-                        </div>
-                        <div class="status-item ${!navigator.onLine ? 'status-error' : 'status-good'}">
-                            Online: ${navigator.onLine ? '✅' : '❌'}
-                        </div>
-                    </div>
-
                     <div class="card p-6">
                         <h3 class="text-2xl font-bold text-red-700 mb-4">Minhas Tarefas</h3>
                         
@@ -2448,7 +1954,6 @@
 
             await carregarTarefasAluno();
             TimeManager.iniciarAtualizacaoContadores();
-            navigation.end();
             
             CacheManager.set(cacheKey, UIManager.elements.contentArea.innerHTML, 2 * 60 * 1000);
         }
@@ -2485,10 +1990,7 @@
             mostrarLoadingTarefasAluno();
             
             try {
-                const startTime = performance.now();
                 const response = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, true);
-                PerformanceMonitor.trackApiCall('getTarefasPorTurma', startTime);
-                
                 const container = document.getElementById('tarefas-aluno-container');
                 
                 if (!response.data || response.data.length === 0) {
@@ -2499,12 +2001,10 @@
 
                 let entregas = [];
                 try {
-                    const entregasStartTime = performance.now();
                     const entregasResponse = await apiGet('getEntregasAluno', { 
                         rm: STATE.usuarioLogado.RM, 
                         turma: STATE.usuarioLogado.Turma 
                     }, true);
-                    PerformanceMonitor.trackApiCall('getEntregasAluno', entregasStartTime);
                     entregas = entregasResponse.data || [];
                 } catch (error) {
                     console.warn('Erro ao carregar entregas do aluno (não crítico):', error);
@@ -2512,13 +2012,17 @@
 
                 CacheManager.set(cacheKey, {tarefas: response.data, entregas: entregas}, 2 * 60 * 1000);
                 
-                renderTarefasAlunoGradualmente(response.data, entregas, container);
+                renderTarefasAluno(response.data, entregas, container);
                 
             } catch (error) {
-                ErrorHandler.handleApiError(error);
                 document.getElementById('tarefas-aluno-container').innerHTML = 
                     `<div class="text-center text-red-500 py-8">Erro ao carregar tarefas: ${Utils.escapeHTML(error.message || String(error))}</div>`;
             }
+        }
+
+        function renderTarefasAlunoFromCache(tarefasLocal, entregas) {
+            const container = document.getElementById('tarefas-aluno-container');
+            renderTarefasAluno(tarefasLocal, entregas, container);
         }
 
         function mostrarLoadingTarefasAluno() {
@@ -2533,8 +2037,7 @@
             `;
         }
 
-        function renderTarefasAlunoFromCache(tarefasLocal, entregas) {
-            const container = document.getElementById('tarefas-aluno-container');
+        function renderTarefasAluno(tarefasLocal, entregas, container) {
             container.innerHTML = '';
             
             if (!tarefasLocal || tarefasLocal.length === 0) {
@@ -2542,143 +2045,107 @@
                 return;
             }
 
-            container.innerHTML = tarefasLocal.map(tarefa => {
-                const contadores = TimeManager.calcularContadoresOtimizado(tarefa.DataAula);
-                const entrega = entregas.find(e => e.ID_Tarefa === `TAREFA_${tarefasLocal.indexOf(tarefa) + 1}`);
-
-                return renderTarefaItem(tarefa, entrega, contadores, tarefasLocal.indexOf(tarefa));
+            container.innerHTML = tarefasLocal.map((tarefa, index) => {
+                const entregaTarefa = entregas.filter(e => e.ID_Tarefa === `TAREFA_${index + 1}`);
+                
+                return `
+                <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                    <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
+                    <p class="text-sm text-gray-600 mt-1">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
+                    
+                    ${renderParteAluno(tarefa, 1, entregaTarefa, index)}
+                    ${renderParteAluno(tarefa, 2, entregaTarefa, index)}
+                    ${renderParteAluno(tarefa, 3, entregaTarefa, index)}
+                    ${renderParteAluno(tarefa, 4, entregaTarefa, index)}
+                </div>
+                `;
             }).join('');
         }
 
-        async function renderTarefasAlunoGradualmente(tarefasLocal, entregas, container) {
-            container.innerHTML = '';
-            
-            for (let i = 0; i < tarefasLocal.length; i++) {
-                if (i % 2 === 0 && i > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
-                }
-                
-                const tarefa = tarefasLocal[i];
-                const entrega = entregas.find(e => e.ID_Tarefa === `TAREFA_${i + 1}`);
-                const contadores = TimeManager.calcularContadoresOtimizado(tarefa.DataAula);
-                
-                const tarefaHTML = renderTarefaItem(tarefa, entrega, contadores, i);
-                container.innerHTML += tarefaHTML;
-            }
-            
-            atualizarContadoresAluno();
-        }
-
-        function renderTarefaItem(tarefa, entrega, contadores, tarefaIndex) {
-            const parte1 = tarefa.Parte1 || '';
-            const parte2 = tarefa.Parte2 || '';
-            const parte3 = tarefa.Parte3 || '';
-            const parte4 = tarefa.Parte4 || '';
-
-            return `
-            <div class="border border-gray-200 rounded-lg p-4 mb-4">
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
-                        <p class="text-sm text-gray-600 mt-1">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
-                        ${entrega && entrega.Nota ? `<p class="text-sm font-semibold text-green-600 mt-1">Nota: ${entrega.Nota}</p>` : ''}
-                        
-                        ${parte1 ? renderParteTarefa(tarefa.ID, 1, parte1, contadores.parte1, entrega, tarefaIndex) : ''}
-                        ${parte2 ? renderParteTarefa(tarefa.ID, 2, parte2, contadores.parte2, entrega, tarefaIndex) : ''}
-                        ${parte3 ? renderParteTarefa(tarefa.ID, 3, parte3, contadores.parte3, entrega, tarefaIndex) : ''}
-                        ${parte4 ? renderParteTarefa(tarefa.ID, 4, parte4, contadores.parte4, entrega, tarefaIndex) : ''}
-                    </div>
-                </div>
-            </div>
-            `;
-        }
-
-        function renderParteTarefa(idTarefa, numeroParte, conteudo, contador, entrega, tarefaIndex) {
-            const linkSalvo = entrega && entrega.Parte === numeroParte ? entrega.Link : '';
-            const inputId = `link-${idTarefa}-${numeroParte}`;
+        function renderParteAluno(tarefa, numeroParte, entregas, tarefaIndex) {
+            const parteConteudo = tarefa[`Parte${numeroParte}`];
+            const entrega = entregas.find(e => e.Parte === numeroParte);
+            const linkSalvo = entrega ? entrega.Link : '';
+            const inputId = `link-${tarefa.ID}-${numeroParte}`;
             const temLinkSalvo = linkSalvo && String(linkSalvo).trim() !== '';
             
-            const disponivel = contador.liberada && !contador.expirado && !temLinkSalvo;
-            const expirado = contador.expirado;
+            // Calcular status baseado na data atual
+            const agora = new Date();
+            const dataAula = new Date(tarefa.DataAula);
+            let status = 'aguardando';
+            let textoStatus = 'Aguardando';
             
-            let retencaoAviso = '';
-            if (numeroParte === 1) retencaoAviso = '<span class="retencao-aviso retencao-50">50% retenção</span>';
-            else if (numeroParte === 2) retencaoAviso = '<span class="retencao-aviso retencao-25">25% retenção</span>';
-            else if (numeroParte === 3) retencaoAviso = '<span class="retencao-aviso retencao-15">15% retenção</span>';
-            else if (numeroParte === 4) retencaoAviso = '<span class="retencao-aviso retencao-10">9.99% retenção</span>';
-
-            let horarioInfo = '';
-            if (contador.liberada && !expirado) {
-                horarioInfo = '<div class="horario-info horario-maxima">Entrega disponível hoje das 13h às 22h.</div>';
-            } else if (!contador.liberada && !expirado) {
-                horarioInfo = '<div class="horario-info horario-fora">Conteúdo e entrega disponíveis apenas em seu dia específico, das 13h às 22h.</div>';
-            } else if (expirado) {
-                horarioInfo = '<div class="horario-info horario-fora">Prazo de entrega desta parte já expirou.</div>';
-            }
-
-            if (!contador.liberada && !expirado) {
-                return `
-                <div class="mt-3 p-3 bg-gray-50 rounded border parte-${numeroParte}">
-                    <div class="flex justify-between items-center">
-                        <strong>Parte ${numeroParte}: ${retencaoAviso}</strong>
-                        <span class="contador ${contador.classe}">${contador.texto}</span>
-                    </div>
-                    ${horarioInfo}
-                </div>`;
-            }
-
-            const conteudoFormatado = Utils.formatarConteudoParaExibicao(conteudo);
+            // Calcular data de entrega para cada parte
+            const diasOffset = (numeroParte - 1) * 7; // Parte 1: 0 dias, Parte 2: 7 dias, etc.
+            const dataEntrega = new Date(dataAula);
+            dataEntrega.setDate(dataEntrega.getDate() + diasOffset);
             
-            const mostrarLinkSalvo = temLinkSalvo;
+            if (agora > dataEntrega) {
+                // Verificar se já passou do dia de entrega
+                const umDiaDepois = new Date(dataEntrega);
+                umDiaDepois.setDate(umDiaDepois.getDate() + 1);
+                
+                if (agora > umDiaDepois) {
+                    status = 'expirado';
+                    textoStatus = 'Expirado';
+                } else {
+                    status = 'disponivel';
+                    textoStatus = 'Disponível hoje';
+                }
+            } else {
+                const diffTempo = dataEntrega.getTime() - agora.getTime();
+                const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+                
+                if (diffDias <= 7) {
+                    status = 'disponivel';
+                    textoStatus = `Libera em ${diffDias} dias`;
+                } else {
+                    status = 'aguardando';
+                    textoStatus = `Libera em ${diffDias} dias`;
+                }
+            }
             
             return `
-            <div class="mt-3 p-3 bg-gray-50 rounded border parte-${numeroParte}">
+            <div class="mt-3 p-3 bg-gray-50 rounded border">
                 <div class="flex justify-between items-center">
-                    <strong>Parte ${numeroParte}: ${retencaoAviso}</strong>
-                    <span class="contador ${contador.classe}">${contador.texto}</span>
+                    <strong>Parte ${numeroParte}</strong>
+                    <span class="contador ${status}">${textoStatus}</span>
                 </div>
-                <div class="conteudo-formatado">${conteudoFormatado}</div>
-                ${horarioInfo}
-                <div class="link-container">
+                <div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>
+                <div class="link-container mt-2">
                     <input type="text" 
-                           class="link-input ${mostrarLinkSalvo ? 'link-salvo' : ''}" 
-                           placeholder="${!contador.liberada ? 'Atividade não enviada' : (expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui')}" 
+                           class="link-input ${temLinkSalvo ? 'link-salvo' : ''}" 
+                           placeholder="${temLinkSalvo ? 'Link já enviado' : 'Cole o link da atividade aqui'}" 
                            id="${inputId}"
                            value="${linkSalvo || ''}"
-                           ${mostrarLinkSalvo || !disponivel ? 'disabled' : ''}>
-                    ${!mostrarLinkSalvo ? `
-                        <button class="btn-primario btn-link btn-salvar" 
-                                onclick="salvarLink('${idTarefa}', ${numeroParte})"
-                                ${!disponivel ? 'disabled' : ''}>
+                           ${temLinkSalvo || status !== 'disponivel' ? 'disabled' : ''}>
+                    ${!temLinkSalvo ? `
+                        <button class="btn-primario btn-link" 
+                                onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte})"
+                                ${status !== 'disponivel' ? 'disabled' : ''}>
                             Salvar
                         </button>
                     ` : ''}
-                    <button class="btn-secundario btn-link btn-excluir" 
-                            onclick="excluirLink('${idTarefa}', ${numeroParte})"
-                            ${!mostrarLinkSalvo ? 'disabled' : ''}>
+                    <button class="btn-secundario btn-link" 
+                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte})"
+                            ${!temLinkSalvo ? 'disabled' : ''}>
                         Excluir
                     </button>
                 </div>
-                ${mostrarLinkSalvo ? '<p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>' : ''}
+                ${temLinkSalvo ? '<p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>' : ''}
             </div>`;
         }
 
-        const salvarLink = Utils.debounce(async function(idTarefa, parte) {
+        async function salvarLinkAluno(idTarefa, parte) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             const link = input ? input.value.trim() : '';
-            const btnSalvar = document.querySelector(`button[onclick="salvarLink('${idTarefa}', ${parte})"]`);
-
+            
             if (!link) {
                 UIManager.showModal('Atenção', 'Por favor, cole um link válido.');
                 return;
             }
 
             try {
-                // Adicionar loading ao botão
-                if (btnSalvar) {
-                    Utils.setButtonLoading(btnSalvar, true);
-                }
-
                 await apiPost('entregarTarefa', {
                     ID_Tarefa: idTarefa,
                     RM_Aluno: STATE.usuarioLogado.RM,
@@ -2692,29 +2159,15 @@
                 
                 CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.RM}`);
                 CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.RM}_dados`);
-                CacheManager.remove(`relatorio_aluno_${STATE.usuarioLogado.RM}`);
-                CacheManager.remove(`relatorio_${STATE.usuarioLogado.Turma}`);
                 
                 await carregarTarefasAluno();
             } catch (error) {
-                ErrorHandler.handleApiError(error);
-            } finally {
-                // Remover loading do botão
-                if (btnSalvar) {
-                    Utils.setButtonLoading(btnSalvar, false);
-                }
+                UIManager.showModal('Erro', `Erro ao salvar link: ${error.message}`);
             }
-        }, 500);
+        }
 
-        const excluirLink = Utils.debounce(async function(idTarefa, parte) {
-            const btnExcluir = document.querySelector(`button[onclick="excluirLink('${idTarefa}', ${parte})"]`);
-            
+        async function excluirLinkAluno(idTarefa, parte) {
             try {
-                // Adicionar loading ao botão
-                if (btnExcluir) {
-                    Utils.setButtonLoading(btnExcluir, true);
-                }
-                
                 await apiPost('excluirEntrega', {
                     ID_Tarefa: idTarefa,
                     RM_Aluno: STATE.usuarioLogado.RM,
@@ -2722,24 +2175,16 @@
                     Parte: parte
                 });
                 
-                UIManager.showModal('Sucesso', `Link da parte ${parte} excluído com sucesso! A nota desta parte foi zerada.`);
+                UIManager.showModal('Sucesso', `Link da parte ${parte} excluído com sucesso!`);
                 
                 CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.RM}`);
                 CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.RM}_dados`);
-                CacheManager.remove(`relatorio_aluno_${STATE.usuarioLogado.RM}`);
-                CacheManager.remove(`relatorio_${STATE.usuarioLogado.Turma}`);
                 
-                // Recarregar as tarefas para habilitar o campo novamente
                 await carregarTarefasAluno();
             } catch (error) {
-                ErrorHandler.handleApiError(error);
-            } finally {
-                // Remover loading do botão
-                if (btnExcluir) {
-                    Utils.setButtonLoading(btnExcluir, false);
-                }
+                UIManager.showModal('Erro', `Erro ao excluir link: ${error.message}`);
             }
-        }, 500);
+        }
 
         function atualizarContadoresAluno() {
             const containers = document.querySelectorAll('#tarefas-aluno-container > div');
@@ -2767,17 +2212,257 @@
         }
 
         // ==================== RELATÓRIOS ====================
+        async function mostrarRelatorioProfessor() {
+            UIManager.elements.contentArea.innerHTML = `
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold text-red-700 mb-4">Relatório por Turma</h3>
+                    <div class="turmas-container">
+                        <div class="turmas-buttons">
+                            ${CONFIG.TURMAS.map(turma => `
+                                <button onclick="carregarRelatorioTurma('${turma}')" class="btn-turma-compact" id="btn-turma-${turma}">
+                                    ${turma}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="export-buttons-container">
+                            <button onclick="exportarParaExcel(window.turmaSelecionada)" class="btn-exportar" id="btn-excel">
+                                Exportar Excel
+                            </button>
+                            <button onclick="exportarParaPDF(window.turmaSelecionada)" class="btn-exportar" id="btn-pdf">
+                                Exportar PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div id="relatorio-turma-container" class="mt-4">
+                        <p class="text-gray-500 text-center py-8">Selecione uma turma para visualizar o relatório</p>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button onclick="mostrarPainelProfessor()" class="btn-secundario">Voltar ao Painel</button>
+                    </div>
+                </div>
+            `;
+            
+            window.turmaSelecionada = null;
+        }
+
+        async function carregarRelatorioTurma(turma) {
+            document.querySelectorAll('.btn-turma-compact').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn-turma-${turma}`).classList.add('active');
+            
+            window.turmaSelecionada = turma;
+            
+            document.getElementById('relatorio-turma-container').innerHTML = `
+                <div class="text-center py-8">
+                    <div class="spinner"></div>
+                    <p class="mt-4 text-gray-600">Carregando relatório da turma ${Utils.escapeHTML(turma)}...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await apiGet('getRelatorioTurma', { turma: turma }, true);
+                const relatorio = response.data || {};
+                
+                let relatorioTurmaHTML = `
+                    <div class="relatorio-header">
+                        <h4 class="text-lg font-semibold text-red-700">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
+                    </div>
+                    <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
+                        Total de alunos: ${relatorio.alunos?.length || 0} | Total de tarefas: ${relatorio.tarefas?.length || 0} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
+                    </div>
+                `;
+                
+                if (!relatorio.alunos || relatorio.alunos.length === 0) {
+                    relatorioTurmaHTML += `
+                        <div class="text-center py-8">
+                            <p class="text-gray-500 mb-4">Nenhum aluno encontrado na turma ${Utils.escapeHTML(turma)}.</p>
+                        </div>
+                    `;
+                } else {
+                    // Se não houver tarefas, mostrar apenas a lista de alunos
+                    if (!relatorio.tarefas || relatorio.tarefas.length === 0) {
+                        relatorioTurmaHTML += `
+                            <div class="overflow-x-auto border rounded-lg mt-4">
+                                <table class="min-w-full compact-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">Média</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${relatorio.alunos.map(aluno => `
+                                            <tr>
+                                                <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
+                                                <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                                <td class="px-4 py-3 text-center border-b">
+                                                    <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                                        ${aluno.Media || '0.0'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    } else {
+                        // Se houver tarefas, mostrar a tabela completa
+                        relatorioTurmaHTML += `
+                            <div class="overflow-x-auto border rounded-lg mt-4">
+                                <table class="min-w-full compact-table" id="tabela-relatorio">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b" rowspan="2">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Média</th>
+                        `;
+                        
+                        // Cabeçalho das tarefas (com colspan para as partes)
+                        relatorio.tarefas.forEach((tarefa, index) => {
+                            relatorioTurmaHTML += `
+                                <th class="px-2 py-3 text-center font-semibold border-b relatorio-tarefa-header" colspan="4">
+                                    ${Utils.escapeHTML(tarefa.Tema)}
+                                </th>
+                            `;
+                        });
+                        
+                        relatorioTurmaHTML += `</tr><tr>`;
+                        
+                        // Subcabeçalho das partes (P1, P2, P3, P4) para cada tarefa
+                        relatorio.tarefas.forEach(() => {
+                            relatorioTurmaHTML += `
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P1</th>
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P2</th>
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P3</th>
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P4</th>
+                            `;
+                        });
+                        
+                        relatorioTurmaHTML += `
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+                        
+                        // Dados dos alunos
+                        relatorio.alunos.forEach((aluno) => {
+                            relatorioTurmaHTML += `
+                                <tr>
+                                    <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                    <td class="px-4 py-3 text-center border-b">
+                                        <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                            ${aluno.Media || '0.0'}
+                                        </span>
+                                    </td>
+                            `;
+                            
+                            // Notas das partes para cada tarefa
+                            relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
+                                for (let parte = 1; parte <= 4; parte++) {
+                                    const notaParte = aluno[`NotaParte${(tarefaIndex * 4) + parte}`] || 0;
+                                    let classeNota = 'text-gray-600';
+                                    if (notaParte > 0) {
+                                        if (notaParte >= 2.5) {
+                                            classeNota = 'text-green-600 font-semibold';
+                                        } else {
+                                            classeNota = 'text-red-600';
+                                        }
+                                    }
+                                    
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
+                                }
+                            });
+                            
+                            relatorioTurmaHTML += `</tr>`;
+                        });
+                        
+                        relatorioTurmaHTML += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                }
+                
+                document.getElementById('relatorio-turma-container').innerHTML = relatorioTurmaHTML;
+                
+            } catch (error) {
+                console.error('Erro ao carregar relatório:', error);
+                document.getElementById('relatorio-turma-container').innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Erro ao carregar relatório: ${Utils.escapeHTML(error.message || String(error))}</p>
+                        <button onclick="carregarRelatorioTurma('${turma}')" class="btn-secundario mt-4">
+                            Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function exportarParaExcel(turma) {
+            if (!turma) {
+                UIManager.showModal('Atenção', 'Selecione uma turma primeiro.');
+                return;
+            }
+            
+            try {
+                const table = document.getElementById('tabela-relatorio');
+                if (!table) {
+                    UIManager.showModal('Erro', 'Tabela não encontrada para exportação.');
+                    return;
+                }
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.table_to_sheet(table);
+                XLSX.utils.book_append_sheet(wb, ws, `Turma ${turma}`);
+                XLSX.writeFile(wb, `relatorio_turma_${turma}.xlsx`);
+            } catch (error) {
+                UIManager.showModal('Erro', `Erro ao exportar para Excel: ${error.message}`);
+            }
+        }
+
+        function exportarParaPDF(turma) {
+            if (!turma) {
+                UIManager.showModal('Atenção', 'Selecione uma turma primeiro.');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                doc.setFontSize(16);
+                doc.text(`Relatório da Turma ${turma}`, 14, 15);
+
+                doc.setFontSize(10);
+                doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, 14, 22);
+
+                const table = document.getElementById('tabela-relatorio');
+                doc.autoTable({
+                    html: table,
+                    startY: 30,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [204, 0, 0] }
+                });
+
+                doc.save(`relatorio_turma_${turma}.pdf`);
+            } catch (error) {
+                UIManager.showModal('Erro', `Erro ao exportar para PDF: ${error.message}`);
+            }
+        }
+
         async function carregarRelatorioAluno() {
             const container = document.getElementById('relatorio-aluno-content');
             
             try {
-                const startTime = performance.now();
                 const entregasResponse = await apiGet('getEntregasAluno', { 
                     rm: STATE.usuarioLogado.RM, 
                     turma: STATE.usuarioLogado.Turma 
                 }, true);
-                PerformanceMonitor.trackApiCall('getEntregasAluno', startTime);
-                
                 const entregas = entregasResponse.data || [];
                 
                 let relatorioHTML = '';
@@ -2787,9 +2472,7 @@
                         <p class="text-gray-500 text-center py-4">Nenhuma entrega registrada.</p>
                     `;
                 } else {
-                    const tarefasStartTime = performance.now();
                     const tarefasResponse = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, true);
-                    PerformanceMonitor.trackApiCall('getTarefasPorTurma', tarefasStartTime);
                     const todasTarefas = tarefasResponse.data || [];
                     
                     let notaTotal = 0;
@@ -2847,282 +2530,20 @@
                 
                 container.innerHTML = relatorioHTML;
             } catch (error) {
-                ErrorHandler.handleApiError(error);
                 container.innerHTML = `<p class="text-red-500 text-center py-4">Erro ao carregar relatório: ${Utils.escapeHTML(error.message)}</p>`;
             }
         }
 
-        async function mostrarRelatorioProfessor() {
-            const navigation = PerformanceMonitor.startNavigation('RelatorioProfessor');
-            
-            UIManager.elements.contentArea.innerHTML = `
-                <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Relatório por Turma</h3>
-                    <div class="turmas-container">
-                        <div class="turmas-buttons">
-                            ${CONFIG.TURMAS.map(turma => `
-                                <button onclick="carregarRelatorioTurma('${turma}')" class="btn-turma-compact" id="btn-turma-${turma}">
-                                    ${turma}
-                                </button>
-                            `).join('')}
-                        </div>
-                        <div class="export-buttons-container">
-                            <button onclick="exportarParaExcel(window.turmaSelecionada)" class="btn-exportar" id="btn-excel">
-                                Exportar Excel
-                            </button>
-                            <button onclick="exportarParaPDF(window.turmaSelecionada)" class="btn-exportar" id="btn-pdf">
-                                Exportar PDF
-                            </button>
-                        </div>
-                    </div>
-                    <div id="relatorio-turma-container" class="mt-4">
-                        <p class="text-gray-500 text-center py-8">Selecione uma turma para visualizar o relatório</p>
-                    </div>
-                    <div class="mt-4 text-center">
-                        <button onclick="mostrarPainelProfessor()" class="btn-secundario">Voltar ao Painel</button>
-                    </div>
-                </div>
-            `;
-            
-            window.turmaSelecionada = null;
-            navigation.end();
-        }
-
-        async function carregarRelatorioTurma(turma) {
-            document.querySelectorAll('.btn-turma-compact').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`btn-turma-${turma}`).classList.add('active');
-            
-            window.turmaSelecionada = turma;
-            
-            document.getElementById('relatorio-turma-container').innerHTML = `
-                <div class="text-center py-8">
-                    <div class="spinner"></div>
-                    <p class="mt-4 text-gray-600">Carregando relatório da turma ${Utils.escapeHTML(turma)}...</p>
-                </div>
-            `;
-            
-            try {
-                const startTime = performance.now();
-                const response = await apiGet('getRelatorioTurma', { turma: turma }, true);
-                PerformanceMonitor.trackApiCall('getRelatorioTurma', startTime);
-                
-                const relatorio = response.data || {};
-                
-                let relatorioTurmaHTML = `
-                    <div class="relatorio-header">
-                        <h4 class="text-lg font-semibold text-red-700">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
-                    </div>
-                    <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
-                        Total de alunos: ${relatorio.alunos?.length || 0} | Total de tarefas: ${relatorio.tarefas?.length || 0} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
-                    </div>
-                `;
-                
-                if (!relatorio.alunos || relatorio.alunos.length === 0) {
-                    relatorioTurmaHTML += `
-                        <div class="text-center py-8">
-                            <p class="text-gray-500 mb-4">Nenhum aluno encontrado na turma ${Utils.escapeHTML(turma)}.</p>
-                        </div>
-                    `;
-                } else {
-                    // Se não houver tarefas, mostrar apenas a lista de alunos
-                    if (!relatorio.tarefas || relatorio.tarefas.length === 0) {
-                        relatorioTurmaHTML += `
-                            <div class="overflow-x-auto border rounded-lg mt-4">
-                                <table class="min-w-full compact-table">
-                                    <thead>
-                                        <tr>
-                                            <th class="px-4 py-3 text-center font-semibold border-b numero-coluna">Nº</th>
-                                            <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b media-coluna">Média</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${relatorio.alunos.map(aluno => `
-                                            <tr>
-                                                <td class="px-4 py-3 text-center border-b numero-coluna">${aluno.Numero || ''}</td>
-                                                <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                                <td class="px-4 py-3 text-center border-b media-coluna">
-                                                    <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
-                                                        ${aluno.Media || '0.0'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
-                    } else {
-                        // Se houver tarefas, mostrar a tabela completa
-                        relatorioTurmaHTML += `
-                            <div class="overflow-x-auto border rounded-lg mt-4">
-                                <table class="min-w-full compact-table table-header-white" id="tabela-relatorio">
-                                    <thead>
-                                        <tr>
-                                            <th class="px-4 py-3 text-center font-semibold border-b numero-coluna">Nº</th>
-                                            <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b media-coluna">Média</th>
-                        `;
-                        
-                        // Cabeçalho das tarefas
-                        relatorio.tarefas.forEach((tarefa, index) => {
-                            relatorioTurmaHTML += `
-                                <th class="px-2 py-3 text-center font-semibold border-b header-tarefa tarefa-group" colspan="4">
-                                    ${Utils.escapeHTML(tarefa.Tema)}
-                                </th>
-                            `;
-                        });
-                        
-                        relatorioTurmaHTML += `</tr><tr>`;
-                        
-                        // Subcabeçalho das partes (P1, P2, P3, P4) para cada tarefa
-                        relatorio.tarefas.forEach(() => {
-                            relatorioTurmaHTML += `
-                                <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P1</th>
-                                <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P2</th>
-                                <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P3</th>
-                                <th class="px-1 py-2 text-center border-b subheader-tarefa parte-column">P4</th>
-                            `;
-                        });
-                        
-                        relatorioTurmaHTML += `
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                        `;
-                        
-                        // Dados dos alunos
-                        relatorio.alunos.forEach((aluno) => {
-                            relatorioTurmaHTML += `
-                                <tr>
-                                    <td class="px-4 py-3 text-center border-b numero-coluna">${aluno.Numero || ''}</td>
-                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                    <td class="px-4 py-3 text-center border-b media-coluna">
-                                        <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
-                                            ${aluno.Media || '0.0'}
-                                        </span>
-                                    </td>
-                            `;
-                            
-                            // Notas das partes para cada tarefa
-                            relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
-                                for (let parte = 1; parte <= 4; parte++) {
-                                    const notaParte = aluno[`NotaParte${(tarefaIndex * 4) + parte}`] || 0;
-                                    let classeNota = 'text-gray-600';
-                                    if (notaParte > 0) {
-                                        if (notaParte >= 2.5) {
-                                            classeNota = 'text-green-600 font-semibold';
-                                        } else {
-                                            classeNota = 'text-red-600';
-                                        }
-                                    }
-                                    
-                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
-                                }
-                            });
-                            
-                            relatorioTurmaHTML += `</tr>`;
-                        });
-                        
-                        relatorioTurmaHTML += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
-                    }
-                }
-                
-                document.getElementById('relatorio-turma-container').innerHTML = relatorioTurmaHTML;
-                
-            } catch (error) {
-                ErrorHandler.handleApiError(error);
-                document.getElementById('relatorio-turma-container').innerHTML = `
-                    <div class="text-center py-8">
-                        <p class="text-red-500">Erro ao carregar relatório: ${Utils.escapeHTML(error.message || String(error))}</p>
-                        <button onclick="carregarRelatorioTurma('${turma}')" class="btn-secundario mt-4">
-                            Tentar Novamente
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
-        function exportarParaExcel(turma) {
-            if (!turma) {
-                UIManager.showModal('Atenção', 'Selecione uma turma primeiro.');
-                return;
-            }
-            
-            try {
-                const table = document.getElementById('tabela-relatorio');
-                if (!table) {
-                    UIManager.showModal('Erro', 'Tabela não encontrada para exportação.');
-                    return;
-                }
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.table_to_sheet(table);
-                XLSX.utils.book_append_sheet(wb, ws, `Turma ${turma}`);
-                XLSX.writeFile(wb, `relatorio_turma_${turma}.xlsx`);
-            } catch (error) {
-                ErrorHandler.handleApiError(error);
-            }
-        }
-
-        function exportarParaPDF(turma) {
-            if (!turma) {
-                UIManager.showModal('Atenção', 'Selecione uma turma primeiro.');
-                return;
-            }
-            
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-
-                doc.setFontSize(16);
-                doc.text(`Relatório da Turma ${turma}`, 14, 15);
-
-                doc.setFontSize(10);
-                doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, 14, 22);
-
-                const table = document.getElementById('tabela-relatorio');
-                doc.autoTable({
-                    html: table,
-                    startY: 30,
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [204, 0, 0] }
-                });
-
-                doc.save(`relatorio_turma_${turma}.pdf`);
-            } catch (error) {
-                ErrorHandler.handleApiError(error);
-            }
-        }
-
-        // ==================== PAINEL DE DIAGNÓSTICO ====================
+        // ==================== DIAGNÓSTICO ====================
         async function mostrarPainelDiagnostico() {
-            const navigation = PerformanceMonitor.startNavigation('PainelDiagnostico');
-            
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Versão 20.5</h3>
-                    
-                    <div class="mb-6">
-                        <h4 class="font-semibold mb-3">Health Check do Sistema</h4>
-                        <button onclick="executarHealthCheck()" class="btn-primario mb-3">Executar Health Check</button>
-                        <div id="health-check-results">
-                            <div class="text-center py-4">
-                                <p class="text-gray-500">Clique em "Executar Health Check" para verificar o status do sistema.</p>
-                            </div>
-                        </div>
-                    </div>
+                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico</h3>
                     
                     <div class="diagnostico-grid">
                         <div class="diagnostico-card">
-                            <h4 class="font-semibold mb-3">Status do Cache</h4>
-                            <div id="status-cache">
+                            <h4 class="font-semibold mb-3">Status do Sistema</h4>
+                            <div id="status-sistema">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
                                     <p class="mt-2 text-gray-600">Carregando...</p>
@@ -3131,21 +2552,11 @@
                         </div>
                         
                         <div class="diagnostico-card">
-                            <h4 class="font-semibold mb-3">Estatísticas do Sistema</h4>
+                            <h4 class="font-semibold mb-3">Estatísticas</h4>
                             <div id="estatisticas-sistema">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
                                     <p class="mt-2 text-gray-600">Carregando...</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="diagnostico-card">
-                            <h4 class="font-semibold mb-3">Métricas de Performance</h4>
-                            <button onclick="coletarMetricasPerformance()" class="btn-primario w-full mb-3">Coletar Métricas</button>
-                            <div id="metricas-performance">
-                                <div class="text-center py-4">
-                                    <p class="text-gray-500">Clique em "Coletar Métricas" para ver as métricas de performance.</p>
                                 </div>
                             </div>
                         </div>
@@ -3157,106 +2568,36 @@
                 </div>
             `;
 
-            carregarStatusCache();
+            carregarStatusSistema();
             carregarEstatisticasSistema();
-            navigation.end();
         }
 
-        async function executarHealthCheck() {
-            const container = document.getElementById('health-check-results');
-            container.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner"></div>
-                    <p class="mt-2 text-gray-600">Executando verificações...</p>
-                </div>
-            `;
-
-            try {
-                const health = await HealthCheck.run();
-                
-                let html = `
-                    <div class="health-check-grid">
-                `;
-                
-                Object.entries(health.checks).forEach(([checkName, check]) => {
-                    html += `
-                        <div class="health-check-item ${check.healthy ? 'health-check-healthy' : 'health-check-unhealthy'}">
-                            <div class="font-semibold mb-2">${checkName.toUpperCase()}</div>
-                            <div class="text-2xl mb-2">${check.healthy ? '✅' : '❌'}</div>
-                            <div class="text-sm">${check.message}</div>
-                            ${check.duration ? `<div class="text-xs mt-1">${check.duration}</div>` : ''}
-                        </div>
-                    `;
-                });
-                
-                html += `</div>`;
-                
-                if (health.healthy) {
-                    html = `<div class="test-success p-3 rounded mb-4">✅ Sistema saudável</div>` + html;
-                } else {
-                    html = `<div class="test-warning p-3 rounded mb-4">⚠️  Sistema com problemas</div>` + html;
-                }
-                
-                container.innerHTML = html;
-            } catch (error) {
-                container.innerHTML = `<div class="test-error p-3 rounded">Erro ao executar health check: ${error.message}</div>`;
-            }
-        }
-
-        function carregarStatusCache() {
-            const container = document.getElementById('status-cache');
+        function carregarStatusSistema() {
+            const container = document.getElementById('status-sistema');
             
             try {
                 const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('task_'));
                 const totalItens = cacheKeys.length;
                 
-                // Calcular tamanho aproximado do cache
-                let tamanhoTotal = 0;
-                cacheKeys.forEach(key => {
-                    try {
-                        const item = localStorage.getItem(key);
-                        if (item) {
-                            tamanhoTotal += new Blob([item]).size;
-                        }
-                    } catch (e) {
-                        console.warn('Erro ao calcular tamanho do item:', e);
-                    }
-                });
-                
-                const tamanhoKB = (tamanhoTotal / 1024).toFixed(2);
-                
-                // Calcular eficiência
-                const totalRequests = PerformanceMonitor.metrics.cacheHits + PerformanceMonitor.metrics.cacheMisses;
-                const eficiencia = totalRequests > 0 ? 
-                    ((PerformanceMonitor.metrics.cacheHits / totalRequests) * 100).toFixed(1) : 0;
-                
                 container.innerHTML = `
                     <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Sistema:</span>
+                            <span class="font-semibold text-green-600">Online</span>
+                        </div>
                         <div class="flex justify-between">
                             <span>Itens em Cache:</span>
                             <span class="font-semibold">${totalItens}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Tamanho do Cache:</span>
-                            <span class="font-semibold">${tamanhoKB} KB</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Eficiência do Cache:</span>
-                            <span class="font-semibold">${eficiencia}%</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Cache Hits:</span>
-                            <span class="font-semibold">${PerformanceMonitor.metrics.cacheHits}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Cache Misses:</span>
-                            <span class="font-semibold">${PerformanceMonitor.metrics.cacheMisses}</span>
+                            <span>Usuário Logado:</span>
+                            <span class="font-semibold">${STATE.usuarioLogado?.NomeCompleto || 'Nenhum'}</span>
                         </div>
                     </div>
                     <button onclick="limparCache()" class="btn-primario w-full mt-3" style="background-color: #ef4444;">Limpar Cache</button>
                 `;
             } catch (error) {
-                container.innerHTML = `<p class="text-red-500">Erro ao carregar status do cache: ${error.message}</p>`;
+                container.innerHTML = `<p class="text-red-500">Erro ao carregar status: ${error.message}</p>`;
             }
         }
 
@@ -3264,33 +2605,19 @@
             const container = document.getElementById('estatisticas-sistema');
             
             try {
-                const performanceReport = PerformanceMonitor.getReport();
-                
                 container.innerHTML = `
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span>Usuários Carregados:</span>
-                            <span class="font-semibold">${STATE.usuarioLogado ? 1 : 0}</span>
+                            <span>Turmas:</span>
+                            <span class="font-semibold">${CONFIG.TURMAS.length}</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Tarefas Carregadas:</span>
                             <span class="font-semibold">${STATE.tarefas.length}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Chamadas API:</span>
-                            <span class="font-semibold">${performanceReport.api.total}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Tempo Médio API:</span>
-                            <span class="font-semibold">${performanceReport.api.media}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Erros:</span>
-                            <span class="font-semibold">${performanceReport.erros}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Tempo Total:</span>
-                            <span class="font-semibold">${performanceReport.tempoTotal}</span>
+                            <span>Perfil:</span>
+                            <span class="font-semibold">${STATE.usuarioLogado?.Perfil || 'Nenhum'}</span>
                         </div>
                     </div>
                 `;
@@ -3299,137 +2626,13 @@
             }
         }
 
-        async function coletarMetricasPerformance() {
-            const container = document.getElementById('metricas-performance');
-            container.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner"></div>
-                    <p class="mt-2 text-gray-600">Coletando métricas...</p>
-                </div>
-            `;
-            
-            try {
-                // Teste de performance da API
-                const startTime = performance.now();
-                let statusAPI = 'Erro';
-                let tempoAPI = 0;
-                
-                try {
-                    const response = await apiGet('testBackend', {}, true);
-                    statusAPI = response.data ? 'OK' : 'Erro';
-                    tempoAPI = performance.now() - startTime;
-                } catch (error) {
-                    statusAPI = 'Erro: ' + error.message;
-                }
-                
-                // Coletar métricas de memória (se disponível)
-                let memoriaUsada = 'N/A';
-                let memoriaTotal = 'N/A';
-                let recomendacoes = [];
-                
-                if (performance.memory) {
-                    memoriaUsada = (performance.memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB';
-                    memoriaTotal = (performance.memory.totalJSHeapSize / 1048576).toFixed(2) + ' MB';
-                    
-                    // Recomendações baseadas nas métricas
-                    if (performance.memory.usedJSHeapSize > 50000000) { // 50MB
-                        recomendacoes.push('Considere limpar o cache para liberar memória.');
-                    }
-                } else {
-                    recomendacoes.push('Navegador não suporta medição de memória.');
-                }
-                
-                if (tempoAPI > 1000) {
-                    recomendacoes.push('A API está respondendo lentamente. Verifique a conexão.');
-                }
-                
-                if (PerformanceMonitor.metrics.cacheMisses > PerformanceMonitor.metrics.cacheHits) {
-                    recomendacoes.push('Alta taxa de cache misses. Considere ajustar o TTL do cache.');
-                }
-                
-                if (recomendacoes.length === 0) {
-                    recomendacoes.push('Sistema funcionando dentro dos parâmetros normais.');
-                }
-                
-                const performanceReport = PerformanceMonitor.getReport();
-                
-                container.innerHTML = `
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Tempo API:</span>
-                            <span class="font-semibold">${tempoAPI.toFixed(2)}ms</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Status API:</span>
-                            <span class="font-semibold ${statusAPI === 'OK' ? 'text-green-600' : 'text-red-600'}">${statusAPI}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Chamadas API:</span>
-                            <span class="font-semibold">${performanceReport.api.total}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Memória Usada:</span>
-                            <span class="font-semibold">${memoriaUsada}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Memória Total:</span>
-                            <span class="font-semibold">${memoriaTotal}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Eficiência Cache:</span>
-                            <span class="font-semibold">${performanceReport.cache.eficiencia}</span>
-                        </div>
-                    </div>
-                    <div class="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                        <strong>Recomendações:</strong>
-                        <ul class="list-disc list-inside mt-1">
-                            ${recomendacoes.map(rec => `<li class="text-xs">${rec}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-                
-            } catch (error) {
-                container.innerHTML = `<p class="text-red-500">Erro ao coletar métricas: ${error.message}</p>`;
-            }
-        }
-
         function limparCache() {
             CacheManager.clear();
-            PerformanceMonitor.metrics.cacheHits = 0;
-            PerformanceMonitor.metrics.cacheMisses = 0;
             UIManager.showModal('Sucesso', 'Cache limpo com sucesso!');
             setTimeout(() => {
-                carregarStatusCache();
-                carregarEstatisticasSistema();
+                carregarStatusSistema();
             }, 1000);
         }
-
-        // ==================== CORREÇÕES DE SEGURANÇA ====================
-
-        // CORREÇÃO IMEDIATA - Fechar modais ao carregar a página
-        document.addEventListener('DOMContentLoaded', function() {
-            // Fechar qualquer modal aberto ao carregar a página
-            const modals = document.querySelectorAll('.modal-overlay, .modal-confirmacao');
-            
-            modals.forEach(modal => {
-                if (modal) modal.classList.add('hidden');
-            });
-            
-            // Resetar estado de confirmação
-            StateManager.setState({ tarefaParaExcluir: null });
-        });
-
-        // Override da função de logout para garantir limpeza
-        const originalLogout = window.logout;
-        window.logout = function() {
-            // Fechar todos os modais
-            document.querySelectorAll('.modal-overlay, .modal-confirmacao').forEach(modal => {
-                modal.classList.add('hidden');
-            });
-            
-            // Chamar logout original
-            originalLogout();
-        };
 
         // ==================== INICIALIZAÇÃO ====================
         document.addEventListener('DOMContentLoaded', init);
@@ -3440,32 +2643,30 @@
         };
 
         window.closeModal = function() {
-            ModalManager.closeAll();
+            UIManager.closeModal();
         };
 
         window.toggleRmVisibility = toggleRmVisibility;
         window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
-        window.coletarMetricasPerformance = coletarMetricasPerformance;
         window.limparCache = limparCache;
         window.mostrarPainelProfessor = mostrarPainelProfessor;
         window.mostrarPainelAluno = mostrarPainelAluno;
         window.mostrarRelatorioProfessor = mostrarRelatorioProfessor;
-        window.carregarRelatorioAluno = carregarRelatorioAluno;
-        window.toggleRelatorioAluno = toggleRelatorioAluno;
+        window.exportarParaExcel = exportarParaExcel;
+        window.exportarParaPDF = exportarParaPDF;
+        window.carregarRelatorioTurma = carregarRelatorioTurma;
         window.salvarTarefa = salvarTarefa;
         window.atualizarTarefa = atualizarTarefa;
         window.excluirTarefa = excluirTarefa;
         window.solicitarExclusaoTarefa = solicitarExclusaoTarefa;
         window.editarTarefa = editarTarefa;
         window.limparFormulario = limparFormulario;
-        window.salvarLink = salvarLink;
-        window.excluirLink = excluirLink;
+        window.salvarLinkAluno = salvarLinkAluno;
+        window.excluirLinkAluno = excluirLinkAluno;
+        window.toggleRelatorioAluno = toggleRelatorioAluno;
+        window.carregarRelatorioAluno = carregarRelatorioAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
-        window.exportarParaExcel = exportarParaExcel;
-        window.exportarParaPDF = exportarParaPDF;
-        window.carregarRelatorioTurma = carregarRelatorioTurma;
         window.togglePartesTarefa = togglePartesTarefa;
-        window.executarHealthCheck = executarHealthCheck;
     </script>
 </body>
 </html>
