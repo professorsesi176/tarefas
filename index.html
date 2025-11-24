@@ -727,7 +727,7 @@
             100% { background-color: transparent; }
         }
 
-        /* Novos estilos para a versão 20.9 */
+        /* Novos estilos para a versão 21.0 */
         .aluno-relatorio-card {
             background-color: #f8fafc;
             border: 2px solid #e2e8f0;
@@ -811,6 +811,37 @@
             font-size: 0.7rem;
             text-align: center;
         }
+
+        /* Novos estilos para modal de exclusão */
+        .modal-exclusao {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            border-top: 4px solid #ef4444;
+        }
+        
+        .btn-excluir-loading {
+            position: relative;
+            color: transparent;
+        }
+        
+        .btn-excluir-loading::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
@@ -830,7 +861,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 20.9
+            Desenvolvido por Geovane Modena | Versão 21.0
         </footer>
     </div>
 
@@ -843,14 +874,23 @@
         </div>
     </div>
 
-    <!-- Modal de Confirmação -->
+    <!-- Modal de Confirmação de Exclusão MELHORADO -->
     <div id="confirm-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 class="text-lg font-bold mb-2">Confirmar Exclusão</h3>
-            <p id="confirm-message" class="text-gray-700"></p>
-            <div class="flex space-x-2 mt-4">
-                <button id="confirm-cancel" class="btn-secundario flex-1">Cancelar</button>
-                <button id="confirm-delete" class="btn-primario flex-1" style="background-color: #ef4444;">Excluir</button>
+        <div class="modal-exclusao">
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Confirmar Exclusão</h3>
+                <p id="confirm-message" class="text-gray-600"></p>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button id="confirm-cancel" class="btn-secundario flex-1 py-3">Cancelar</button>
+                <button id="confirm-delete" class="btn-primario flex-1 py-3" style="background-color: #ef4444;">
+                    <span id="confirm-delete-text">Excluir Tarefa</span>
+                </button>
             </div>
         </div>
     </div>
@@ -873,7 +913,8 @@
             tarefaParaExcluir: null,
             contadoresAtivos: [],
             rmVisible: false,
-            relatorioAlunoVisivel: false
+            relatorioAlunoVisivel: false,
+            excluindoTarefa: false
         };
 
         // ==================== SISTEMA DE CACHE ====================
@@ -959,14 +1000,23 @@
                     .replace(/'/g, '&#039;');
             },
 
-            setButtonLoading: (button, isLoading) => {
+            setButtonLoading: (button, isLoading, text = '') => {
                 if (!button) return;
                 if (isLoading) {
                     button.disabled = true;
-                    button.classList.add('btn-loading');
+                    button.classList.add('btn-excluir-loading');
+                    if (text) {
+                        button.setAttribute('data-original-text', button.innerHTML);
+                        button.innerHTML = text;
+                    }
                 } else {
                     button.disabled = false;
-                    button.classList.remove('btn-loading');
+                    button.classList.remove('btn-excluir-loading');
+                    const originalText = button.getAttribute('data-original-text');
+                    if (originalText) {
+                        button.innerHTML = originalText;
+                        button.removeAttribute('data-original-text');
+                    }
                 }
             },
 
@@ -1125,16 +1175,34 @@
                 UIManager.elements.confirmMessage.textContent = message;
                 UIManager.elements.confirmModal.classList.remove('hidden');
                 
+                // Resetar estados dos botões
+                const deleteBtn = UIManager.elements.confirmDelete;
+                const deleteText = document.getElementById('confirm-delete-text');
+                deleteText.textContent = 'Excluir Tarefa';
+                deleteBtn.classList.remove('btn-excluir-loading');
+                deleteBtn.disabled = false;
+                
                 UIManager.elements.confirmCancel.onclick = () => {
                     UIManager.elements.confirmModal.classList.add('hidden');
                     STATE.tarefaParaExcluir = null;
+                    STATE.excluindoTarefa = false;
                 };
                 
                 UIManager.elements.confirmDelete.onclick = () => {
-                    UIManager.elements.confirmModal.classList.add('hidden');
+                    if (STATE.excluindoTarefa) return; // Evitar múltiplos cliques
+                    
+                    STATE.excluindoTarefa = true;
+                    deleteText.textContent = 'Excluindo...';
+                    deleteBtn.classList.add('btn-excluir-loading');
+                    deleteBtn.disabled = true;
+                    
                     if (onConfirm) onConfirm();
-                    STATE.tarefaParaExcluir = null;
                 };
+            },
+
+            closeConfirmModal: () => {
+                UIManager.elements.confirmModal.classList.add('hidden');
+                STATE.excluindoTarefa = false;
             },
 
             renderLoading: (message = 'Carregando...') => {
@@ -1378,7 +1446,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v20.9...');
+                console.log('Inicializando sistema v21.0...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1634,7 +1702,7 @@
 
             tbody.innerHTML = STATE.tarefas.map(tarefa => {
                 return `
-                <tr class="tarefa-item">
+                <tr class="tarefa-item" id="tarefa-row-${tarefa.ID}">
                     <td class="turma-column">${Utils.escapeHTML(tarefa.Turma)}</td>
                     <td class="px-4 py-2">
                         <div class="font-semibold text-gray-800 mb-2">${Utils.escapeHTML(tarefa.Tema)}</div>
@@ -1755,74 +1823,7 @@
             }
         }
 
-        const atualizarTarefa = Utils.debounce(async function() {
-            const btnSalvar = document.getElementById('btnSalvarTarefa');
-            
-            try {
-                Utils.setButtonLoading(btnSalvar, true);
-                
-                if (!STATE.tarefaEditando) {
-                    UIManager.showModal('Erro', 'Nenhuma tarefa selecionada para edição.');
-                    return;
-                }
-
-                const tema = document.getElementById('tema').value.trim();
-                const dataAula = document.getElementById('dataAula').value;
-
-                if (!tema || !dataAula) {
-                    UIManager.showModal('Atenção', 'Preencha todos os campos obrigatórios.');
-                    return;
-                }
-
-                if (tema.length > CONFIG.MAX_TEMA_LEN) {
-                    UIManager.showModal('Atenção', `O tema deve ter no máximo ${CONFIG.MAX_TEMA_LEN} caracteres.`);
-                    return;
-                }
-
-                const parte1 = document.getElementById('parte1').value.trim();
-                const parte2 = document.getElementById('parte2').value.trim();
-                const parte3 = document.getElementById('parte3').value.trim();
-                const parte4 = document.getElementById('parte4').value.trim();
-
-                if (!parte1 || !parte2 || !parte3 || !parte4) {
-                    UIManager.showModal('Atenção', 'Todas as partes da tarefa devem ser preenchidas.');
-                    return;
-                }
-
-                if ([parte1, parte2, parte3, parte4].some(p => p.length > CONFIG.MAX_PARTE_LEN)) {
-                    UIManager.showModal('Atenção', `Cada parte deve ter no máximo ${CONFIG.MAX_PARTE_LEN} caracteres.`);
-                    return;
-                }
-
-                const dados = {
-                    ID: STATE.tarefaEditando.ID,
-                    Tema: tema,
-                    Parte1: parte1,
-                    Parte2: parte2,
-                    Parte3: parte3,
-                    Parte4: parte4,
-                    DataAula: dataAula
-                };
-
-                await apiPost('editarTarefa', dados);
-                UIManager.showModal('Sucesso', 'Tarefa atualizada com sucesso!');
-                
-                CacheManager.remove('painel_professor');
-                CacheManager.remove('tarefas_professor_lista');
-                CacheManager.remove(`relatorio_${STATE.tarefaEditando.Turma}`);
-                
-                STATE.tarefaEditando = null;
-                limparFormulario();
-                await carregarTarefasProfessor();
-                
-            } catch (error) {
-                UIManager.showModal('Erro', `Erro ao atualizar tarefa: ${error.message}`);
-            } finally {
-                Utils.setButtonLoading(btnSalvar, false);
-            }
-        }, 500);
-
-        // ==================== FUNÇÃO SOLICITAR EXCLUSÃO CORRIGIDA ====================
+        // ==================== FUNÇÃO SOLICITAR EXCLUSÃO MELHORADA ====================
         function solicitarExclusaoTarefa(idTarefa) {
             console.log('solicitarExclusaoTarefa chamada para ID:', idTarefa);
             
@@ -1837,7 +1838,7 @@
             console.log('Mostrando modal de confirmação para exclusão');
             
             UIManager.showConfirmModal(
-                `Tem certeza que deseja excluir a tarefa "${tarefa.Tema}" da turma ${tarefa.Turma}?`, 
+                `Tem certeza que deseja excluir permanentemente a tarefa "${tarefa.Tema}" da turma ${tarefa.Turma}? Esta ação não pode ser desfeita.`, 
                 () => {
                     console.log('Confirmação recebida, excluindo tarefa:', idTarefa);
                     excluirTarefa(idTarefa);
@@ -1858,43 +1859,60 @@
             await mostrarPainelProfessor();
         }
 
-        // ==================== FUNÇÃO EXCLUIR TAREFA CORRIGIDA ====================
+        // ==================== FUNÇÃO EXCLUIR TAREFA MELHORADA ====================
         async function excluirTarefa(idTarefa) {
             console.log('excluirTarefa chamada para ID:', idTarefa);
             
-            // Encontrar o botão correto usando o ID específico
-            const botaoExcluir = document.getElementById(`btn-excluir-${idTarefa}`);
-            
-            if (!botaoExcluir) {
-                console.error('Botão de exclusão não encontrado para ID:', idTarefa);
-                UIManager.showModal('Erro', 'Erro interno: botão não encontrado.');
-                return;
-            }
-            
             try {
-                // Mostrar loading no botão
-                console.log('Ativando loading no botão de exclusão');
-                Utils.setButtonLoading(botaoExcluir, true);
+                const response = await apiPost('excluirTarefa', { ID: idTarefa });
                 
-                await apiPost('excluirTarefa', { ID: idTarefa });
-                UIManager.showModal('Sucesso', 'Tarefa excluída com sucesso.');
-                
-                // Limpar caches
-                CacheManager.remove('painel_professor');
-                CacheManager.remove('tarefas_professor_lista');
-                CONFIG.TURMAS.forEach(turma => {
-                    CacheManager.remove(`relatorio_${turma}`);
-                });
-                
-                // Recarregar a lista de tarefas
-                await carregarTarefasProfessor();
+                if (response.success) {
+                    // Fechar modal de confirmação
+                    UIManager.closeConfirmModal();
+                    
+                    // Mostrar mensagem de sucesso
+                    UIManager.showModal('Sucesso', 'Tarefa excluída com sucesso.');
+                    
+                    // Limpar caches
+                    CacheManager.remove('painel_professor');
+                    CacheManager.remove('tarefas_professor_lista');
+                    CONFIG.TURMAS.forEach(turma => {
+                        CacheManager.remove(`relatorio_${turma}`);
+                    });
+                    
+                    // Recarregar a lista de tarefas
+                    await carregarTarefasProfessor();
+                    
+                } else {
+                    throw new Error(response.error || 'Erro desconhecido ao excluir tarefa');
+                }
                 
             } catch (error) {
                 console.error('Erro ao excluir tarefa:', error);
-                UIManager.showModal('Erro', `Erro ao excluir tarefa: ${error.message}`);
-            } finally {
-                console.log('Desativando loading no botão de exclusão');
-                Utils.setButtonLoading(botaoExcluir, false);
+                
+                // Reabrir modal com mensagem de erro
+                const deleteBtn = UIManager.elements.confirmDelete;
+                const deleteText = document.getElementById('confirm-delete-text');
+                
+                deleteText.textContent = 'Tentar Novamente';
+                deleteBtn.classList.remove('btn-excluir-loading');
+                deleteBtn.disabled = false;
+                
+                UIManager.elements.confirmMessage.innerHTML = 
+                    `<div class="text-red-600 mb-2">Erro ao excluir: ${error.message}</div>
+                     <div class="text-sm text-gray-600">Tem certeza que deseja tentar excluir novamente?</div>`;
+                
+                // Atualizar o handler para tentar novamente
+                UIManager.elements.confirmDelete.onclick = () => {
+                    if (STATE.excluindoTarefa) return;
+                    
+                    STATE.excluindoTarefa = true;
+                    deleteText.textContent = 'Excluindo...';
+                    deleteBtn.classList.add('btn-excluir-loading');
+                    deleteBtn.disabled = true;
+                    
+                    excluirTarefa(idTarefa);
+                };
             }
         }
 
@@ -2019,6 +2037,7 @@
             CacheManager.set(cacheKey, UIManager.elements.contentArea.innerHTML, 2 * 60 * 1000);
         }
 
+        // ==================== FUNÇÕES DO ALUNO ====================
         function toggleRelatorioAluno() {
             const conteudo = document.getElementById('relatorio-aluno-content');
             const icon = document.querySelector('.aluno-relatorio-card .expand-icon');
@@ -2250,7 +2269,7 @@
             </div>`;
         }
 
-        // ==================== FUNÇÕES DE ENTREGA ATUALIZADAS PARA EMAIL ====================
+        // ==================== FUNÇÕES DE ENTREGA ====================
         async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             const link = input ? input.value.trim() : '';
@@ -2818,7 +2837,6 @@
         window.exportarParaPDF = exportarParaPDF;
         window.carregarRelatorioTurma = carregarRelatorioTurma;
         window.salvarTarefaCorrigida = salvarTarefaCorrigida;
-        window.atualizarTarefa = atualizarTarefa;
         window.excluirTarefa = excluirTarefa;
         window.solicitarExclusaoTarefa = solicitarExclusaoTarefa;
         window.editarTarefa = editarTarefa;
@@ -2829,6 +2847,74 @@
         window.carregarRelatorioAluno = carregarRelatorioAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
+
+        // Função de edição de tarefa (mantida para compatibilidade)
+        window.atualizarTarefa = Utils.debounce(async function() {
+            const btnSalvar = document.getElementById('btnSalvarTarefa');
+            
+            try {
+                Utils.setButtonLoading(btnSalvar, true);
+                
+                if (!STATE.tarefaEditando) {
+                    UIManager.showModal('Erro', 'Nenhuma tarefa selecionada para edição.');
+                    return;
+                }
+
+                const tema = document.getElementById('tema').value.trim();
+                const dataAula = document.getElementById('dataAula').value;
+
+                if (!tema || !dataAula) {
+                    UIManager.showModal('Atenção', 'Preencha todos os campos obrigatórios.');
+                    return;
+                }
+
+                if (tema.length > CONFIG.MAX_TEMA_LEN) {
+                    UIManager.showModal('Atenção', `O tema deve ter no máximo ${CONFIG.MAX_TEMA_LEN} caracteres.`);
+                    return;
+                }
+
+                const parte1 = document.getElementById('parte1').value.trim();
+                const parte2 = document.getElementById('parte2').value.trim();
+                const parte3 = document.getElementById('parte3').value.trim();
+                const parte4 = document.getElementById('parte4').value.trim();
+
+                if (!parte1 || !parte2 || !parte3 || !parte4) {
+                    UIManager.showModal('Atenção', 'Todas as partes da tarefa devem ser preenchidas.');
+                    return;
+                }
+
+                if ([parte1, parte2, parte3, parte4].some(p => p.length > CONFIG.MAX_PARTE_LEN)) {
+                    UIManager.showModal('Atenção', `Cada parte deve ter no máximo ${CONFIG.MAX_PARTE_LEN} caracteres.`);
+                    return;
+                }
+
+                const dados = {
+                    ID: STATE.tarefaEditando.ID,
+                    Tema: tema,
+                    Parte1: parte1,
+                    Parte2: parte2,
+                    Parte3: parte3,
+                    Parte4: parte4,
+                    DataAula: dataAula
+                };
+
+                await apiPost('editarTarefa', dados);
+                UIManager.showModal('Sucesso', 'Tarefa atualizada com sucesso!');
+                
+                CacheManager.remove('painel_professor');
+                CacheManager.remove('tarefas_professor_lista');
+                CacheManager.remove(`relatorio_${STATE.tarefaEditando.Turma}`);
+                
+                STATE.tarefaEditando = null;
+                limparFormulario();
+                await carregarTarefasProfessor();
+                
+            } catch (error) {
+                UIManager.showModal('Erro', `Erro ao atualizar tarefa: ${error.message}`);
+            } finally {
+                Utils.setButtonLoading(btnSalvar, false);
+            }
+        }, 500);
     </script>
 </body>
 </html>
