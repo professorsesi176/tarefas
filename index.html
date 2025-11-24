@@ -1507,7 +1507,7 @@
             UIManager.elements.contentArea.innerHTML = `
                 <div id="painelProfessor" class="space-y-6">
                     <div class="card p-6 border-t-4 border-red-600">
-                        <h3 class="text-2xl font-bold mb-4 text-red-700" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Criar Nova Tarefa'}</h3>
+                        <h3 class="text-2xl font-bold mb-4 text-red-700" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Painel de Tarefas'}</h3>
                         
                         <div class="form-group">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Turmas:</label>
@@ -2632,7 +2632,7 @@
         async function mostrarPainelDiagnostico() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Exclusão de Tarefas</h3>
+                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico</h3>
                     
                     <div class="mb-6">
                         <button onclick="testarExclusaoTarefas()" class="btn-primario mb-4">
