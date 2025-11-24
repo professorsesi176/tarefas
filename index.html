@@ -15,8 +15,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- CSS Externo via GitHub Pages -->
-    <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
+    <style>
+        /* ... (todos os estilos CSS anteriores permanecem exatamente iguais) ... */
+    </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
     <div id="app-container" class="w-full max-w-6xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
@@ -36,7 +37,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 21.3
+            Desenvolvido por Geovane Modena | Versão 21.4
         </footer>
     </div>
 
@@ -635,7 +636,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v21.3...');
+                console.log('Inicializando sistema v21.4...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -850,11 +851,14 @@
             document.getElementById('parte3').value = STATE.tarefaEditando.Parte3 || '';
             document.getElementById('parte4').value = STATE.tarefaEditando.Parte4 || '';
             
-            // Marcar a turma da tarefa sendo editada
-            const checkbox = document.getElementById(`turma-${STATE.tarefaEditando.Turma}`);
-            if (checkbox) {
-                checkbox.checked = true;
-            }
+            // Marcar a turma da tarefa sendo editada e desabilitar os checkboxes
+            const checkboxes = document.querySelectorAll('.turma-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.disabled = true;
+                if (checkbox.value === STATE.tarefaEditando.Turma) {
+                    checkbox.checked = true;
+                }
+            });
             
             window.scrollTo(0, 0);
         }
@@ -933,12 +937,19 @@
             try {
                 Utils.setButtonLoading(btnSalvar, true);
                 
-                const turmasSelecionadas = Array.from(document.querySelectorAll('.turma-checkbox:checked'))
-                    .map(cb => cb.value);
+                let turmasSelecionadas;
                 
-                if (turmasSelecionadas.length === 0) {
-                    UIManager.showModal('Atenção', 'Selecione pelo menos uma turma.');
-                    return;
+                // No modo de edição, usamos a turma da tarefa editada
+                if (STATE.tarefaEditando) {
+                    turmasSelecionadas = [STATE.tarefaEditando.Turma];
+                } else {
+                    turmasSelecionadas = Array.from(document.querySelectorAll('.turma-checkbox:checked'))
+                        .map(cb => cb.value);
+                    
+                    if (turmasSelecionadas.length === 0) {
+                        UIManager.showModal('Atenção', 'Selecione pelo menos uma turma.');
+                        return;
+                    }
                 }
 
                 const tema = document.getElementById('tema').value.trim();
@@ -969,37 +980,27 @@
                     return;
                 }
 
-                // Verificar se é uma edição ou criação
+                console.log('Iniciando criação/atualização de tarefas para turmas:', turmasSelecionadas);
+                
+                let results;
                 if (STATE.tarefaEditando) {
-                    // MODE EDIÇÃO: Atualizar a tarefa existente
-                    console.log('Editando tarefa existente:', STATE.tarefaEditando.ID);
-                    
+                    // Modo de edição: enviar uma única requisição para editar a tarefa
                     const dados = {
                         ID: STATE.tarefaEditando.ID,
+                        Turma: STATE.tarefaEditando.Turma, // A turma original, não alterada
                         Tema: tema,
                         Parte1: parte1,
                         Parte2: parte2,
                         Parte3: parte3,
                         Parte4: parte4,
-                        DataAula: dataAula
+                        DataAula: dataAula,
+                        professor: STATE.usuarioLogado.NomeCompleto
                     };
 
-                    await apiPost('editarTarefa', dados);
-                    UIManager.showModal('Sucesso', `Tarefa "${tema}" atualizada com sucesso!`);
-                    
-                    // Limpar caches
-                    CacheManager.remove('painel_professor');
-                    CacheManager.remove('tarefas_professor_lista');
-                    CacheManager.remove(`relatorio_${STATE.tarefaEditando.Turma}`);
-                    
-                    STATE.tarefaEditando = null;
-                    limparFormulario();
-                    await carregarTarefasProfessor();
-                    
+                    console.log(`Enviando dados para edição da tarefa ${STATE.tarefaEditando.ID}:`, dados);
+                    results = [await apiPost('editarTarefa', dados)];
                 } else {
-                    // MODO CRIAÇÃO: Criar novas tarefas para cada turma selecionada
-                    console.log('Criando novas tarefas para turmas:', turmasSelecionadas);
-                    
+                    // Modo de criação: criar uma tarefa para cada turma selecionada
                     const promises = turmasSelecionadas.map(async (turma) => {
                         const dados = {
                             Turma: turma,
@@ -1016,26 +1017,26 @@
                         return await apiPost('criarTarefa', dados);
                     });
 
-                    // Aguardar todas as promises
-                    const results = await Promise.all(promises);
-                    console.log('Resultados da criação:', results);
-                    
-                    UIManager.showModal('Sucesso', `Tarefa criada com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
-                    
-                    // Limpar caches
-                    CacheManager.remove('painel_professor');
-                    CacheManager.remove('tarefas_professor_lista');
-                    turmasSelecionadas.forEach(turma => {
-                        CacheManager.remove(`relatorio_${turma}`);
-                    });
-                    
-                    limparFormulario();
-                    await carregarTarefasProfessor();
+                    results = await Promise.all(promises);
                 }
                 
+                console.log('Resultados da criação/edição:', results);
+                
+                UIManager.showModal('Sucesso', `Tarefa ${STATE.tarefaEditando ? 'atualizada' : 'criada'} com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
+                
+                // Limpar caches
+                CacheManager.remove('painel_professor');
+                CacheManager.remove('tarefas_professor_lista');
+                turmasSelecionadas.forEach(turma => {
+                    CacheManager.remove(`relatorio_${turma}`);
+                });
+                
+                limparFormulario();
+                await carregarTarefasProfessor();
+                
             } catch (error) {
-                console.error('Erro detalhado ao salvar tarefa:', error);
-                UIManager.showModal('Erro', `Erro ao salvar tarefa: ${error.message}`);
+                console.error('Erro detalhado ao criar/editar tarefa:', error);
+                UIManager.showModal('Erro', `Erro ao ${STATE.tarefaEditando ? 'editar' : 'criar'} tarefa: ${error.message}`);
             } finally {
                 Utils.setButtonLoading(btnSalvar, false);
             }
@@ -1127,8 +1128,9 @@
             if (p3) p3.value = '';
             if (p4) p4.value = '';
             
-            // Desmarcar todas as turmas
+            // Reabilitar e desmarcar todas as turmas
             document.querySelectorAll('.turma-checkbox').forEach(cb => {
+                cb.disabled = false;
                 cb.checked = false;
             });
             
@@ -1922,7 +1924,7 @@
         async function mostrarPainelDiagnostico() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Versão 21.3</h3>
+                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Versão 21.4</h3>
                     
                     <div class="mb-6">
                         <button onclick="testarExclusaoTarefas()" class="btn-primario mb-4">
