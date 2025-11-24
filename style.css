@@ -1024,4 +1024,54 @@
             margin-bottom: 5px;
             color: #374151;
         }
+
+        /* Estilos para o novo botão Tarefas */
+        .btn-tarefas {
+            background-color: #000000;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+            margin-right: 8px;
+        }
+        
+        .btn-tarefas:hover {
+            background-color: #333333;
+            transform: translateY(-1px);
+        }
+
+        /* Estilos para diagnóstico em linha */
+        .diagnostico-linha {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .diagnostico-item {
+            flex: 1;
+            min-width: 200px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: white;
+        }
+        
+        .metricas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .metrica-item {
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background-color: #f9fafb;
+        }
     </style>
