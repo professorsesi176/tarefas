@@ -854,6 +854,56 @@
             margin-bottom: 5px;
             color: #374151;
         }
+
+        /* Estilos para o novo botão Tarefas */
+        .btn-tarefas {
+            background-color: #000000;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+            margin-right: 8px;
+        }
+        
+        .btn-tarefas:hover {
+            background-color: #333333;
+            transform: translateY(-1px);
+        }
+
+        /* Estilos para diagnóstico em linha */
+        .diagnostico-linha {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .diagnostico-item {
+            flex: 1;
+            min-width: 200px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: white;
+        }
+        
+        .metricas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .metrica-item {
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background-color: #f9fafb;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
@@ -863,6 +913,7 @@
                 <h1 class="text-3xl font-extrabold text-red-700 text-center">Sistema de Gestão de Tarefas</h1>
                 <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
                 <div class="absolute top-0 right-0 flex space-x-2">
+                    <button id="tarefasBtn" class="btn-tarefas hidden">Tarefas</button>
                     <button id="diagnosticoBtn" class="btn-primario hidden">Diagnóstico</button>
                     <button id="relatorioBtn" class="btn-primario hidden" style="background-color: #10b981;">Relatório</button>
                     <button onclick="logout()" id="logoutBtn" class="btn-secundario hidden">Sair</button>
@@ -873,7 +924,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 21.1
+            Desenvolvido por Geovane Modena | Versão 21.2
         </footer>
     </div>
 
@@ -903,7 +954,13 @@
             tarefaEditando: null,
             contadoresAtivos: [],
             rmVisible: false,
-            relatorioAlunoVisivel: false
+            relatorioAlunoVisivel: false,
+            metricasPerformance: {
+                chamadasAPI: 0,
+                tempoTotal: 0,
+                memoriaUsada: 0,
+                memoriaTotal: 0
+            }
         };
 
         // ==================== SISTEMA DE CACHE ====================
@@ -953,6 +1010,32 @@
                     keys.forEach(k => localStorage.removeItem(k));
                 } catch (e) {
                     console.warn('Erro ao limpar cache:', e);
+                }
+            },
+
+            getCacheStats: () => {
+                try {
+                    const keys = Object.keys(localStorage).filter(k => k.startsWith('task_'));
+                    const totalItens = keys.length;
+                    let tamanhoTotal = 0;
+                    
+                    keys.forEach(key => {
+                        const item = localStorage.getItem(key);
+                        if (item) {
+                            tamanhoTotal += new Blob([item]).size;
+                        }
+                    });
+                    
+                    const eficiencia = totalItens > 0 ? Math.min(100, (totalItens / 100) * 100) : 0; // Simulação
+                    
+                    return {
+                        itens: totalItens,
+                        tamanho: tamanhoTotal,
+                        eficiencia: eficiencia
+                    };
+                } catch (e) {
+                    console.warn('Erro ao calcular estatísticas do cache:', e);
+                    return { itens: 0, tamanho: 0, eficiencia: 0 };
                 }
             }
         };
@@ -1009,15 +1092,26 @@
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
+            },
+
+            formatarBytes: (bytes) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
         };
 
         // ==================== GERENCIADOR DE API ====================
         const ApiManager = {
             jsonpCallbackId: 0,
+            chamadasAPI: 0,
+            tempoTotalAPI: 0,
 
             requestJSONP: (url, callback) => {
                 const callbackName = 'jsonp_callback_' + ApiManager.jsonpCallbackId++;
+                const inicio = performance.now();
                 
                 const timeout = setTimeout(() => {
                     if (window[callbackName]) {
@@ -1027,22 +1121,42 @@
                 }, 15000);
                 
                 window[callbackName] = function(data) {
+                    const fim = performance.now();
+                    const tempo = fim - inicio;
+                    
                     clearTimeout(timeout);
                     delete window[callbackName];
                     if (script.parentNode) {
                         document.body.removeChild(script);
                     }
+                    
+                    // Atualizar métricas
+                    ApiManager.chamadasAPI++;
+                    ApiManager.tempoTotalAPI += tempo;
+                    STATE.metricasPerformance.chamadasAPI = ApiManager.chamadasAPI;
+                    STATE.metricasPerformance.tempoTotal = ApiManager.tempoTotalAPI;
+                    
                     callback(null, data);
                 };
                 
                 const script = document.createElement('script');
                 script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
                 script.onerror = function() {
+                    const fim = performance.now();
+                    const tempo = fim - inicio;
+                    
                     clearTimeout(timeout);
                     delete window[callbackName];
                     if (script.parentNode) {
                         document.body.removeChild(script);
                     }
+                    
+                    // Atualizar métricas mesmo em caso de erro
+                    ApiManager.chamadasAPI++;
+                    ApiManager.tempoTotalAPI += tempo;
+                    STATE.metricasPerformance.chamadasAPI = ApiManager.chamadasAPI;
+                    STATE.metricasPerformance.tempoTotal = ApiManager.tempoTotalAPI;
+                    
                     callback(new Error('Falha ao carregar o script. Verifique sua conexão.'));
                 };
                 
@@ -1117,6 +1231,21 @@
                         }
                     });
                 });
+            },
+
+            getMetricas: () => {
+                return {
+                    chamadasAPI: ApiManager.chamadasAPI,
+                    tempoTotalAPI: ApiManager.tempoTotalAPI,
+                    tempoMedioAPI: ApiManager.chamadasAPI > 0 ? ApiManager.tempoTotalAPI / ApiManager.chamadasAPI : 0
+                };
+            },
+
+            resetMetricas: () => {
+                ApiManager.chamadasAPI = 0;
+                ApiManager.tempoTotalAPI = 0;
+                STATE.metricasPerformance.chamadasAPI = 0;
+                STATE.metricasPerformance.tempoTotal = 0;
             }
         };
 
@@ -1132,6 +1261,7 @@
                 logoutBtn: document.getElementById('logoutBtn'),
                 relatorioBtn: document.getElementById('relatorioBtn'),
                 diagnosticoBtn: document.getElementById('diagnosticoBtn'),
+                tarefasBtn: document.getElementById('tarefasBtn'),
                 modalOverlay: document.getElementById('modal-overlay'),
                 modalTitle: document.getElementById('modal-title'),
                 modalMessage: document.getElementById('modal-message')
@@ -1195,6 +1325,7 @@
                 UIManager.elements.logoutBtn.classList.add('hidden');
                 UIManager.elements.relatorioBtn.classList.add('hidden');
                 UIManager.elements.diagnosticoBtn.classList.add('hidden');
+                UIManager.elements.tarefasBtn.classList.add('hidden');
                 UIManager.elements.userInfo.innerHTML = '';
                 STATE.contadoresAtivos.forEach(interval => clearInterval(interval));
                 STATE.contadoresAtivos = [];
@@ -1216,6 +1347,8 @@
                     UIManager.elements.relatorioBtn.classList.remove('hidden');
                     UIManager.elements.diagnosticoBtn.classList.remove('hidden');
                     UIManager.elements.diagnosticoBtn.onclick = mostrarPainelDiagnostico;
+                    UIManager.elements.tarefasBtn.classList.remove('hidden');
+                    UIManager.elements.tarefasBtn.onclick = mostrarPainelProfessor;
                 } else {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
@@ -1227,6 +1360,8 @@
                     `;
                     UIManager.elements.relatorioBtn.classList.add('hidden');
                     UIManager.elements.diagnosticoBtn.classList.add('hidden');
+                    UIManager.elements.tarefasBtn.classList.remove('hidden');
+                    UIManager.elements.tarefasBtn.onclick = mostrarPainelAluno;
                 }
                 
                 UIManager.elements.logoutBtn.classList.remove('hidden');
@@ -1388,7 +1523,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v21.1...');
+                console.log('Inicializando sistema v21.2...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1767,62 +1902,62 @@
 
         // ==================== EXCLUSÃO SIMPLIFICADA ====================
         async function excluirTarefaDireto(idTarefa, botao) {
-    // Verificar se é o segundo clique (já está confirmando)
-    if (botao.getAttribute('data-confirmando') === 'true') {
-        console.log('Iniciando exclusão confirmada da tarefa:', idTarefa);
-        
-        const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
-        if (!tarefa) {
-            UIManager.showModal('Erro', 'Tarefa não encontrada.');
-            return;
-        }
-        
-        // Mostrar loading no botão
-        Utils.setButtonLoading(botao, true);
-        
-        try {
-            const response = await apiPost('excluirTarefa', { ID: idTarefa });
-            
-            if (response.success) {
-                UIManager.showModal('Sucesso', `Tarefa "${tarefa.Tema}" excluída com sucesso!`);
-                
-                // Limpar caches
-                CacheManager.remove('painel_professor');
-                CacheManager.remove('tarefas_professor_lista');
-                CONFIG.TURMAS.forEach(turma => {
-                    CacheManager.remove(`relatorio_${turma}`);
-                });
-                
-                // Recarregar a lista de tarefas
-                await carregarTarefasProfessor();
-                
-            } else {
-                throw new Error(response.error || 'Erro desconhecido ao excluir tarefa');
-            }
-            
-        } catch (error) {
-            console.error('Erro ao excluir tarefa:', error);
-            UIManager.showModal('Erro', `Falha ao excluir tarefa: ${error.message}`);
-        } finally {
-            Utils.setButtonLoading(botao, false);
-        }
-    } else {
-        // Primeiro clique - entrar no modo de confirmação
-        const textoOriginal = botao.textContent;
-        botao.setAttribute('data-confirmando', 'true');
-        botao.textContent = 'Clique novamente para excluir';
-        botao.style.backgroundColor = '#dc2626';
-        
-        // Voltar ao normal após 3 segundos
-        setTimeout(() => {
+            // Verificar se é o segundo clique (já está confirmando)
             if (botao.getAttribute('data-confirmando') === 'true') {
-                botao.setAttribute('data-confirmando', 'false');
-                botao.textContent = textoOriginal;
-                botao.style.backgroundColor = '';
+                console.log('Iniciando exclusão confirmada da tarefa:', idTarefa);
+                
+                const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
+                if (!tarefa) {
+                    UIManager.showModal('Erro', 'Tarefa não encontrada.');
+                    return;
+                }
+                
+                // Mostrar loading no botão
+                Utils.setButtonLoading(botao, true);
+                
+                try {
+                    const response = await apiPost('excluirTarefa', { ID: idTarefa });
+                    
+                    if (response.success) {
+                        UIManager.showModal('Sucesso', `Tarefa "${tarefa.Tema}" excluída com sucesso!`);
+                        
+                        // Limpar caches
+                        CacheManager.remove('painel_professor');
+                        CacheManager.remove('tarefas_professor_lista');
+                        CONFIG.TURMAS.forEach(turma => {
+                            CacheManager.remove(`relatorio_${turma}`);
+                        });
+                        
+                        // Recarregar a lista de tarefas
+                        await carregarTarefasProfessor();
+                        
+                    } else {
+                        throw new Error(response.error || 'Erro desconhecido ao excluir tarefa');
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro ao excluir tarefa:', error);
+                    UIManager.showModal('Erro', `Falha ao excluir tarefa: ${error.message}`);
+                } finally {
+                    Utils.setButtonLoading(botao, false);
+                }
+            } else {
+                // Primeiro clique - entrar no modo de confirmação
+                const textoOriginal = botao.textContent;
+                botao.setAttribute('data-confirmando', 'true');
+                botao.textContent = 'Clique novamente para excluir';
+                botao.style.backgroundColor = '#dc2626';
+                
+                // Voltar ao normal após 3 segundos
+                setTimeout(() => {
+                    if (botao.getAttribute('data-confirmando') === 'true') {
+                        botao.setAttribute('data-confirmando', 'false');
+                        botao.textContent = textoOriginal;
+                        botao.style.backgroundColor = '';
+                    }
+                }, 3000);
             }
-        }, 3000);
-    }
-}
+        }
 
         async function editarTarefa(idTarefa) {
             const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
@@ -2155,11 +2290,28 @@
                     horarioInfo = '<div class="horario-info horario-fora">Fora do horário de entrega (13h-22h)</div>';
                 }
             }
+
+            // Adicionar labels de retenção para os alunos
+            let retencaoLabel = '';
+            switch(numeroParte) {
+                case 1:
+                    retencaoLabel = '<span class="retencao-aviso retencao-50">50% retenção</span>';
+                    break;
+                case 2:
+                    retencaoLabel = '<span class="retencao-aviso retencao-25">25% retenção</span>';
+                    break;
+                case 3:
+                    retencaoLabel = '<span class="retencao-aviso retencao-15">15% retenção</span>';
+                    break;
+                case 4:
+                    retencaoLabel = '<span class="retencao-aviso retencao-10">9.99% retenção</span>';
+                    break;
+            }
             
             return `
             <div class="mt-3 p-3 bg-gray-50 rounded border">
                 <div class="flex justify-between items-center">
-                    <strong>Parte ${numeroParte}</strong>
+                    <strong>Parte ${numeroParte} ${retencaoLabel}</strong>
                     <span class="contador ${status}">${textoStatus}</span>
                 </div>
                 <div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>
@@ -2329,9 +2481,6 @@
                     </div>
                     <div id="relatorio-turma-container" class="mt-4">
                         <p class="text-gray-500 text-center py-8">Selecione uma turma para visualizar o relatório</p>
-                    </div>
-                    <div class="mt-4 text-center">
-                        <button onclick="mostrarPainelProfessor()" class="btn-secundario">Voltar ao Painel</button>
                     </div>
                 </div>
             `;
@@ -2632,7 +2781,7 @@
         async function mostrarPainelDiagnostico() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico</h3>
+                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Versão 21.2</h3>
                     
                     <div class="mb-6">
                         <button onclick="testarExclusaoTarefas()" class="btn-primario mb-4">
@@ -2641,10 +2790,10 @@
                         <div id="resultado-teste-exclusao"></div>
                     </div>
                     
-                    <div class="diagnostico-grid">
-                        <div class="diagnostico-card">
-                            <h4 class="font-semibold mb-3">Status do Sistema</h4>
-                            <div id="status-sistema">
+                    <div class="diagnostico-linha">
+                        <div class="diagnostico-item">
+                            <h4 class="font-semibold mb-3">Status do Cache</h4>
+                            <div id="status-cache">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
                                     <p class="mt-2 text-gray-600">Carregando...</p>
@@ -2652,9 +2801,19 @@
                             </div>
                         </div>
                         
-                        <div class="diagnostico-card">
-                            <h4 class="font-semibold mb-3">Estatísticas</h4>
+                        <div class="diagnostico-item">
+                            <h4 class="font-semibold mb-3">Estatísticas do Sistema</h4>
                             <div id="estatisticas-sistema">
+                                <div class="text-center py-4">
+                                    <div class="spinner"></div>
+                                    <p class="mt-2 text-gray-600">Carregando...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="diagnostico-item">
+                            <h4 class="font-semibold mb-3">Métricas de Performance</h4>
+                            <div id="metricas-performance">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
                                     <p class="mt-2 text-gray-600">Carregando...</p>
@@ -2672,15 +2831,12 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="mt-6 text-center">
-                        <button onclick="mostrarPainelProfessor()" class="btn-secundario">Voltar ao Painel</button>
-                    </div>
                 </div>
             `;
 
-            carregarStatusSistema();
+            carregarStatusCache();
             carregarEstatisticasSistema();
+            carregarMetricasPerformance();
             carregarInformacoesDebug();
         }
 
@@ -2768,36 +2924,31 @@
             }
         }
 
-        function carregarStatusSistema() {
-            const container = document.getElementById('status-sistema');
+        function carregarStatusCache() {
+            const container = document.getElementById('status-cache');
             
             try {
-                const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('task_'));
-                const totalItens = cacheKeys.length;
+                const cacheStats = CacheManager.getCacheStats();
                 
                 container.innerHTML = `
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span>Sistema:</span>
-                            <span class="font-semibold text-green-600">Online</span>
-                        </div>
-                        <div class="flex justify-between">
                             <span>Itens em Cache:</span>
-                            <span class="font-semibold">${totalItens}</span>
+                            <span class="font-semibold">${cacheStats.itens}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Usuário Logado:</span>
-                            <span class="font-semibold">${STATE.usuarioLogado?.NomeCompleto || 'Nenhum'}</span>
+                            <span>Tamanho do Cache:</span>
+                            <span class="font-semibold">${Utils.formatarBytes(cacheStats.tamanho)}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Email:</span>
-                            <span class="font-semibold">${STATE.usuarioLogado?.Email || 'Nenhum'}</span>
+                            <span>Eficiência do Cache:</span>
+                            <span class="font-semibold">${cacheStats.eficiencia.toFixed(1)}%</span>
                         </div>
                     </div>
                     <button onclick="limparCache()" class="btn-primario w-full mt-3" style="background-color: #ef4444;">Limpar Cache</button>
                 `;
             } catch (error) {
-                container.innerHTML = `<p class="text-red-500">Erro ao carregar status: ${error.message}</p>`;
+                container.innerHTML = `<p class="text-red-500">Erro ao carregar status do cache: ${error.message}</p>`;
             }
         }
 
@@ -2805,28 +2956,146 @@
             const container = document.getElementById('estatisticas-sistema');
             
             try {
+                const usuariosCarregados = STATE.usuarioLogado ? 1 : 0;
+                const tarefasCarregadas = STATE.tarefas.length;
+                const metricasAPI = ApiManager.getMetricas();
+                
                 container.innerHTML = `
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span>Turmas:</span>
-                            <span class="font-semibold">${CONFIG.TURMAS.length}</span>
+                            <span>Usuários Carregados:</span>
+                            <span class="font-semibold">${usuariosCarregados}</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Tarefas Carregadas:</span>
-                            <span class="font-semibold">${STATE.tarefas.length}</span>
+                            <span class="font-semibold">${tarefasCarregadas}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Perfil:</span>
-                            <span class="font-semibold">${STATE.usuarioLogado?.Perfil || 'Nenhum'}</span>
+                            <span>Chamadas API:</span>
+                            <span class="font-semibold">${metricasAPI.chamadasAPI}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Identificação:</span>
-                            <span class="font-semibold">Por Email</span>
+                            <span>Tempo Total:</span>
+                            <span class="font-semibold">${metricasAPI.tempoTotalAPI.toFixed(2)} ms</span>
                         </div>
                     </div>
                 `;
             } catch (error) {
                 container.innerHTML = `<p class="text-red-500">Erro ao carregar estatísticas: ${error.message}</p>`;
+            }
+        }
+
+        function carregarMetricasPerformance() {
+            const container = document.getElementById('metricas-performance');
+            
+            try {
+                // Coletar métricas de performance
+                const metrics = performance.getEntriesByType('navigation')[0];
+                const memory = performance.memory; // Disponível apenas em alguns navegadores
+                const metricasAPI = ApiManager.getMetricas();
+                
+                let metricsHTML = `
+                    <div class="metricas-grid">
+                        <div class="metrica-item">
+                            <div class="font-semibold">Tempo API</div>
+                            <div class="text-lg">${metricasAPI.tempoMedioAPI.toFixed(2)} ms</div>
+                            <div class="text-xs text-gray-500">médio por chamada</div>
+                        </div>
+                        
+                        <div class="metrica-item">
+                            <div class="font-semibold">Status API</div>
+                            <div class="text-lg text-green-600">Online</div>
+                            <div class="text-xs text-gray-500">conectado</div>
+                        </div>
+                        
+                        <div class="metrica-item">
+                            <div class="font-semibold">Chamadas API</div>
+                            <div class="text-lg">${metricasAPI.chamadasAPI}</div>
+                            <div class="text-xs text-gray-500">total</div>
+                        </div>
+                `;
+                
+                if (memory) {
+                    STATE.metricasPerformance.memoriaUsada = memory.usedJSHeapSize;
+                    STATE.metricasPerformance.memoriaTotal = memory.totalJSHeapSize;
+                    
+                    metricsHTML += `
+                        <div class="metrica-item">
+                            <div class="font-semibold">Memória Usada</div>
+                            <div class="text-lg">${(memory.usedJSHeapSize / 1048576).toFixed(2)} MB</div>
+                            <div class="text-xs text-gray-500">${((memory.usedJSHeapSize / memory.totalJSHeapSize) * 100).toFixed(1)}%</div>
+                        </div>
+                        
+                        <div class="metrica-item">
+                            <div class="font-semibold">Memória Total</div>
+                            <div class="text-lg">${(memory.totalJSHeapSize / 1048576).toFixed(2)} MB</div>
+                            <div class="text-xs text-gray-500">disponível</div>
+                        </div>
+                    `;
+                } else {
+                    metricsHTML += `
+                        <div class="metrica-item">
+                            <div class="font-semibold">Memória Usada</div>
+                            <div class="text-lg">N/A</div>
+                            <div class="text-xs text-gray-500">não disponível</div>
+                        </div>
+                        
+                        <div class="metrica-item">
+                            <div class="font-semibold">Memória Total</div>
+                            <div class="text-lg">N/A</div>
+                            <div class="text-xs text-gray-500">não disponível</div>
+                        </div>
+                    `;
+                }
+                
+                metricsHTML += `</div>`;
+                
+                // Recomendações
+                let recomendacoes = [];
+                
+                if (memory && memory.usedJSHeapSize / memory.totalJSHeapSize > 0.8) {
+                    recomendacoes.push("Considere limpar o cache para liberar memória.");
+                }
+                
+                if (metricasAPI.chamadasAPI > 50) {
+                    recomendacoes.push("Muitas chamadas API. Verifique a eficiência das requisições.");
+                }
+                
+                if (metricasAPI.tempoMedioAPI > 1000) {
+                    recomendacoes.push("Tempo de resposta da API está alto. Verifique a conexão.");
+                }
+                
+                const cacheStats = CacheManager.getCacheStats();
+                if (cacheStats.itens > 50) {
+                    recomendacoes.push("Cache muito grande. Considere limpar itens desnecessários.");
+                }
+                
+                if (recomendacoes.length > 0) {
+                    metricsHTML += `
+                        <div class="mt-3 p-3 bg-yellow-50 rounded border border-yellow-200">
+                            <div class="font-semibold text-yellow-800 mb-2">Recomendações:</div>
+                            <ul class="text-sm text-yellow-700 list-disc list-inside">
+                                ${recomendacoes.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                metricsHTML += `
+                    <div class="mt-3 flex space-x-2">
+                        <button onclick="ApiManager.resetMetricas()" class="btn-secundario flex-1 text-sm">
+                            Resetar Métricas
+                        </button>
+                        <button onclick="carregarMetricasPerformance()" class="btn-primario flex-1 text-sm">
+                            Atualizar
+                        </button>
+                    </div>
+                `;
+                
+                container.innerHTML = metricsHTML;
+                
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500">Erro ao carregar métricas: ${error.message}</p>`;
             }
         }
 
@@ -2838,9 +3107,11 @@
                     'URL da API': CONFIG.API_URL,
                     'Tarefas no Estado': STATE.tarefas.length,
                     'Usuário Logado': STATE.usuarioLogado ? `${STATE.usuarioLogado.NomeCompleto} (${STATE.usuarioLogado.Perfil})` : 'Nenhum',
-                    'Navegador': navigator.userAgent,
+                    'Navegador': navigator.userAgent.substring(0, 50) + '...',
                     'LocalStorage Keys': Object.keys(localStorage).filter(k => k.startsWith('task_')).length,
-                    'Timestamp': new Date().toISOString()
+                    'Timestamp': new Date().toISOString(),
+                    'Performance API': performance ? 'Disponível' : 'Indisponível',
+                    'Memória API': performance.memory ? 'Disponível' : 'Indisponível'
                 };
                 
                 let debugHTML = '';
@@ -2864,7 +3135,8 @@
             CacheManager.clear();
             UIManager.showModal('Sucesso', 'Cache limpo com sucesso!');
             setTimeout(() => {
-                carregarStatusSistema();
+                carregarStatusCache();
+                carregarMetricasPerformance();
                 carregarInformacoesDebug();
             }, 1000);
         }
@@ -2901,74 +3173,7 @@
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
         window.testarExclusaoTarefas = testarExclusaoTarefas;
-
-        // Função de edição de tarefa (mantida para compatibilidade)
-        window.atualizarTarefa = Utils.debounce(async function() {
-            const btnSalvar = document.getElementById('btnSalvarTarefa');
-            
-            try {
-                Utils.setButtonLoading(btnSalvar, true);
-                
-                if (!STATE.tarefaEditando) {
-                    UIManager.showModal('Erro', 'Nenhuma tarefa selecionada para edição.');
-                    return;
-                }
-
-                const tema = document.getElementById('tema').value.trim();
-                const dataAula = document.getElementById('dataAula').value;
-
-                if (!tema || !dataAula) {
-                    UIManager.showModal('Atenção', 'Preencha todos os campos obrigatórios.');
-                    return;
-                }
-
-                if (tema.length > CONFIG.MAX_TEMA_LEN) {
-                    UIManager.showModal('Atenção', `O tema deve ter no máximo ${CONFIG.MAX_TEMA_LEN} caracteres.`);
-                    return;
-                }
-
-                const parte1 = document.getElementById('parte1').value.trim();
-                const parte2 = document.getElementById('parte2').value.trim();
-                const parte3 = document.getElementById('parte3').value.trim();
-                const parte4 = document.getElementById('parte4').value.trim();
-
-                if (!parte1 || !parte2 || !parte3 || !parte4) {
-                    UIManager.showModal('Atenção', 'Todas as partes da tarefa devem ser preenchidas.');
-                    return;
-                }
-
-                if ([parte1, parte2, parte3, parte4].some(p => p.length > CONFIG.MAX_PARTE_LEN)) {
-                    UIManager.showModal('Atenção', `Cada parte deve ter no máximo ${CONFIG.MAX_PARTE_LEN} caracteres.`);
-                    return;
-                }
-
-                const dados = {
-                    ID: STATE.tarefaEditando.ID,
-                    Tema: tema,
-                    Parte1: parte1,
-                    Parte2: parte2,
-                    Parte3: parte3,
-                    Parte4: parte4,
-                    DataAula: dataAula
-                };
-
-                await apiPost('editarTarefa', dados);
-                UIManager.showModal('Sucesso', 'Tarefa atualizada com sucesso!');
-                
-                CacheManager.remove('painel_professor');
-                CacheManager.remove('tarefas_professor_lista');
-                CacheManager.remove(`relatorio_${STATE.tarefaEditando.Turma}`);
-                
-                STATE.tarefaEditando = null;
-                limparFormulario();
-                await carregarTarefasProfessor();
-                
-            } catch (error) {
-                UIManager.showModal('Erro', `Erro ao atualizar tarefa: ${error.message}`);
-            } finally {
-                Utils.setButtonLoading(btnSalvar, false);
-            }
-        }, 500);
+        window.carregarMetricasPerformance = carregarMetricasPerformance;
     </script>
 </body>
 </html>
