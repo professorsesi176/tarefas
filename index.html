@@ -14,6 +14,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- CSS Externo via GitHub Pages -->
     <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
@@ -34,7 +36,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 21.2
+            Desenvolvido por Geovane Modena | Versão 21.3
         </footer>
     </div>
 
@@ -633,7 +635,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v21.2...');
+                console.log('Inicializando sistema v21.3...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -967,44 +969,73 @@
                     return;
                 }
 
-                console.log('Iniciando criação de tarefas para turmas:', turmasSelecionadas);
-                
-                // Para cada turma selecionada, criar uma tarefa
-                const promises = turmasSelecionadas.map(async (turma) => {
+                // Verificar se é uma edição ou criação
+                if (STATE.tarefaEditando) {
+                    // MODE EDIÇÃO: Atualizar a tarefa existente
+                    console.log('Editando tarefa existente:', STATE.tarefaEditando.ID);
+                    
                     const dados = {
-                        Turma: turma,
+                        ID: STATE.tarefaEditando.ID,
                         Tema: tema,
                         Parte1: parte1,
                         Parte2: parte2,
                         Parte3: parte3,
                         Parte4: parte4,
-                        DataAula: dataAula,
-                        professor: STATE.usuarioLogado.NomeCompleto
+                        DataAula: dataAula
                     };
 
-                    console.log(`Enviando dados para turma ${turma}:`, dados);
-                    return await apiPost('criarTarefa', dados);
-                });
+                    await apiPost('editarTarefa', dados);
+                    UIManager.showModal('Sucesso', `Tarefa "${tema}" atualizada com sucesso!`);
+                    
+                    // Limpar caches
+                    CacheManager.remove('painel_professor');
+                    CacheManager.remove('tarefas_professor_lista');
+                    CacheManager.remove(`relatorio_${STATE.tarefaEditando.Turma}`);
+                    
+                    STATE.tarefaEditando = null;
+                    limparFormulario();
+                    await carregarTarefasProfessor();
+                    
+                } else {
+                    // MODO CRIAÇÃO: Criar novas tarefas para cada turma selecionada
+                    console.log('Criando novas tarefas para turmas:', turmasSelecionadas);
+                    
+                    const promises = turmasSelecionadas.map(async (turma) => {
+                        const dados = {
+                            Turma: turma,
+                            Tema: tema,
+                            Parte1: parte1,
+                            Parte2: parte2,
+                            Parte3: parte3,
+                            Parte4: parte4,
+                            DataAula: dataAula,
+                            professor: STATE.usuarioLogado.NomeCompleto
+                        };
 
-                // Aguardar todas as promises
-                const results = await Promise.all(promises);
-                console.log('Resultados da criação:', results);
-                
-                UIManager.showModal('Sucesso', `Tarefa criada com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
-                
-                // Limpar caches
-                CacheManager.remove('painel_professor');
-                CacheManager.remove('tarefas_professor_lista');
-                turmasSelecionadas.forEach(turma => {
-                    CacheManager.remove(`relatorio_${turma}`);
-                });
-                
-                limparFormulario();
-                await carregarTarefasProfessor();
+                        console.log(`Enviando dados para turma ${turma}:`, dados);
+                        return await apiPost('criarTarefa', dados);
+                    });
+
+                    // Aguardar todas as promises
+                    const results = await Promise.all(promises);
+                    console.log('Resultados da criação:', results);
+                    
+                    UIManager.showModal('Sucesso', `Tarefa criada com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
+                    
+                    // Limpar caches
+                    CacheManager.remove('painel_professor');
+                    CacheManager.remove('tarefas_professor_lista');
+                    turmasSelecionadas.forEach(turma => {
+                        CacheManager.remove(`relatorio_${turma}`);
+                    });
+                    
+                    limparFormulario();
+                    await carregarTarefasProfessor();
+                }
                 
             } catch (error) {
-                console.error('Erro detalhado ao criar tarefa:', error);
-                UIManager.showModal('Erro', `Erro ao criar tarefa: ${error.message}`);
+                console.error('Erro detalhado ao salvar tarefa:', error);
+                UIManager.showModal('Erro', `Erro ao salvar tarefa: ${error.message}`);
             } finally {
                 Utils.setButtonLoading(btnSalvar, false);
             }
@@ -1891,7 +1922,7 @@
         async function mostrarPainelDiagnostico() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Versão 21.2</h3>
+                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Versão 21.3</h3>
                     
                     <div class="mb-6">
                         <button onclick="testarExclusaoTarefas()" class="btn-primario mb-4">
