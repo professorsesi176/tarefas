@@ -1843,8 +1843,9 @@
             await mostrarPainelProfessor();
         }
 
+        // ==================== FUNÇÃO EXCLUIR TAREFA CORRIGIDA ====================
         async function excluirTarefa(idTarefa) {
-            const botaoExcluir = document.querySelector(`[onclick="solicitarExclusaoTarefa('${idTarefa}')"]`);
+            const botaoExcluir = document.querySelector(`button[onclick="solicitarExclusaoTarefa('${idTarefa}')"]`);
             
             try {
                 // Mostrar loading no botão
@@ -1853,13 +1854,16 @@
                 await apiPost('excluirTarefa', { ID: idTarefa });
                 UIManager.showModal('Sucesso', 'Tarefa excluída com sucesso.');
                 
+                // Limpar caches
                 CacheManager.remove('painel_professor');
                 CacheManager.remove('tarefas_professor_lista');
                 CONFIG.TURMAS.forEach(turma => {
                     CacheManager.remove(`relatorio_${turma}`);
                 });
                 
+                // Recarregar a lista de tarefas
                 await carregarTarefasProfessor();
+                
             } catch (error) {
                 UIManager.showModal('Erro', `Erro ao excluir tarefa: ${error.message}`);
             } finally {
