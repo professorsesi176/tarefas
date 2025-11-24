@@ -14,526 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        /* Estilos CSS otimizados */
-        .hidden { display: none; }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #dc2626;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .btn-primario {
-            background-color: #dc2626;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-primario:hover:not(:disabled) {
-            background-color: #b91c1c;
-            transform: translateY(-1px);
-        }
-        .btn-primario:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-secundario {
-            background-color: #6b7280;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-secundario:hover:not(:disabled) {
-            background-color: #4b5563;
-            transform: translateY(-1px);
-        }
-        .btn-secundario:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-excluir {
-            background-color: #dc2626;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: 500;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-        .btn-excluir:hover:not(:disabled) {
-            background-color: #b91c1c;
-        }
-        .btn-excluir:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-        }
-        .btn-excluir-loading {
-            position: relative;
-            color: transparent;
-        }
-        .btn-excluir-loading::after {
-            content: "";
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s ease-in-out infinite;
-        }
-        .btn-editar {
-            background-color: #2563eb;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: 500;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-        .btn-editar:hover {
-            background-color: #1d4ed8;
-        }
-        .btn-link {
-            padding: 8px 16px;
-            font-size: 0.875rem;
-            margin-left: 8px;
-        }
-        .btn-tarefas {
-            background-color: #059669;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 500;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-tarefas:hover {
-            background-color: #047857;
-        }
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #374151;
-        }
-        .form-input, .form-textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-        }
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-        }
-        .compact-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .compact-table th, .compact-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .compact-table th {
-            background-color: #f8fafc;
-            font-weight: 600;
-            color: #374151;
-        }
-        .tarefa-expand-button {
-            background: none;
-            border: none;
-            color: #dc2626;
-            cursor: pointer;
-            font-size: 0.875rem;
-            text-decoration: underline;
-            padding: 0;
-        }
-        .tarefa-expand-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        .tarefa-expand-content.expandido {
-            max-height: 500px;
-        }
-        .conteudo-formatado {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: inherit;
-            line-height: 1.5;
-        }
-        .link-input {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.875rem;
-        }
-        .link-input:disabled {
-            background-color: #f3f4f6;
-            color: #6b7280;
-            cursor: not-allowed;
-        }
-        .link-container {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            margin-top: 0.5rem;
-        }
-        .contador {
-            font-size: 0.875rem;
-            font-weight: 600;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-        }
-        .contador.aguardando {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        .contador.disponivel {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        .contador.expirado {
-            background-color: #fecaca;
-            color: #991b1b;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .turmas-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .btn-turma-compact {
-            padding: 0.5rem 1rem;
-            background-color: #e5e7eb;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        .btn-turma-compact.active {
-            background-color: #dc2626;
-            color: white;
-        }
-        .btn-turma-compact:hover:not(.active) {
-            background-color: #d1d5db;
-        }
-        .export-buttons-container {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .btn-exportar {
-            padding: 0.5rem 1rem;
-            background-color: #059669;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        .btn-exportar:hover {
-            background-color: #047857;
-        }
-        .instrucoes-box {
-            background-color: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .instrucoes-title {
-            font-weight: 600;
-            color: #0369a1;
-            margin-bottom: 0.5rem;
-        }
-        .instrucoes-list {
-            list-style-type: decimal;
-            margin-left: 1.5rem;
-            color: #0c4a6e;
-        }
-        .instrucoes-list li {
-            margin-bottom: 0.25rem;
-        }
-        .aluno-relatorio-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .aluno-relatorio-card:hover {
-            border-color: #dc2626;
-        }
-        .aluno-relatorio-header {
-            padding: 1rem;
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            background-color: #f8fafc;
-        }
-        .aluno-relatorio-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        .aluno-relatorio-content.expandido {
-            max-height: 500px;
-            padding: 1rem;
-        }
-        .expand-icon {
-            transition: transform 0.3s;
-        }
-        .expand-icon.expandido {
-            transform: rotate(180deg);
-        }
-        .fundamento-cientifico {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-top: 1.5rem;
-        }
-        .fundamento-title {
-            padding: 1rem;
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            background-color: #f8fafc;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .fundamento-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        .fundamento-content.expandido {
-            max-height: 1000px;
-            padding: 1rem;
-        }
-        .fundamento-list {
-            list-style-type: decimal;
-            margin-left: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .fundamento-list li {
-            margin-bottom: 0.5rem;
-        }
-        .referencias {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #e5e7eb;
-        }
-        .referencias-title {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .referencias-list {
-            list-style-type: disc;
-            margin-left: 1.5rem;
-        }
-        .referencias-list li {
-            margin-bottom: 0.25rem;
-            font-size: 0.875rem;
-        }
-        .imagem-curva {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-        }
-        .retencao-aviso {
-            font-size: 0.75rem;
-            padding: 0.125rem 0.5rem;
-            border-radius: 4px;
-            margin-left: 0.5rem;
-            font-weight: 600;
-        }
-        .retencao-50 { background-color: #dc2626; color: white; }
-        .retencao-25 { background-color: #ea580c; color: white; }
-        .retencao-15 { background-color: #d97706; color: white; }
-        .retencao-10 { background-color: #ca8a04; color: white; }
-        .horario-info {
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            background-color: #f0f9ff;
-            color: #0369a1;
-        }
-        .horario-maxima {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        .horario-fora {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        .diagnostico-linha {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .diagnostico-item {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 1rem;
-        }
-        .test-result {
-            padding: 0.75rem;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        .test-success { background-color: #d1fae5; color: #065f46; }
-        .test-warning { background-color: #fef3c7; color: #92400e; }
-        .test-error { background-color: #fecaca; color: #991b1b; }
-        .debug-section {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            background-color: #f8fafc;
-            border-radius: 6px;
-        }
-        .debug-title {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #374151;
-        }
-        .debug-info {
-            font-family: monospace;
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-        .metricas-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-        }
-        .metrica-item {
-            text-align: center;
-            padding: 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-        }
-        .email-container {
-            display: flex;
-        }
-        .email-prefix {
-            flex: 1;
-        }
-        .email-suffix {
-            padding: 0.75rem;
-            background-color: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-left: none;
-            border-radius: 0 8px 8px 0;
-            display: flex;
-            align-items: center;
-            color: #6b7280;
-        }
-        .password-container {
-            position: relative;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.125rem;
-        }
-        .link-salvo {
-            background-color: #f3f4f6 !important;
-            color: #6b7280 !important;
-            border-color: #d1d5db !important;
-        }
-        .link-input.expirado {
-            background-color: #f3f4f6;
-            color: #6b7280;
-            border-color: #d1d5db;
-            cursor: not-allowed;
-        }
-    </style>
+    <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
     <div id="app-container" class="w-full max-w-6xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
@@ -542,6 +23,8 @@
                 <h1 class="text-3xl font-extrabold text-red-700 text-center">Sistema de Gestão de Tarefas</h1>
                 <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
                 <div class="absolute top-0 right-0 flex space-x-2">
+                    <!-- Botão Tarefas removido para alunos via CSS -->
+                    <button id="tarefasBtn" class="btn-tarefas hidden">Tarefas</button>
                     <button id="diagnosticoBtn" class="btn-primario hidden">Diagnóstico</button>
                     <button id="relatorioBtn" class="btn-primario hidden" style="background-color: #10b981;">Relatório</button>
                     <button onclick="logout()" id="logoutBtn" class="btn-secundario hidden">Sair</button>
@@ -654,7 +137,7 @@
                         }
                     });
                     
-                    const eficiencia = totalItens > 0 ? Math.min(100, (totalItens / 100) * 100) : 0; // Simulação
+                    const eficiencia = totalItens > 0 ? Math.min(100, (totalItens / 100) * 100) : 0;
                     
                     return {
                         itens: totalItens,
@@ -758,7 +241,6 @@
                         document.body.removeChild(script);
                     }
                     
-                    // Atualizar métricas
                     ApiManager.chamadasAPI++;
                     ApiManager.tempoTotalAPI += tempo;
                     STATE.metricasPerformance.chamadasAPI = ApiManager.chamadasAPI;
@@ -779,7 +261,6 @@
                         document.body.removeChild(script);
                     }
                     
-                    // Atualizar métricas mesmo em caso de erro
                     ApiManager.chamadasAPI++;
                     ApiManager.tempoTotalAPI += tempo;
                     STATE.metricasPerformance.chamadasAPI = ApiManager.chamadasAPI;
@@ -877,7 +358,6 @@
             }
         };
 
-        // Aliases para compatibilidade
         const apiGet = ApiManager.get;
         const apiPost = ApiManager.post;
 
@@ -889,6 +369,7 @@
                 logoutBtn: document.getElementById('logoutBtn'),
                 relatorioBtn: document.getElementById('relatorioBtn'),
                 diagnosticoBtn: document.getElementById('diagnosticoBtn'),
+                tarefasBtn: document.getElementById('tarefasBtn'),
                 modalOverlay: document.getElementById('modal-overlay'),
                 modalTitle: document.getElementById('modal-title'),
                 modalMessage: document.getElementById('modal-message')
@@ -952,6 +433,7 @@
                 UIManager.elements.logoutBtn.classList.add('hidden');
                 UIManager.elements.relatorioBtn.classList.add('hidden');
                 UIManager.elements.diagnosticoBtn.classList.add('hidden');
+                UIManager.elements.tarefasBtn.classList.add('hidden');
                 UIManager.elements.userInfo.innerHTML = '';
                 STATE.contadoresAtivos.forEach(interval => clearInterval(interval));
                 STATE.contadoresAtivos = [];
@@ -973,6 +455,8 @@
                     UIManager.elements.relatorioBtn.classList.remove('hidden');
                     UIManager.elements.diagnosticoBtn.classList.remove('hidden');
                     UIManager.elements.diagnosticoBtn.onclick = mostrarPainelDiagnostico;
+                    UIManager.elements.tarefasBtn.classList.remove('hidden');
+                    UIManager.elements.tarefasBtn.onclick = mostrarPainelProfessor;
                 } else {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
@@ -984,6 +468,8 @@
                     `;
                     UIManager.elements.relatorioBtn.classList.add('hidden');
                     UIManager.elements.diagnosticoBtn.classList.add('hidden');
+                    // Botão Tarefas REMOVIDO para alunos - apenas Meu Desempenho
+                    UIManager.elements.tarefasBtn.classList.add('hidden');
                 }
                 
                 UIManager.elements.logoutBtn.classList.remove('hidden');
@@ -1016,7 +502,6 @@
                 const fim = new Date(diaEntrega);
                 fim.setHours(22, 0, 0, 0);
 
-                // Se estiver antes do início
                 if (agora < inicio) {
                     const diff = inicio - agora;
                     const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -1041,7 +526,6 @@
                     };
                 }
 
-                // Se estiver depois do fim
                 if (agora > fim) {
                     return {
                         texto: 'Expirado',
@@ -1052,7 +536,6 @@
                     };
                 }
 
-                // Dentro do único dia de entrega (13h–22h)
                 const diffFim = fim - agora;
                 const diasFim = Math.floor(diffFim / (1000 * 60 * 60 * 24));
                 const horasFim = Math.floor((diffFim % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -1142,7 +625,6 @@
 
         // ==================== FUNÇÕES PRINCIPAIS ====================
 
-        // Função de inicialização
         async function init() {
             try {
                 console.log('Inicializando sistema v21.5...');
@@ -1153,14 +635,11 @@
             }
         }
 
-        // Renderizar tela de login
         function renderLogin() {
             UIManager.elements.contentArea.innerHTML = Components.loginForm();
 
-            // Configurar evento de toggle de senha
             document.getElementById('toggleSenha').addEventListener('click', toggleRmVisibility);
 
-            // Configurar evento de input para o email
             const emailPrefix = document.getElementById('email-prefix');
             const emailHidden = document.getElementById('email');
 
@@ -1168,14 +647,12 @@
                 emailHidden.value = this.value.trim() + '@portalsesisp.org.br';
             });
 
-            // Configurar evento de submit do formulário
             document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 await handleLogin(e);
             });
         }
 
-        // Toggle visibilidade da senha
         function toggleRmVisibility() {
             const senhaInput = document.getElementById('senha');
             const toggleButton = document.getElementById('toggleSenha');
@@ -1185,7 +662,6 @@
             toggleButton.textContent = STATE.rmVisible ? '🙈' : '👁️';
         }
 
-        // Manipular login
         async function handleLogin(event) {
             event.preventDefault();
             const emailPrefix = document.getElementById('email-prefix').value.trim();
@@ -1217,7 +693,6 @@
                     
                     UIManager.elements.contentArea.innerHTML = UIManager.renderLoading('Carregando painel...');
                     
-                    // Carregar tarefas
                     try {
                         const tarefasResponse = await apiGet('getTarefas', {}, true);
                         STATE.tarefas = tarefasResponse.data || tarefasResponse;
@@ -1230,7 +705,6 @@
 
                     AuthManager.updateUserInfo();
 
-                    // Redirecionar para o painel apropriado
                     if (STATE.usuarioLogado.Perfil === "Professor") {
                         await mostrarPainelProfessor();
                     } else {
@@ -1360,7 +834,6 @@
             document.getElementById('parte3').value = STATE.tarefaEditando.Parte3 || '';
             document.getElementById('parte4').value = STATE.tarefaEditando.Parte4 || '';
             
-            // Marcar a turma da tarefa sendo editada e desabilitar os checkboxes
             const checkboxes = document.querySelectorAll('.turma-checkbox');
             checkboxes.forEach(checkbox => {
                 checkbox.disabled = true;
@@ -1439,7 +912,6 @@
             elemento.classList.toggle('expandido');
         }
 
-        // ==================== FUNÇÃO CORRIGIDA PARA SALVAR TAREFA ====================
         async function salvarTarefaCorrigida() {
             const btnSalvar = document.getElementById('btnSalvarTarefa');
             
@@ -1448,7 +920,6 @@
                 
                 let turmasSelecionadas;
                 
-                // No modo de edição, usamos a turma da tarefa editada
                 if (STATE.tarefaEditando) {
                     turmasSelecionadas = [STATE.tarefaEditando.Turma];
                 } else {
@@ -1493,10 +964,9 @@
                 
                 let results;
                 if (STATE.tarefaEditando) {
-                    // Modo de edição: enviar uma única requisição para editar a tarefa
                     const dados = {
                         ID: STATE.tarefaEditando.ID,
-                        Turma: STATE.tarefaEditando.Turma, // A turma original, não alterada
+                        Turma: STATE.tarefaEditando.Turma,
                         Tema: tema,
                         Parte1: parte1,
                         Parte2: parte2,
@@ -1509,7 +979,6 @@
                     console.log(`Enviando dados para edição da tarefa ${STATE.tarefaEditando.ID}:`, dados);
                     results = [await apiPost('editarTarefa', dados)];
                 } else {
-                    // Modo de criação: criar uma tarefa para cada turma selecionada
                     const promises = turmasSelecionadas.map(async (turma) => {
                         const dados = {
                             Turma: turma,
@@ -1533,7 +1002,6 @@
                 
                 UIManager.showModal('Sucesso', `Tarefa ${STATE.tarefaEditando ? 'atualizada' : 'criada'} com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
                 
-                // Limpar caches
                 CacheManager.remove('painel_professor');
                 CacheManager.remove('tarefas_professor_lista');
                 turmasSelecionadas.forEach(turma => {
@@ -1551,9 +1019,7 @@
             }
         }
 
-        // ==================== EXCLUSÃO SIMPLIFICADA ====================
         async function excluirTarefaDireto(idTarefa, botao) {
-            // Verificar se é o segundo clique (já está confirmando)
             if (botao.getAttribute('data-confirmando') === 'true') {
                 console.log('Iniciando exclusão confirmada da tarefa:', idTarefa);
                 
@@ -1563,7 +1029,6 @@
                     return;
                 }
                 
-                // Mostrar loading no botão
                 Utils.setButtonLoading(botao, true);
                 
                 try {
@@ -1572,14 +1037,12 @@
                     if (response.success) {
                         UIManager.showModal('Sucesso', `Tarefa "${tarefa.Tema}" excluída com sucesso!`);
                         
-                        // Limpar caches
                         CacheManager.remove('painel_professor');
                         CacheManager.remove('tarefas_professor_lista');
                         CONFIG.TURMAS.forEach(turma => {
                             CacheManager.remove(`relatorio_${turma}`);
                         });
                         
-                        // Recarregar a lista de tarefas
                         await carregarTarefasProfessor();
                         
                     } else {
@@ -1593,13 +1056,11 @@
                     Utils.setButtonLoading(botao, false);
                 }
             } else {
-                // Primeiro clique - entrar no modo de confirmação
                 const textoOriginal = botao.textContent;
                 botao.setAttribute('data-confirmando', 'true');
                 botao.textContent = 'Clique novamente para excluir';
                 botao.style.backgroundColor = '#dc2626';
                 
-                // Voltar ao normal após 3 segundos
                 setTimeout(() => {
                     if (botao.getAttribute('data-confirmando') === 'true') {
                         botao.setAttribute('data-confirmando', 'false');
@@ -1637,7 +1098,6 @@
             if (p3) p3.value = '';
             if (p4) p4.value = '';
             
-            // Reabilitar e desmarcar todas as turmas
             document.querySelectorAll('.turma-checkbox').forEach(cb => {
                 cb.disabled = false;
                 cb.checked = false;
@@ -1712,7 +1172,7 @@
                                     <li>O cérebro consolida melhor a memória entre 6h e 9h após o aprendizado inicial.</li>
                                     <li>O sono tem papel essencial — é durante o sono que ocorre a consolidação sináptica (transformar memórias de curto em longo prazo).</li>
                                     <li>A atenção sustentada é máxima no período entre 8h e 11h da manhã e tem uma segunda faixa ótima entre 17h e 20h.</li>
-                                    <li>À noite, atividades reflexivas e criativas têm melhor rendimento, porque o córtex pré-frontal está menos sobrecarregado de estímulos novos.</li>
+                                    <li>À noite, atividades reflexivas e creativas têm melhor rendimento, porque o córtex pré-frontal está menos sobrecarregado de estímulos novos.</li>
                                     <li>Sono de 7h a 9h por noite.</li>
                                     <li>Evitar telas nos 30 min antes de dormir.</li>
                                     <li>Fazer revisão leve antes do sono.</li>
@@ -1754,7 +1214,7 @@
             icon.classList.toggle('expandido');
             
             if (conteudo.classList.contains('expandido')) {
-                carregarRelatorioAluno(true); // Forçar atualização
+                carregarRelatorioAluno();
             }
         }
 
@@ -1857,11 +1317,9 @@
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             const temLinkSalvo = linkSalvo && String(linkSalvo).trim() !== '';
             
-            // Calcular status baseado na data atual usando a função corrigida
             const agora = new Date();
             const dataAula = new Date(tarefa.DataAula);
             
-            // Calcular data de entrega para cada parte com diasOffset correto
             let diasOffset = 0;
             switch(numeroParte) {
                 case 1: diasOffset = 0; break;
@@ -1874,7 +1332,6 @@
             const dataEntrega = new Date(dataAula);
             dataEntrega.setDate(dataEntrega.getDate() + diasOffset);
             
-            // Verificar se está dentro do período de entrega (13h-22h do dia correto)
             const inicio = new Date(dataEntrega);
             inicio.setHours(13, 0, 0, 0);
             
@@ -1887,7 +1344,6 @@
             let expirado = false;
             
             if (agora < inicio) {
-                // Antes do período de entrega
                 const diff = inicio - agora;
                 const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
                 const horas = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -1903,14 +1359,13 @@
                 
                 status = 'aguardando';
                 liberada = false;
+                expirado = false;
             } else if (agora > fim) {
-                // Depois do período de entrega
                 status = 'expirado';
                 textoStatus = 'Expirado';
                 liberada = false;
                 expirado = true;
             } else {
-                // Dentro do período de entrega
                 const diffFim = fim - agora;
                 const diasFim = Math.floor(diffFim / (1000 * 60 * 60 * 24));
                 const horasFim = Math.floor((diffFim % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -1926,9 +1381,9 @@
                 
                 status = 'disponivel';
                 liberada = true;
+                expirado = false;
             }
             
-            // Verificar horário para mostrar nota esperada
             const horaAtual = agora.getHours();
             let notaEsperada = '0.0';
             let horarioInfo = '';
@@ -1945,7 +1400,6 @@
                 }
             }
 
-            // Adicionar labels de retenção para os alunos
             let retencaoLabel = '';
             switch(numeroParte) {
                 case 1:
@@ -1962,8 +1416,13 @@
                     break;
             }
             
-            // Definir classes para o input
-            const inputClass = `${temLinkSalvo ? 'link-salvo' : ''} ${expirado ? 'expirado' : ''}`;
+            // Determinar classe do input baseado no status
+            let inputClass = '';
+            if (temLinkSalvo) {
+                inputClass = 'link-salvo';
+            } else if (expirado) {
+                inputClass = 'link-expirado';
+            }
             
             return `
             <div class="mt-3 p-3 bg-gray-50 rounded border">
@@ -1976,14 +1435,15 @@
                 <div class="link-container mt-2">
                     <input type="text" 
                            class="link-input ${inputClass}" 
-                           placeholder="${temLinkSalvo ? 'Link já enviado' : 'Cole o link da atividade aqui'}" 
+                           placeholder="${temLinkSalvo ? 'Link já enviado' : (expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui')}" 
                            id="${inputId}"
                            value="${linkSalvo || ''}"
-                           ${temLinkSalvo || !liberada ? 'disabled' : ''}>
-                    ${!temLinkSalvo && liberada ? `
+                           ${temLinkSalvo || expirado || !liberada ? 'disabled' : ''}>
+                    ${!temLinkSalvo ? `
                         <button class="btn-primario btn-link" 
                                 onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                                id="btn-salvar-${tarefa.ID}-${numeroParte}">
+                                id="btn-salvar-${tarefa.ID}-${numeroParte}"
+                                ${expirado || !liberada ? 'disabled' : ''}>
                             Salvar
                         </button>
                     ` : ''}
@@ -2010,7 +1470,6 @@
             }
 
             try {
-                // Mostrar loading no botão salvar
                 Utils.setButtonLoading(botaoSalvar, true);
                 
                 await apiPost('entregarTarefa', {
@@ -2027,14 +1486,12 @@
                 CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                 CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                 
-                // Atualizar a interface manualmente sem recarregar tudo
                 input.classList.add('link-salvo');
                 input.disabled = true;
                 botaoSalvar.disabled = true;
                 botaoSalvar.classList.add('hidden');
                 botaoExcluir.disabled = false;
                 
-                // Adicionar mensagem de sucesso
                 const mensagemSucesso = document.createElement('p');
                 mensagemSucesso.className = 'text-green-600 text-sm mt-1';
                 mensagemSucesso.textContent = '✓ Link salvo com sucesso';
@@ -2052,7 +1509,6 @@
             const botaoSalvar = document.getElementById(`btn-salvar-${idTarefa}-${parte}`);
             
             try {
-                // Mostrar loading no botão excluir
                 Utils.setButtonLoading(botaoExcluir, true);
                 
                 await apiPost('excluirEntrega', {
@@ -2067,7 +1523,6 @@
                 CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                 CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                 
-                // Atualizar a interface manualmente sem recarregar tudo
                 input.classList.remove('link-salvo');
                 input.disabled = false;
                 input.value = '';
@@ -2075,7 +1530,6 @@
                 botaoSalvar.classList.remove('hidden');
                 botaoExcluir.disabled = true;
                 
-                // Remover mensagem de sucesso
                 const mensagemSucesso = input.parentNode.querySelector('.text-green-600');
                 if (mensagemSucesso) {
                     mensagemSucesso.remove();
@@ -2179,7 +1633,6 @@
                         </div>
                     `;
                 } else {
-                    // Se não houver tarefas, mostrar apenas a lista de alunos
                     if (!relatorio.tarefas || relatorio.tarefas.length === 0) {
                         relatorioTurmaHTML += `
                             <div class="overflow-x-auto border rounded-lg mt-4">
@@ -2208,7 +1661,6 @@
                             </div>
                         `;
                     } else {
-                        // Se houver tarefas, mostrar a tabela completa
                         relatorioTurmaHTML += `
                             <div class="overflow-x-auto border rounded-lg mt-4">
                                 <table class="min-w-full compact-table" id="tabela-relatorio">
@@ -2219,7 +1671,6 @@
                                             <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Média</th>
                         `;
                         
-                        // Cabeçalho das tarefas (com colspan para as partes)
                         relatorio.tarefas.forEach((tarefa, index) => {
                             relatorioTurmaHTML += `
                                 <th class="px-2 py-3 text-center font-semibold border-b relatorio-tarefa-header" colspan="4">
@@ -2230,7 +1681,6 @@
                         
                         relatorioTurmaHTML += `</tr><tr>`;
                         
-                        // Subcabeçalho das partes (P1, P2, P3, P4) para cada tarefa
                         relatorio.tarefas.forEach(() => {
                             relatorioTurmaHTML += `
                                 <th class="px-1 py-2 text-center border-b relatorio-parte-header">P1</th>
@@ -2246,7 +1696,6 @@
                                     <tbody>
                         `;
                         
-                        // Dados dos alunos
                         relatorio.alunos.forEach((aluno) => {
                             relatorioTurmaHTML += `
                                 <tr>
@@ -2259,7 +1708,6 @@
                                     </td>
                             `;
                             
-                            // Notas das partes para cada tarefa
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
                                 for (let parte = 1; parte <= 4; parte++) {
                                     const notaParte = aluno[`NotaParte${(tarefaIndex * 4) + parte}`] || 0;
@@ -2354,14 +1802,15 @@
             }
         }
 
-        async function carregarRelatorioAluno(forceRefresh = false) {
+        async function carregarRelatorioAluno() {
             const container = document.getElementById('relatorio-aluno-content');
             
             try {
+                // SEMPRE forçar atualização do relatório do aluno
                 const entregasResponse = await apiGet('getEntregasAluno', { 
                     email: STATE.usuarioLogado.Email, 
                     turma: STATE.usuarioLogado.Turma 
-                }, forceRefresh);
+                }, true); // forceRefresh: true para sempre buscar dados atualizados
                 const entregas = entregasResponse.data || [];
                 
                 let relatorioHTML = '';
@@ -2371,7 +1820,7 @@
                         <p class="text-gray-500 text-center py-4">Nenhuma entrega registrada.</p>
                     `;
                 } else {
-                    const tarefasResponse = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, forceRefresh);
+                    const tarefasResponse = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, true);
                     const todasTarefas = tarefasResponse.data || [];
                     
                     let notaTotal = 0;
@@ -2501,7 +1950,6 @@
             container.innerHTML = '<div class="text-center py-4"><div class="spinner"></div><p class="mt-2 text-gray-600">Testando sistema de exclusão...</p></div>';
             
             try {
-                // Testar se a função de exclusão está disponível
                 const response = await apiGet('testBackend');
                 
                 let resultadoHTML = `
@@ -2519,7 +1967,6 @@
                     </div>
                 `;
                 
-                // Testar se podemos obter a lista de tarefas
                 try {
                     const tarefasResponse = await apiGet('getTarefas', {}, true);
                     const tarefas = tarefasResponse.data || [];
@@ -2537,7 +1984,6 @@
                         </div>
                     `;
                     
-                    // Verificar se há tarefas para testar exclusão
                     if (tarefas.length > 0) {
                         resultadoHTML += `
                             <div class="test-result test-success">
@@ -2645,9 +2091,8 @@
             const container = document.getElementById('metricas-performance');
             
             try {
-                // Coletar métricas de performance
                 const metrics = performance.getEntriesByType('navigation')[0];
-                const memory = performance.memory; // Disponível apenas em alguns navegadores
+                const memory = performance.memory;
                 const metricasAPI = ApiManager.getMetricas();
                 
                 let metricsHTML = `
@@ -2706,7 +2151,6 @@
                 
                 metricsHTML += `</div>`;
                 
-                // Recomendações
                 let recomendacoes = [];
                 
                 if (memory && memory.usedJSHeapSize / memory.totalJSHeapSize > 0.8) {
