@@ -1,36 +1,3 @@
-1.Tela de Criação de Tarefas
-o botão excluir não está excluindo a tarefa e as colunas criadas no excel. Deve aparecer um aviso de confirmação antes de conlcuir o processo.
-Na criação das tarefas a ordem de criação das colunas deve ser essa:
-Nota1	
-Link1	DataHora1	Parte1	Link2	DataHora2	Parte2	
-Link3	DataHora3	Parte3     Link4	DataHora4	Parte4
+quando editei uma tarefa, o sistema criou outra.
 
-Nota2	
-Link5	DataHora5	Parte5	Link6	DataHora6	Parte6	
-Link7	DataHora7	Parte7     Link8	DataHora8	Parte8
-
-Nota3	
-Link9	DataHora9	Parte9	Link10	DataHora10	Parte10	
-Link11	DataHora11	Parte11     Link12	DataHora12	Parte12
-
-Devem ter 3 Cards - Status do Cache, Estatísticas do Sistema e Métricas de Performance
-
-Status do Cache
-Itens em Cache:
-Tamanho do Cache:
-Eficiência do Cache:
-
-Estatísticas do Sistema
-Usuários Carregados:
-Tarefas Carregadas:
-Chamadas API:
-Tempo Total:
-
-Métricas de Performance
-Coletar Métricas
-Tempo API:
-Status API:
-Chamadas API:
-Memória Usada:
-Memória Total:
-Recomendações:
+testar se o aluno excluir esta funcionando
