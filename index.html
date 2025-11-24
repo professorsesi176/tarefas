@@ -1654,7 +1654,7 @@
                             <button onclick="editarTarefa('${tarefa.ID}')" class="btn-editar">
                                 Editar
                             </button>
-                            <button onclick="solicitarExclusaoTarefa('${tarefa.ID}')" class="btn-excluir">
+                            <button onclick="solicitarExclusaoTarefa('${tarefa.ID}')" class="btn-excluir" id="btn-excluir-${tarefa.ID}">
                                 Excluir
                             </button>
                         </div>
@@ -1822,12 +1822,27 @@
             }
         }, 500);
 
+        // ==================== FUNÇÃO SOLICITAR EXCLUSÃO CORRIGIDA ====================
         function solicitarExclusaoTarefa(idTarefa) {
+            console.log('solicitarExclusaoTarefa chamada para ID:', idTarefa);
+            
             const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
+            if (!tarefa) {
+                console.error('Tarefa não encontrada para exclusão:', idTarefa);
+                UIManager.showModal('Erro', 'Tarefa não encontrada.');
+                return;
+            }
+            
             STATE.tarefaParaExcluir = idTarefa;
-            UIManager.showConfirmModal(`Tem certeza que deseja excluir a tarefa "${tarefa?.Tema}" da turma ${tarefa?.Turma}?`, () => {
-                excluirTarefa(idTarefa);
-            });
+            console.log('Mostrando modal de confirmação para exclusão');
+            
+            UIManager.showConfirmModal(
+                `Tem certeza que deseja excluir a tarefa "${tarefa.Tema}" da turma ${tarefa.Turma}?`, 
+                () => {
+                    console.log('Confirmação recebida, excluindo tarefa:', idTarefa);
+                    excluirTarefa(idTarefa);
+                }
+            );
         }
 
         async function editarTarefa(idTarefa) {
@@ -1845,10 +1860,20 @@
 
         // ==================== FUNÇÃO EXCLUIR TAREFA CORRIGIDA ====================
         async function excluirTarefa(idTarefa) {
-            const botaoExcluir = document.querySelector(`button[onclick="solicitarExclusaoTarefa('${idTarefa}')"]`);
+            console.log('excluirTarefa chamada para ID:', idTarefa);
+            
+            // Encontrar o botão correto usando o ID específico
+            const botaoExcluir = document.getElementById(`btn-excluir-${idTarefa}`);
+            
+            if (!botaoExcluir) {
+                console.error('Botão de exclusão não encontrado para ID:', idTarefa);
+                UIManager.showModal('Erro', 'Erro interno: botão não encontrado.');
+                return;
+            }
             
             try {
                 // Mostrar loading no botão
+                console.log('Ativando loading no botão de exclusão');
                 Utils.setButtonLoading(botaoExcluir, true);
                 
                 await apiPost('excluirTarefa', { ID: idTarefa });
@@ -1865,8 +1890,10 @@
                 await carregarTarefasProfessor();
                 
             } catch (error) {
+                console.error('Erro ao excluir tarefa:', error);
                 UIManager.showModal('Erro', `Erro ao excluir tarefa: ${error.message}`);
             } finally {
+                console.log('Desativando loading no botão de exclusão');
                 Utils.setButtonLoading(botaoExcluir, false);
             }
         }
