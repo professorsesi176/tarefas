@@ -419,6 +419,7 @@
         .btn-link {
             padding: 8px 12px;
             font-size: 0.8rem;
+            position: relative;
         }
         
         .btn-link:disabled {
@@ -547,6 +548,7 @@
             padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
+            position: relative;
         }
         
         .btn-editar:hover {
@@ -560,6 +562,7 @@
             padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
+            position: relative;
         }
         
         .btn-excluir:hover {
@@ -724,7 +727,7 @@
             100% { background-color: transparent; }
         }
 
-        /* Novos estilos para a versão 20.8 */
+        /* Novos estilos para a versão 20.9 */
         .aluno-relatorio-card {
             background-color: #f8fafc;
             border: 2px solid #e2e8f0;
@@ -827,7 +830,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 20.8
+            Desenvolvido por Geovane Modena | Versão 20.9
         </footer>
     </div>
 
@@ -1375,7 +1378,7 @@
         // Função de inicialização
         async function init() {
             try {
-                console.log('Inicializando sistema v20.8...');
+                console.log('Inicializando sistema v20.9...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1841,7 +1844,12 @@
         }
 
         async function excluirTarefa(idTarefa) {
+            const botaoExcluir = document.querySelector(`[onclick="solicitarExclusaoTarefa('${idTarefa}')"]`);
+            
             try {
+                // Mostrar loading no botão
+                Utils.setButtonLoading(botaoExcluir, true);
+                
                 await apiPost('excluirTarefa', { ID: idTarefa });
                 UIManager.showModal('Sucesso', 'Tarefa excluída com sucesso.');
                 
@@ -1854,6 +1862,8 @@
                 await carregarTarefasProfessor();
             } catch (error) {
                 UIManager.showModal('Erro', `Erro ao excluir tarefa: ${error.message}`);
+            } finally {
+                Utils.setButtonLoading(botaoExcluir, false);
             }
         }
 
@@ -2192,13 +2202,15 @@
                            ${temLinkSalvo || !liberada ? 'disabled' : ''}>
                     ${!temLinkSalvo ? `
                         <button class="btn-primario btn-link" 
-                                onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte})"
+                                onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                                id="btn-salvar-${tarefa.ID}-${numeroParte}"
                                 ${!liberada ? 'disabled' : ''}>
                             Salvar
                         </button>
                     ` : ''}
                     <button class="btn-secundario btn-link" 
-                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte})"
+                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                            id="btn-excluir-${tarefa.ID}-${numeroParte}"
                             ${!temLinkSalvo ? 'disabled' : ''}>
                         Excluir
                     </button>
@@ -2208,9 +2220,10 @@
         }
 
         // ==================== FUNÇÕES DE ENTREGA ATUALIZADAS PARA EMAIL ====================
-        async function salvarLinkAluno(idTarefa, parte) {
+        async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             const link = input ? input.value.trim() : '';
+            const botaoExcluir = document.getElementById(`btn-excluir-${idTarefa}-${parte}`);
             
             if (!link) {
                 UIManager.showModal('Atenção', 'Por favor, cole um link válido.');
@@ -2218,6 +2231,9 @@
             }
 
             try {
+                // Mostrar loading no botão salvar
+                Utils.setButtonLoading(botaoSalvar, true);
+                
                 await apiPost('entregarTarefa', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
@@ -2232,14 +2248,34 @@
                 CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                 CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                 
-                await carregarTarefasAluno();
+                // Atualizar a interface manualmente sem recarregar tudo
+                input.classList.add('link-salvo');
+                input.disabled = true;
+                botaoSalvar.disabled = true;
+                botaoSalvar.classList.add('hidden');
+                botaoExcluir.disabled = false;
+                
+                // Adicionar mensagem de sucesso
+                const mensagemSucesso = document.createElement('p');
+                mensagemSucesso.className = 'text-green-600 text-sm mt-1';
+                mensagemSucesso.textContent = '✓ Link salvo com sucesso';
+                input.parentNode.appendChild(mensagemSucesso);
+                
             } catch (error) {
                 UIManager.showModal('Erro', `Erro ao salvar link: ${error.message}`);
+            } finally {
+                Utils.setButtonLoading(botaoSalvar, false);
             }
         }
 
-        async function excluirLinkAluno(idTarefa, parte) {
+        async function excluirLinkAluno(idTarefa, parte, botaoExcluir) {
+            const input = document.getElementById(`link-${idTarefa}-${parte}`);
+            const botaoSalvar = document.getElementById(`btn-salvar-${idTarefa}-${parte}`);
+            
             try {
+                // Mostrar loading no botão excluir
+                Utils.setButtonLoading(botaoExcluir, true);
+                
                 await apiPost('excluirEntrega', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
@@ -2252,9 +2288,24 @@
                 CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                 CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                 
-                await carregarTarefasAluno();
+                // Atualizar a interface manualmente sem recarregar tudo
+                input.classList.remove('link-salvo');
+                input.disabled = false;
+                input.value = '';
+                botaoSalvar.disabled = false;
+                botaoSalvar.classList.remove('hidden');
+                botaoExcluir.disabled = true;
+                
+                // Remover mensagem de sucesso
+                const mensagemSucesso = input.parentNode.querySelector('.text-green-600');
+                if (mensagemSucesso) {
+                    mensagemSucesso.remove();
+                }
+                
             } catch (error) {
                 UIManager.showModal('Erro', `Erro ao excluir link: ${error.message}`);
+            } finally {
+                Utils.setButtonLoading(botaoExcluir, false);
             }
         }
 
