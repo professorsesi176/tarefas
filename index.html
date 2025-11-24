@@ -1767,44 +1767,62 @@
 
         // ==================== EXCLUSÃO SIMPLIFICADA ====================
         async function excluirTarefaDireto(idTarefa, botao) {
-            console.log('Iniciando exclusão direta da tarefa:', idTarefa);
-            
-            const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
-            if (!tarefa) {
-                UIManager.showModal('Erro', 'Tarefa não encontrada.');
-                return;
-            }
-            
-            // Mostrar loading no botão
-            Utils.setButtonLoading(botao, true);
-            
-            try {
-                const response = await apiPost('excluirTarefa', { ID: idTarefa });
-                
-                if (response.success) {
-                    UIManager.showModal('Sucesso', `Tarefa "${tarefa.Tema}" excluída com sucesso!`);
-                    
-                    // Limpar caches
-                    CacheManager.remove('painel_professor');
-                    CacheManager.remove('tarefas_professor_lista');
-                    CONFIG.TURMAS.forEach(turma => {
-                        CacheManager.remove(`relatorio_${turma}`);
-                    });
-                    
-                    // Recarregar a lista de tarefas
-                    await carregarTarefasProfessor();
-                    
-                } else {
-                    throw new Error(response.error || 'Erro desconhecido ao excluir tarefa');
-                }
-                
-            } catch (error) {
-                console.error('Erro ao excluir tarefa:', error);
-                UIManager.showModal('Erro', `Falha ao excluir tarefa: ${error.message}`);
-            } finally {
-                Utils.setButtonLoading(botao, false);
-            }
+    // Verificar se é o segundo clique (já está confirmando)
+    if (botao.getAttribute('data-confirmando') === 'true') {
+        console.log('Iniciando exclusão confirmada da tarefa:', idTarefa);
+        
+        const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
+        if (!tarefa) {
+            UIManager.showModal('Erro', 'Tarefa não encontrada.');
+            return;
         }
+        
+        // Mostrar loading no botão
+        Utils.setButtonLoading(botao, true);
+        
+        try {
+            const response = await apiPost('excluirTarefa', { ID: idTarefa });
+            
+            if (response.success) {
+                UIManager.showModal('Sucesso', `Tarefa "${tarefa.Tema}" excluída com sucesso!`);
+                
+                // Limpar caches
+                CacheManager.remove('painel_professor');
+                CacheManager.remove('tarefas_professor_lista');
+                CONFIG.TURMAS.forEach(turma => {
+                    CacheManager.remove(`relatorio_${turma}`);
+                });
+                
+                // Recarregar a lista de tarefas
+                await carregarTarefasProfessor();
+                
+            } else {
+                throw new Error(response.error || 'Erro desconhecido ao excluir tarefa');
+            }
+            
+        } catch (error) {
+            console.error('Erro ao excluir tarefa:', error);
+            UIManager.showModal('Erro', `Falha ao excluir tarefa: ${error.message}`);
+        } finally {
+            Utils.setButtonLoading(botao, false);
+        }
+    } else {
+        // Primeiro clique - entrar no modo de confirmação
+        const textoOriginal = botao.textContent;
+        botao.setAttribute('data-confirmando', 'true');
+        botao.textContent = 'Clique novamente para excluir';
+        botao.style.backgroundColor = '#dc2626';
+        
+        // Voltar ao normal após 3 segundos
+        setTimeout(() => {
+            if (botao.getAttribute('data-confirmando') === 'true') {
+                botao.setAttribute('data-confirmando', 'false');
+                botao.textContent = textoOriginal;
+                botao.style.backgroundColor = '';
+            }
+        }, 3000);
+    }
+}
 
         async function editarTarefa(idTarefa) {
             const tarefa = STATE.tarefas.find(t => t.ID === idTarefa);
