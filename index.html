@@ -761,13 +761,6 @@
                             <label for="dataAula" class="block text-sm font-medium text-gray-700">Data da Aula</label>
                             <input type="date" id="dataAula" class="mt-1" required>
                         </div>
-
-                        <div class="form-group">
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="tarefaEspecial" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
-                                <span class="text-sm font-medium text-gray-700">Tarefa Especial (1.5 pontos, independente do horário)</span>
-                            </label>
-                        </div>
                         
                         <div class="mt-4 space-y-4">
                             <div>
@@ -841,11 +834,6 @@
             document.getElementById('parte3').value = STATE.tarefaEditando.Parte3 || '';
             document.getElementById('parte4').value = STATE.tarefaEditando.Parte4 || '';
             
-            // Preencher tarefa especial se existir
-            if (STATE.tarefaEditando.TarefaEspecial) {
-                document.getElementById('tarefaEspecial').checked = true;
-            }
-            
             const checkboxes = document.querySelectorAll('.turma-checkbox');
             checkboxes.forEach(checkbox => {
                 checkbox.disabled = true;
@@ -888,12 +876,11 @@
             }
 
             tbody.innerHTML = STATE.tarefas.map(tarefa => {
-                const especialBadge = tarefa.TarefaEspecial ? '<span class="especial-badge">Especial</span>' : '';
                 return `
                 <tr class="tarefa-item" id="tarefa-row-${tarefa.ID}">
                     <td class="turma-column">${Utils.escapeHTML(tarefa.Turma)}</td>
                     <td class="px-4 py-2">
-                        <div class="font-semibold text-gray-800 mb-2">${Utils.escapeHTML(tarefa.Tema)} ${especialBadge}</div>
+                        <div class="font-semibold text-gray-800 mb-2">${Utils.escapeHTML(tarefa.Tema)}</div>
                         <button class="tarefa-expand-button" onclick="togglePartesTarefa('${tarefa.ID}')">
                             Ver Partes
                         </button>
@@ -947,7 +934,6 @@
 
                 const tema = document.getElementById('tema').value.trim();
                 const dataAula = document.getElementById('dataAula').value;
-                const tarefaEspecial = document.getElementById('tarefaEspecial').checked;
 
                 if (!tema || !dataAula) {
                     UIManager.showModal('Atenção', 'Preencha o tema e a data da aula.');
@@ -987,7 +973,6 @@
                         Parte3: parte3,
                         Parte4: parte4,
                         DataAula: dataAula,
-                        TarefaEspecial: tarefaEspecial,
                         professor: STATE.usuarioLogado.NomeCompleto
                     };
 
@@ -1003,7 +988,6 @@
                             Parte3: parte3,
                             Parte4: parte4,
                             DataAula: dataAula,
-                            TarefaEspecial: tarefaEspecial,
                             professor: STATE.usuarioLogado.NomeCompleto
                         };
 
@@ -1107,15 +1091,12 @@
             const p2 = document.getElementById('parte2');
             const p3 = document.getElementById('parte3');
             const p4 = document.getElementById('parte4');
-            const especialEl = document.getElementById('tarefaEspecial');
-            
             if (temaEl) temaEl.value = '';
             if (dataEl) dataEl.value = '';
             if (p1) p1.value = '';
             if (p2) p2.value = '';
             if (p3) p3.value = '';
             if (p4) p4.value = '';
-            if (especialEl) especialEl.checked = false;
             
             document.querySelectorAll('.turma-checkbox').forEach(cb => {
                 cb.disabled = false;
@@ -1314,14 +1295,10 @@
 
             container.innerHTML = tarefasLocal.map((tarefa, index) => {
                 const entregaTarefa = entregas.filter(e => e.ID_Tarefa === `TAREFA_${index + 1}`);
-                const especialBadge = tarefa.TarefaEspecial ? '<span class="especial-badge">Tarefa Especial (1.5 pts)</span>' : '';
                 
                 return `
                 <div class="border border-gray-200 rounded-lg p-4 mb-4">
-                    <div class="flex justify-between items-start">
-                        <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
-                        ${especialBadge}
-                    </div>
+                    <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
                     <p class="text-sm text-gray-600 mt-1">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
                     
                     ${renderParteAluno(tarefa, 1, entregaTarefa, index)}
@@ -1407,22 +1384,12 @@
                 expirado = false;
             }
             
-            // Para tarefas especiais, sempre considerar como liberada
-            if (tarefa.TarefaEspecial) {
-                liberada = true;
-                status = 'disponivel';
-                textoStatus = 'Tarefa Especial - Sem prazo';
-            }
-            
             const horaAtual = agora.getHours();
             let notaEsperada = '0.0';
             let horarioInfo = '';
             
             if (liberada) {
-                if (tarefa.TarefaEspecial) {
-                    notaEsperada = '1.5';
-                    horarioInfo = '<div class="horario-info horario-especial">Tarefa Especial: 1.5 pontos (sem restrição de horário)</div>';
-                } else if (horaAtual >= 17 && horaAtual < 20) {
+                if (horaAtual >= 17 && horaAtual < 20) {
                     notaEsperada = '2.5';
                     horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h): 2.5</div>';
                 } else if ((horaAtual >= 13 && horaAtual < 17) || (horaAtual >= 20 && horaAtual < 22)) {
@@ -1434,33 +1401,41 @@
             }
 
             let retencaoLabel = '';
-            if (!tarefa.TarefaEspecial) {
-                switch(numeroParte) {
-                    case 1:
-                        retencaoLabel = '<span class="retencao-aviso retencao-50">50% retenção</span>';
-                        break;
-                    case 2:
-                        retencaoLabel = '<span class="retencao-aviso retencao-25">25% retenção</span>';
-                        break;
-                    case 3:
-                        retencaoLabel = '<span class="retencao-aviso retencao-15">15% retenção</span>';
-                        break;
-                    case 4:
-                        retencaoLabel = '<span class="retencao-aviso retencao-10">9.99% retenção</span>';
-                        break;
-                }
+            switch(numeroParte) {
+                case 1:
+                    retencaoLabel = '<span class="retencao-aviso retencao-50">50% retenção</span>';
+                    break;
+                case 2:
+                    retencaoLabel = '<span class="retencao-aviso retencao-25">25% retenção</span>';
+                    break;
+                case 3:
+                    retencaoLabel = '<span class="retencao-aviso retencao-15">15% retenção</span>';
+                    break;
+                case 4:
+                    retencaoLabel = '<span class="retencao-aviso retencao-10">9.99% retenção</span>';
+                    break;
             }
             
             // Determinar classe do input baseado no status
             let inputClass = '';
             if (temLinkSalvo) {
                 inputClass = 'link-salvo';
-            } else if (expirado && !tarefa.TarefaEspecial) {
+            } else if (expirado) {
                 inputClass = 'link-expirado';
             }
             
-            // SEMPRE mostrar o conteúdo - removida a restrição
-            const conteudoParteHTML = `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>`;
+            // Conteúdo da parte - só mostra se estiver liberada ou se já tiver link salvo
+            let conteudoParteHTML = '';
+            if (liberada || temLinkSalvo) {
+                conteudoParteHTML = `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>`;
+            } else {
+                conteudoParteHTML = `
+                    <div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                        <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
+                        <p class="text-yellow-600 text-sm mt-1">Aguarde até que esta parte seja liberada para visualizar o conteúdo</p>
+                    </div>
+                `;
+            }
             
             return `
             <div class="mt-3 p-3 bg-gray-50 rounded border">
@@ -1473,32 +1448,31 @@
                 <div class="link-container mt-2">
                     <input type="text" 
                            class="link-input ${inputClass}" 
-                           placeholder="${temLinkSalvo ? 'Link já enviado' : ((expirado && !tarefa.TarefaEspecial) ? 'Prazo expirado' : 'Cole o link da atividade aqui')}" 
+                           placeholder="${temLinkSalvo ? 'Link já enviado' : (expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui')}" 
                            id="${inputId}"
                            value="${linkSalvo || ''}"
-                           ${(temLinkSalvo || (expirado && !tarefa.TarefaEspecial) || !liberada) ? 'disabled' : ''}>
+                           ${temLinkSalvo || expirado || !liberada ? 'disabled' : ''}>
                     ${!temLinkSalvo ? `
                         <button class="btn-primario btn-link" 
-                                onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this, ${tarefa.TarefaEspecial})"
+                                onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
                                 id="btn-salvar-${tarefa.ID}-${numeroParte}"
-                                ${(expirado && !tarefa.TarefaEspecial) || !liberada ? 'disabled' : ''}>
+                                ${expirado || !liberada ? 'disabled' : ''}>
                             Salvar
                         </button>
                     ` : ''}
-                    ${temLinkSalvo ? `
-                        <button class="btn-secundario btn-link" 
-                                onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                                id="btn-excluir-${tarefa.ID}-${numeroParte}">
-                            Excluir
-                        </button>
-                    ` : ''}
+                    <button class="btn-secundario btn-link" 
+                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                            id="btn-excluir-${tarefa.ID}-${numeroParte}"
+                            ${!temLinkSalvo ? 'disabled' : ''}>
+                        Excluir
+                    </button>
                 </div>
                 ${temLinkSalvo ? '<p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>' : ''}
             </div>`;
         }
 
         // ==================== FUNÇÕES DE ENTREGA CORRIGIDAS ====================
-        async function salvarLinkAluno(idTarefa, parte, botaoSalvar, isTarefaEspecial = false) {
+        async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             const link = input ? input.value.trim() : '';
             const botaoExcluir = document.getElementById(`btn-excluir-${idTarefa}-${parte}`);
@@ -1518,8 +1492,7 @@
                     Email_Aluno: STATE.usuarioLogado.Email,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte,
-                    Link: link,
-                    TarefaEspecial: isTarefaEspecial
+                    Link: link
                 });
                 
                 const response = await apiPost('entregarTarefa', {
@@ -1528,15 +1501,13 @@
                     NomeAluno: STATE.usuarioLogado.NomeCompleto,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte,
-                    Link: link,
-                    TarefaEspecial: isTarefaEspecial
+                    Link: link
                 });
                 
                 console.log('Resposta do salvamento:', response);
                 
                 if (response.success) {
-                    const nota = response.nota || (isTarefaEspecial ? '1.5' : 'N/A');
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso! Nota: ${nota}`);
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso! Nota: ${response.nota || 'N/A'}`);
                     
                     // Limpar caches para forçar recarregamento
                     CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
@@ -1611,7 +1582,7 @@
                 if (!tema) return;
                 
                 const tarefa = STATE.tarefas.find(t => t.Tema === tema);
-                if (tarefa && !tarefa.TarefaEspecial) {
+                if (tarefa) {
                     const contadores = TimeManager.calcularContadoresOtimizado(tarefa.DataAula);
                     
                     [1, 2, 3, 4].forEach(parte => {
@@ -1621,6 +1592,20 @@
                             if (contadorElement.textContent !== contador.texto) {
                                 contadorElement.textContent = contador.texto;
                                 contadorElement.className = `contador ${contador.classe}`;
+                                
+                                // Atualizar também a visibilidade do conteúdo
+                                const parteContainer = contadorElement.closest('.mt-3');
+                                const conteudoElement = parteContainer.querySelector('.conteudo-formatado, .conteudo-oculto');
+                                if (conteudoElement) {
+                                    const novoConteudoHTML = contador.liberada ? 
+                                        `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(tarefa[`Parte${parte}`])}</div>` :
+                                        `<div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                                            <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
+                                            <p class="text-yellow-600 text-sm mt-1">Aguarde até que esta parte seja liberada para visualizar o conteúdo</p>
+                                        </div>`;
+                                    
+                                    conteudoElement.outerHTML = novoConteudoHTML;
+                                }
                             }
                         }
                     });
@@ -1735,7 +1720,7 @@
                         relatorio.tarefas.forEach((tarefa, index) => {
                             relatorioTurmaHTML += `
                                 <th class="px-2 py-3 text-center font-semibold border-b relatorio-tarefa-header" colspan="4">
-                                    ${Utils.escapeHTML(tarefa.Tema)} ${tarefa.TarefaEspecial ? '(Especial)' : ''}
+                                    ${Utils.escapeHTML(tarefa.Tema)}
                                 </th>
                             `;
                         });
@@ -1774,9 +1759,7 @@
                                     const notaParte = aluno[`NotaParte${(tarefaIndex * 4) + parte}`] || 0;
                                     let classeNota = 'text-gray-600';
                                     if (notaParte > 0) {
-                                        if (tarefa.TarefaEspecial) {
-                                            classeNota = 'text-blue-600 font-semibold';
-                                        } else if (notaParte >= 2.5) {
+                                        if (notaParte >= 2.5) {
                                             classeNota = 'text-green-600 font-semibold';
                                         } else {
                                             classeNota = 'text-red-600';
@@ -1898,7 +1881,6 @@
                                         <th>Parte</th>
                                         <th class="data-column">Data de Submissão</th>
                                         <th class="data-column">Nota</th>
-                                        <th class="data-column">Tipo</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1908,7 +1890,6 @@
                         const tarefaIndex = parseInt(entrega.ID_Tarefa.replace('TAREFA_', '')) - 1;
                         const tarefa = todasTarefas[tarefaIndex];
                         const temaTarefa = tarefa ? tarefa.Tema : `Tarefa ${tarefaIndex + 1}`;
-                        const isEspecial = tarefa ? tarefa.TarefaEspecial : false;
                         
                         const notaEntrega = parseFloat(entrega.Nota) || 0;
                         if (notaEntrega > 0) {
@@ -1921,8 +1902,7 @@
                                 <td>${Utils.escapeHTML(temaTarefa)}</td>
                                 <td>Parte ${entrega.Parte}</td>
                                 <td class="data-column">${Utils.formatarData(entrega.DataSubmissao)}</td>
-                                <td class="data-column font-semibold ${isEspecial ? 'text-blue-600' : (notaEntrega >= 2.5 ? 'text-green-600' : 'text-red-600')}">${notaEntrega.toFixed(1)}</td>
-                                <td class="data-column">${isEspecial ? 'Especial' : 'Normal'}</td>
+                                <td class="data-column font-semibold">${notaEntrega.toFixed(1)}</td>
                             </tr>
                         `;
                     });
@@ -2201,6 +2181,14 @@
     </script>
 
     <style>
+        .conteudo-oculto {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
         .conteudo-formatado {
             white-space: pre-wrap;
             word-wrap: break-word;
@@ -2220,36 +2208,6 @@
         .contador.expirado {
             color: #dc2626;
             font-weight: 600;
-        }
-        
-        .especial-badge {
-            background-color: #3b82f6;
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .horario-especial {
-            color: #3b82f6;
-            font-weight: 600;
-        }
-        
-        .link-input:disabled {
-            background-color: #f3f4f6;
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
-        
-        .link-salvo {
-            background-color: #f0fdf4;
-            border-color: #bbf7d0;
-        }
-        
-        .link-expirado {
-            background-color: #fef2f2;
-            border-color: #fecaca;
         }
     </style>
 </body>
