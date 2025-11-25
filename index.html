@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 21.5
+            Desenvolvido por Geovane Modena | Versão 21.6
         </footer>
     </div>
 
@@ -627,7 +627,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v21.5...');
+                console.log('Inicializando sistema v21.6...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1424,13 +1424,26 @@
                 inputClass = 'link-expirado';
             }
             
+            // Conteúdo da parte - só mostra se estiver liberada ou se já tiver link salvo
+            let conteudoParteHTML = '';
+            if (liberada || temLinkSalvo) {
+                conteudoParteHTML = `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>`;
+            } else {
+                conteudoParteHTML = `
+                    <div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                        <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
+                        <p class="text-yellow-600 text-sm mt-1">Aguarde até que esta parte seja liberada para visualizar o conteúdo</p>
+                    </div>
+                `;
+            }
+            
             return `
             <div class="mt-3 p-3 bg-gray-50 rounded border">
                 <div class="flex justify-between items-center">
                     <strong>Parte ${numeroParte} ${retencaoLabel}</strong>
                     <span class="contador ${status}">${textoStatus}</span>
                 </div>
-                <div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>
+                ${conteudoParteHTML}
                 ${horarioInfo}
                 <div class="link-container mt-2">
                     <input type="text" 
@@ -1458,7 +1471,7 @@
             </div>`;
         }
 
-        // ==================== FUNÇÕES DE ENTREGA ====================
+        // ==================== FUNÇÕES DE ENTREGA CORRIGIDAS ====================
         async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             const link = input ? input.value.trim() : '';
@@ -1470,9 +1483,19 @@
             }
 
             try {
+                // Mostrar loading no botão salvar
                 Utils.setButtonLoading(botaoSalvar, true);
+                botaoSalvar.textContent = "Salvando...";
                 
-                await apiPost('entregarTarefa', {
+                console.log('Enviando link para salvar:', {
+                    ID_Tarefa: idTarefa,
+                    Email_Aluno: STATE.usuarioLogado.Email,
+                    Turma: STATE.usuarioLogado.Turma,
+                    Parte: parte,
+                    Link: link
+                });
+                
+                const response = await apiPost('entregarTarefa', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     NomeAluno: STATE.usuarioLogado.NomeCompleto,
@@ -1481,64 +1504,73 @@
                     Link: link
                 });
                 
-                UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!`);
+                console.log('Resposta do salvamento:', response);
                 
-                CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
-                CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
-                
-                input.classList.add('link-salvo');
-                input.disabled = true;
-                botaoSalvar.disabled = true;
-                botaoSalvar.classList.add('hidden');
-                botaoExcluir.disabled = false;
-                
-                const mensagemSucesso = document.createElement('p');
-                mensagemSucesso.className = 'text-green-600 text-sm mt-1';
-                mensagemSucesso.textContent = '✓ Link salvo com sucesso';
-                input.parentNode.appendChild(mensagemSucesso);
+                if (response.success) {
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso! Nota: ${response.nota || 'N/A'}`);
+                    
+                    // Limpar caches para forçar recarregamento
+                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
+                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
+                    
+                    // Recarregar as tarefas para atualizar a interface
+                    await carregarTarefasAluno();
+                    
+                } else {
+                    throw new Error(response.error || 'Erro desconhecido ao salvar link');
+                }
                 
             } catch (error) {
+                console.error('Erro detalhado ao salvar link:', error);
                 UIManager.showModal('Erro', `Erro ao salvar link: ${error.message}`);
             } finally {
                 Utils.setButtonLoading(botaoSalvar, false);
+                botaoSalvar.textContent = "Salvar";
             }
         }
 
         async function excluirLinkAluno(idTarefa, parte, botaoExcluir) {
-            const input = document.getElementById(`link-${idTarefa}-${parte}`);
-            const botaoSalvar = document.getElementById(`btn-salvar-${idTarefa}-${parte}`);
-            
             try {
+                // Mostrar loading no botão excluir
                 Utils.setButtonLoading(botaoExcluir, true);
+                botaoExcluir.textContent = "Excluindo...";
                 
-                await apiPost('excluirEntrega', {
+                console.log('Excluindo entrega:', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte
                 });
                 
-                UIManager.showModal('Sucesso', `Link da parte ${parte} excluído com sucesso!`);
+                const response = await apiPost('excluirEntrega', {
+                    ID_Tarefa: idTarefa,
+                    Email_Aluno: STATE.usuarioLogado.Email,
+                    Turma: STATE.usuarioLogado.Turma,
+                    Parte: parte
+                });
                 
-                CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
-                CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
+                console.log('Resposta da exclusão:', response);
                 
-                input.classList.remove('link-salvo');
-                input.disabled = false;
-                input.value = '';
-                botaoSalvar.disabled = false;
-                botaoSalvar.classList.remove('hidden');
-                botaoExcluir.disabled = true;
-                
-                const mensagemSucesso = input.parentNode.querySelector('.text-green-600');
-                if (mensagemSucesso) {
-                    mensagemSucesso.remove();
+                if (response.success) {
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} excluído com sucesso!`);
+                    
+                    // Limpar caches para forçar recarregamento
+                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
+                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
+                    
+                    // Recarregar as tarefas para atualizar a interface
+                    await carregarTarefasAluno();
+                    
+                } else {
+                    throw new Error(response.error || 'Erro desconhecido ao excluir link');
                 }
                 
             } catch (error) {
+                console.error('Erro detalhado ao excluir link:', error);
                 UIManager.showModal('Erro', `Erro ao excluir link: ${error.message}`);
             } finally {
                 Utils.setButtonLoading(botaoExcluir, false);
+                botaoExcluir.textContent = "Excluir";
             }
         }
 
@@ -1560,6 +1592,20 @@
                             if (contadorElement.textContent !== contador.texto) {
                                 contadorElement.textContent = contador.texto;
                                 contadorElement.className = `contador ${contador.classe}`;
+                                
+                                // Atualizar também a visibilidade do conteúdo
+                                const parteContainer = contadorElement.closest('.mt-3');
+                                const conteudoElement = parteContainer.querySelector('.conteudo-formatado, .conteudo-oculto');
+                                if (conteudoElement) {
+                                    const novoConteudoHTML = contador.liberada ? 
+                                        `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(tarefa[`Parte${parte}`])}</div>` :
+                                        `<div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                                            <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
+                                            <p class="text-yellow-600 text-sm mt-1">Aguarde até que esta parte seja liberada para visualizar o conteúdo</p>
+                                        </div>`;
+                                    
+                                    conteudoElement.outerHTML = novoConteudoHTML;
+                                }
                             }
                         }
                     });
@@ -1882,22 +1928,15 @@
             }
         }
 
-        // ==================== DIAGNÓSTICO MELHORADO ====================
+        // ==================== DIAGNÓSTICO SIMPLIFICADO ====================
         async function mostrarPainelDiagnostico() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-4">Painel de Diagnóstico - Versão 21.5</h3>
+                    <h3 class="text-2xl font-bold text-red-700 mb-6">Painel de Diagnóstico do Sistema</h3>
                     
-                    <div class="mb-6">
-                        <button onclick="testarExclusaoTarefas()" class="btn-primario mb-4">
-                            Testar Sistema de Exclusão
-                        </button>
-                        <div id="resultado-teste-exclusao"></div>
-                    </div>
-                    
-                    <div class="diagnostico-linha">
-                        <div class="diagnostico-item">
-                            <h4 class="font-semibold mb-3">Status do Cache</h4>
+                    <div class="diagnostico-grid">
+                        <div class="diagnostico-card">
+                            <h4 class="font-semibold mb-3 text-gray-800">Status do Cache</h4>
                             <div id="status-cache">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
@@ -1906,8 +1945,8 @@
                             </div>
                         </div>
                         
-                        <div class="diagnostico-item">
-                            <h4 class="font-semibold mb-3">Estatísticas do Sistema</h4>
+                        <div class="diagnostico-card">
+                            <h4 class="font-semibold mb-3 text-gray-800">Estatísticas do Sistema</h4>
                             <div id="estatisticas-sistema">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
@@ -1916,8 +1955,8 @@
                             </div>
                         </div>
                         
-                        <div class="diagnostico-item">
-                            <h4 class="font-semibold mb-3">Métricas de Performance</h4>
+                        <div class="diagnostico-card">
+                            <h4 class="font-semibold mb-3 text-gray-800">Métricas de Performance</h4>
                             <div id="metricas-performance">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
@@ -1925,14 +1964,14 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="mt-6">
-                        <h4 class="font-semibold mb-3">Informações de Debug</h4>
-                        <div id="debug-info">
-                            <div class="text-center py-4">
-                                <div class="spinner"></div>
-                                <p class="mt-2 text-gray-600">Carregando informações de debug...</p>
+                        <div class="diagnostico-card">
+                            <h4 class="font-semibold mb-3 text-gray-800">Informações Técnicas</h4>
+                            <div id="debug-info">
+                                <div class="text-center py-4">
+                                    <div class="spinner"></div>
+                                    <p class="mt-2 text-gray-600">Carregando informações...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1945,87 +1984,6 @@
             carregarInformacoesDebug();
         }
 
-        async function testarExclusaoTarefas() {
-            const container = document.getElementById('resultado-teste-exclusao');
-            container.innerHTML = '<div class="text-center py-4"><div class="spinner"></div><p class="mt-2 text-gray-600">Testando sistema de exclusão...</p></div>';
-            
-            try {
-                const response = await apiGet('testBackend');
-                
-                let resultadoHTML = `
-                    <div class="test-result test-success">
-                        <strong>Sistema de Backend:</strong> ${response.message || 'Funcionando'}
-                    </div>
-                    <div class="debug-section">
-                        <div class="debug-title">Detalhes do Teste:</div>
-                        <div class="debug-info">
-                            Versão: ${response.versao || 'N/A'}<br>
-                            Status: ${response.status || 'N/A'}<br>
-                            Tarefas Mapeadas: ${response.tarefas_mapeadas || 'N/A'}<br>
-                            Teste Exclusão: ${response.teste_exclusao_tarefa || 'N/A'}
-                        </div>
-                    </div>
-                `;
-                
-                try {
-                    const tarefasResponse = await apiGet('getTarefas', {}, true);
-                    const tarefas = tarefasResponse.data || [];
-                    
-                    resultadoHTML += `
-                        <div class="test-result ${tarefas.length > 0 ? 'test-success' : 'test-warning'}">
-                            <strong>Lista de Tarefas:</strong> ${tarefas.length} tarefas carregadas
-                        </div>
-                        <div class="debug-section">
-                            <div class="debug-title">Primeiras 3 Tarefas:</div>
-                            <div class="debug-info">
-                                ${tarefas.slice(0, 3).map(t => `ID: ${t.ID} | Tema: ${t.Tema} | Turma: ${t.Turma}`).join('<br>')}
-                                ${tarefas.length > 3 ? `<br>... e mais ${tarefas.length - 3} tarefas` : ''}
-                            </div>
-                        </div>
-                    `;
-                    
-                    if (tarefas.length > 0) {
-                        resultadoHTML += `
-                            <div class="test-result test-success">
-                                <strong>Pronto para Teste:</strong> Clique em "Excluir" em qualquer tarefa para testar
-                            </div>
-                            <div class="mt-4">
-                                <button onclick="mostrarPainelProfessor()" class="btn-primario">
-                                    Ir para Lista de Tarefas
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        resultadoHTML += `
-                            <div class="test-result test-warning">
-                                <strong>Sem Tarefas:</strong> Crie uma tarefa primeiro para testar a exclusão
-                            </div>
-                        `;
-                    }
-                    
-                } catch (error) {
-                    resultadoHTML += `
-                        <div class="test-result test-error">
-                            <strong>Erro ao Carregar Tarefas:</strong> ${error.message}
-                        </div>
-                    `;
-                }
-                
-                container.innerHTML = resultadoHTML;
-                
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="test-result test-error">
-                        <strong>Erro no Teste:</strong> ${error.message}
-                    </div>
-                    <div class="debug-section">
-                        <div class="debug-title">Detalhes do Erro:</div>
-                        <div class="debug-info">${error.stack || 'Sem detalhes adicionais'}</div>
-                    </div>
-                `;
-            }
-        }
-
         function carregarStatusCache() {
             const container = document.getElementById('status-cache');
             
@@ -2033,24 +1991,28 @@
                 const cacheStats = CacheManager.getCacheStats();
                 
                 container.innerHTML = `
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Itens em Cache:</span>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Itens em Cache:</span>
                             <span class="font-semibold">${cacheStats.itens}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Tamanho do Cache:</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Tamanho do Cache:</span>
                             <span class="font-semibold">${Utils.formatarBytes(cacheStats.tamanho)}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Eficiência do Cache:</span>
-                            <span class="font-semibold">${cacheStats.eficiencia.toFixed(1)}%</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Eficiência:</span>
+                            <span class="font-semibold ${cacheStats.eficiencia > 80 ? 'text-green-600' : cacheStats.eficiencia > 50 ? 'text-yellow-600' : 'text-red-600'}">
+                                ${cacheStats.eficiencia.toFixed(1)}%
+                            </span>
                         </div>
                     </div>
-                    <button onclick="limparCache()" class="btn-primario w-full mt-3" style="background-color: #ef4444;">Limpar Cache</button>
+                    <button onclick="limparCache()" class="btn-primario w-full mt-4" style="background-color: #ef4444;">
+                        Limpar Cache
+                    </button>
                 `;
             } catch (error) {
-                container.innerHTML = `<p class="text-red-500">Erro ao carregar status do cache: ${error.message}</p>`;
+                container.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar status do cache</p>`;
             }
         }
 
@@ -2063,27 +2025,27 @@
                 const metricasAPI = ApiManager.getMetricas();
                 
                 container.innerHTML = `
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Usuários Carregados:</span>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Usuário Logado:</span>
                             <span class="font-semibold">${usuariosCarregados}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Tarefas Carregadas:</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Tarefas Carregadas:</span>
                             <span class="font-semibold">${tarefasCarregadas}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Chamadas API:</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Chamadas API:</span>
                             <span class="font-semibold">${metricasAPI.chamadasAPI}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Tempo Total:</span>
-                            <span class="font-semibold">${metricasAPI.tempoTotalAPI.toFixed(2)} ms</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Tempo Total API:</span>
+                            <span class="font-semibold">${metricasAPI.tempoTotalAPI.toFixed(0)} ms</span>
                         </div>
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = `<p class="text-red-500">Erro ao carregar estatísticas: ${error.message}</p>`;
+                container.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar estatísticas</p>`;
             }
         }
 
@@ -2091,111 +2053,57 @@
             const container = document.getElementById('metricas-performance');
             
             try {
-                const metrics = performance.getEntriesByType('navigation')[0];
-                const memory = performance.memory;
                 const metricasAPI = ApiManager.getMetricas();
+                const memory = performance.memory;
                 
                 let metricsHTML = `
-                    <div class="metricas-grid">
-                        <div class="metrica-item">
-                            <div class="font-semibold">Tempo API</div>
-                            <div class="text-lg">${metricasAPI.tempoMedioAPI.toFixed(2)} ms</div>
-                            <div class="text-xs text-gray-500">médio por chamada</div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Tempo Médio API:</span>
+                            <span class="font-semibold ${metricasAPI.tempoMedioAPI < 100 ? 'text-green-600' : metricasAPI.tempoMedioAPI < 500 ? 'text-yellow-600' : 'text-red-600'}">
+                                ${metricasAPI.tempoMedioAPI.toFixed(2)} ms
+                            </span>
                         </div>
                         
-                        <div class="metrica-item">
-                            <div class="font-semibold">Status API</div>
-                            <div class="text-lg text-green-600">Online</div>
-                            <div class="text-xs text-gray-500">conectado</div>
-                        </div>
-                        
-                        <div class="metrica-item">
-                            <div class="font-semibold">Chamadas API</div>
-                            <div class="text-lg">${metricasAPI.chamadasAPI}</div>
-                            <div class="text-xs text-gray-500">total</div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Status API:</span>
+                            <span class="font-semibold text-green-600">Online</span>
                         </div>
                 `;
                 
                 if (memory) {
-                    STATE.metricasPerformance.memoriaUsada = memory.usedJSHeapSize;
-                    STATE.metricasPerformance.memoriaTotal = memory.totalJSHeapSize;
+                    const memoriaUsadaMB = (memory.usedJSHeapSize / 1048576).toFixed(2);
+                    const memoriaTotalMB = (memory.totalJSHeapSize / 1048576).toFixed(2);
+                    const percentualMemoria = ((memory.usedJSHeapSize / memory.totalJSHeapSize) * 100).toFixed(1);
                     
                     metricsHTML += `
-                        <div class="metrica-item">
-                            <div class="font-semibold">Memória Usada</div>
-                            <div class="text-lg">${(memory.usedJSHeapSize / 1048576).toFixed(2)} MB</div>
-                            <div class="text-xs text-gray-500">${((memory.usedJSHeapSize / memory.totalJSHeapSize) * 100).toFixed(1)}%</div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Memória Usada:</span>
+                            <span class="font-semibold ${percentualMemoria < 70 ? 'text-green-600' : percentualMemoria < 85 ? 'text-yellow-600' : 'text-red-600'}">
+                                ${memoriaUsadaMB} MB
+                            </span>
                         </div>
                         
-                        <div class="metrica-item">
-                            <div class="font-semibold">Memória Total</div>
-                            <div class="text-lg">${(memory.totalJSHeapSize / 1048576).toFixed(2)} MB</div>
-                            <div class="text-xs text-gray-500">disponível</div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Memória Total:</span>
+                            <span class="font-semibold">${memoriaTotalMB} MB</span>
                         </div>
                     `;
                 } else {
                     metricsHTML += `
-                        <div class="metrica-item">
-                            <div class="font-semibold">Memória Usada</div>
-                            <div class="text-lg">N/A</div>
-                            <div class="text-xs text-gray-500">não disponível</div>
-                        </div>
-                        
-                        <div class="metrica-item">
-                            <div class="font-semibold">Memória Total</div>
-                            <div class="text-lg">N/A</div>
-                            <div class="text-xs text-gray-500">não disponível</div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Memória:</span>
+                            <span class="font-semibold text-gray-500">N/A</span>
                         </div>
                     `;
                 }
                 
                 metricsHTML += `</div>`;
                 
-                let recomendacoes = [];
-                
-                if (memory && memory.usedJSHeapSize / memory.totalJSHeapSize > 0.8) {
-                    recomendacoes.push("Considere limpar o cache para liberar memória.");
-                }
-                
-                if (metricasAPI.chamadasAPI > 50) {
-                    recomendacoes.push("Muitas chamadas API. Verifique a eficiência das requisições.");
-                }
-                
-                if (metricasAPI.tempoMedioAPI > 1000) {
-                    recomendacoes.push("Tempo de resposta da API está alto. Verifique a conexão.");
-                }
-                
-                const cacheStats = CacheManager.getCacheStats();
-                if (cacheStats.itens > 50) {
-                    recomendacoes.push("Cache muito grande. Considere limpar itens desnecessários.");
-                }
-                
-                if (recomendacoes.length > 0) {
-                    metricsHTML += `
-                        <div class="mt-3 p-3 bg-yellow-50 rounded border border-yellow-200">
-                            <div class="font-semibold text-yellow-800 mb-2">Recomendações:</div>
-                            <ul class="text-sm text-yellow-700 list-disc list-inside">
-                                ${recomendacoes.map(rec => `<li>${rec}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
-                
-                metricsHTML += `
-                    <div class="mt-3 flex space-x-2">
-                        <button onclick="ApiManager.resetMetricas()" class="btn-secundario flex-1 text-sm">
-                            Resetar Métricas
-                        </button>
-                        <button onclick="carregarMetricasPerformance()" class="btn-primario flex-1 text-sm">
-                            Atualizar
-                        </button>
-                    </div>
-                `;
-                
                 container.innerHTML = metricsHTML;
                 
             } catch (error) {
-                container.innerHTML = `<p class="text-red-500">Erro ao carregar métricas: ${error.message}</p>`;
+                container.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar métricas</p>`;
             }
         }
 
@@ -2204,30 +2112,27 @@
             
             try {
                 const debugInfo = {
-                    'URL da API': CONFIG.API_URL,
-                    'Tarefas no Estado': STATE.tarefas.length,
-                    'Usuário Logado': STATE.usuarioLogado ? `${STATE.usuarioLogado.NomeCompleto} (${STATE.usuarioLogado.Perfil})` : 'Nenhum',
-                    'Navegador': navigator.userAgent.substring(0, 50) + '...',
-                    'LocalStorage Keys': Object.keys(localStorage).filter(k => k.startsWith('task_')).length,
-                    'Timestamp': new Date().toISOString(),
-                    'Performance API': performance ? 'Disponível' : 'Indisponível',
-                    'Memória API': performance.memory ? 'Disponível' : 'Indisponível'
+                    'Navegador': navigator.userAgent.split(' ')[0] || 'N/A',
+                    'Online': navigator.onLine ? 'Sim' : 'Não',
+                    'LocalStorage': Object.keys(localStorage).filter(k => k.startsWith('task_')).length + ' itens',
+                    'Timestamp': new Date().toLocaleTimeString()
                 };
                 
-                let debugHTML = '';
+                let debugHTML = '<div class="space-y-2">';
                 for (const [key, value] of Object.entries(debugInfo)) {
                     debugHTML += `
-                        <div class="flex justify-between py-1 border-b">
-                            <span class="font-medium">${key}:</span>
-                            <span class="text-gray-600">${value}</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">${key}:</span>
+                            <span class="text-sm font-medium">${value}</span>
                         </div>
                     `;
                 }
+                debugHTML += '</div>';
                 
                 container.innerHTML = debugHTML;
                 
             } catch (error) {
-                container.innerHTML = `<p class="text-red-500">Erro ao carregar debug: ${error.message}</p>`;
+                container.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar informações</p>`;
             }
         }
 
@@ -2272,8 +2177,38 @@
         window.carregarRelatorioAluno = carregarRelatorioAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
-        window.testarExclusaoTarefas = testarExclusaoTarefas;
         window.carregarMetricasPerformance = carregarMetricasPerformance;
     </script>
+
+    <style>
+        .conteudo-oculto {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
+        .conteudo-formatado {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        
+        .contador.aguardando {
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .contador.disponivel {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .contador.expirado {
+            color: #dc2626;
+            font-weight: 600;
+        }
+    </style>
 </body>
 </html>
