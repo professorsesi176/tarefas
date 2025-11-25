@@ -1074,4 +1074,32 @@
             border-radius: 6px;
             background-color: #f9fafb;
         }
+        .conteudo-oculto {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
+        .conteudo-formatado {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        
+        .contador.aguardando {
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .contador.disponivel {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .contador.expirado {
+            color: #dc2626;
+            font-weight: 600;
+        }
     </style>
