@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 21.7
+            Desenvolvido por Geovane Modena | Versão 21.8
         </footer>
     </div>
 
@@ -211,6 +211,26 @@
                 const sizes = ['Bytes', 'KB', 'MB', 'GB'];
                 const i = Math.floor(Math.log(bytes) / Math.log(k));
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+
+            validarLink: (link) => {
+                if (!link || typeof link !== 'string') return false;
+                
+                let linkTrimmed = link.trim();
+                if (linkTrimmed === '') return false;
+                
+                // Adicionar https:// se não tiver protocolo
+                if (!/^https?:\/\//i.test(linkTrimmed)) {
+                    linkTrimmed = 'https://' + linkTrimmed;
+                }
+                
+                // Validar formato básico de URL
+                try {
+                    new URL(linkTrimmed);
+                    return linkTrimmed.length >= 5; // URL mínima razoável reduzida
+                } catch {
+                    return false;
+                }
             }
         };
 
@@ -488,7 +508,8 @@
                         classe: 'aguardando',
                         liberada: false,
                         expirado: false,
-                        dentroHorarioEntrega: false
+                        dentroHorarioEntrega: false,
+                        conteudoLiberado: false
                     };
                 }
 
@@ -501,6 +522,9 @@
 
                 const fim = new Date(diaEntrega);
                 fim.setHours(22, 0, 0, 0);
+
+                // CONTEÚDO LIBERADO: se já passou do horário de início
+                const conteudoLiberado = agora >= inicio;
 
                 if (agora < inicio) {
                     const diff = inicio - agora;
@@ -522,7 +546,8 @@
                         classe: 'aguardando',
                         liberada: false,
                         expirado: false,
-                        dentroHorarioEntrega: false
+                        dentroHorarioEntrega: false,
+                        conteudoLiberado: conteudoLiberado
                     };
                 }
 
@@ -532,7 +557,8 @@
                         classe: 'expirado',
                         liberada: false,
                         expirado: true,
-                        dentroHorarioEntrega: false
+                        dentroHorarioEntrega: false,
+                        conteudoLiberado: conteudoLiberado
                     };
                 }
 
@@ -555,7 +581,8 @@
                     classe: 'disponivel',
                     liberada: true,
                     expirado: false,
-                    dentroHorarioEntrega: true
+                    dentroHorarioEntrega: true,
+                    conteudoLiberado: conteudoLiberado
                 };
             },
 
@@ -627,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v21.7...');
+                console.log('Inicializando sistema v21.8...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1338,57 +1365,13 @@
             const fim = new Date(dataEntrega);
             fim.setHours(22, 0, 0, 0);
             
-            let status = 'aguardando';
-            let textoStatus = 'Aguardando';
-            let liberada = false;
-            let expirado = false;
-            
-            if (agora < inicio) {
-                const diff = inicio - agora;
-                const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const horas = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                
-                if (dias > 0) {
-                    textoStatus = `Libera em ${dias}d ${horas}h ${minutos}m`;
-                } else if (horas > 0) {
-                    textoStatus = `Libera em ${horas}h ${minutos}m`;
-                } else {
-                    textoStatus = `Libera em ${minutos}m`;
-                }
-                
-                status = 'aguardando';
-                liberada = false;
-                expirado = false;
-            } else if (agora > fim) {
-                status = 'expirado';
-                textoStatus = 'Expirado';
-                liberada = false;
-                expirado = true;
-            } else {
-                const diffFim = fim - agora;
-                const diasFim = Math.floor(diffFim / (1000 * 60 * 60 * 24));
-                const horasFim = Math.floor((diffFim % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutosFim = Math.floor((diffFim % (1000 * 60 * 60)) / (1000 * 60));
-                
-                if (diasFim > 0) {
-                    textoStatus = `Termina em ${diasFim}d ${horasFim}h ${minutosFim}m`;
-                } else if (horasFim > 0) {
-                    textoStatus = `Termina em ${horasFim}h ${minutosFim}m`;
-                } else {
-                    textoStatus = `Termina em ${minutosFim}m`;
-                }
-                
-                status = 'disponivel';
-                liberada = true;
-                expirado = false;
-            }
+            const status = TimeManager.calcularStatusParteDiaUnico(dataAula, diasOffset);
             
             const horaAtual = agora.getHours();
             let notaEsperada = '0.0';
             let horarioInfo = '';
             
-            if (liberada) {
+            if (status.liberada) {
                 if (horaAtual >= 17 && horaAtual < 20) {
                     notaEsperada = '2.5';
                     horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h): 2.5</div>';
@@ -1420,33 +1403,43 @@
             let inputClass = '';
             if (temLinkSalvo) {
                 inputClass = 'link-salvo';
-            } else if (expirado) {
+            } else if (status.expirado) {
                 inputClass = 'link-expirado';
             }
             
-            // CONTEÚDO DA PARTE - SEMPRE MOSTRAR, MESMO APÓS EXPIRAR
-            let conteudoParteHTML = `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>`;
+            // CONTEÚDO DA PARTE - MOSTRAR SEMPRE APÓS O HORÁRIO DE LIBERAÇÃO
+            let conteudoParteHTML = '';
+            if (status.conteudoLiberado) {
+                conteudoParteHTML = `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>`;
+            } else {
+                conteudoParteHTML = `
+                    <div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                        <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
+                        <p class="text-yellow-600 text-sm mt-1">Aguarde até que esta parte seja liberada para visualizar o conteúdo</p>
+                    </div>
+                `;
+            }
             
             return `
             <div class="mt-3 p-3 bg-gray-50 rounded border">
                 <div class="flex justify-between items-center">
                     <strong>Parte ${numeroParte} ${retencaoLabel}</strong>
-                    <span class="contador ${status}">${textoStatus}</span>
+                    <span class="contador ${status.classe}">${status.texto}</span>
                 </div>
                 ${conteudoParteHTML}
                 ${horarioInfo}
                 <div class="link-container mt-2">
                     <input type="text" 
                            class="link-input ${inputClass}" 
-                           placeholder="${temLinkSalvo ? 'Link já enviado' : (expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui')}" 
+                           placeholder="${temLinkSalvo ? 'Link já enviado' : (status.expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui')}" 
                            id="${inputId}"
                            value="${linkSalvo || ''}"
-                           ${temLinkSalvo || expirado || !liberada ? 'disabled' : ''}>
+                           ${temLinkSalvo || status.expirado || !status.liberada ? 'disabled' : ''}>
                     ${!temLinkSalvo ? `
                         <button class="btn-primario btn-link" 
                                 onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
                                 id="btn-salvar-${tarefa.ID}-${numeroParte}"
-                                ${expirado || !liberada ? 'disabled' : ''}>
+                                ${status.expirado || !status.liberada ? 'disabled' : ''}>
                             Salvar
                         </button>
                     ` : ''}
@@ -1458,18 +1451,30 @@
                     </button>
                 </div>
                 ${temLinkSalvo ? '<p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>' : ''}
+                ${status.expirado && !temLinkSalvo ? '<p class="text-red-600 text-sm mt-1">✗ Prazo de entrega expirado</p>' : ''}
             </div>`;
         }
 
         // ==================== FUNÇÕES DE ENTREGA CORRIGIDAS ====================
         async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
-            const link = input ? input.value.trim() : '';
+            let link = input ? input.value.trim() : '';
             const botaoExcluir = document.getElementById(`btn-excluir-${idTarefa}-${parte}`);
             
             if (!link) {
                 UIManager.showModal('Atenção', 'Por favor, cole um link válido.');
                 return;
+            }
+
+            // Validar link no frontend antes de enviar
+            if (!Utils.validarLink(link)) {
+                UIManager.showModal('Atenção', 'Link inválido. Certifique-se de que é um link válido (ex: https://exemplo.com).');
+                return;
+            }
+
+            // Garantir que o link tenha protocolo
+            if (!/^https?:\/\//i.test(link)) {
+                link = 'https://' + link;
             }
 
             try {
@@ -1942,13 +1947,29 @@
                         </div>
 
                         <div class="diagnostico-card">
-                            <h4 class="font-semibold mb-3 text-gray-800">Informações Técnicas</h4>
-                            <div id="debug-info">
+                            <h4 class="font-semibold mb-3 text-gray-800">Diagnóstico de Links</h4>
+                            <div id="diagnostico-links">
                                 <div class="text-center py-4">
                                     <div class="spinner"></div>
-                                    <p class="mt-2 text-gray-600">Carregando informações...</p>
+                                    <p class="mt-2 text-gray-600">Carregando diagnóstico...</p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 class="font-semibold text-blue-800 mb-2">Solução de Problemas - Link Inválido</h4>
+                        <p class="text-blue-700 text-sm mb-3">Se estiver com erro "Link de entrega inválido", verifique:</p>
+                        <ol class="list-decimal list-inside text-blue-700 text-sm space-y-1">
+                            <li>O link deve começar com http:// ou https://</li>
+                            <li>Links do OneDrive devem ser públicos (compartilhamento público)</li>
+                            <li>Exemplo válido: https://1drv.ms/b/s!ABC123def456...</li>
+                            <li>Teste o link em uma nova aba do navegador antes de enviar</li>
+                        </ol>
+                        <div class="mt-3">
+                            <button onclick="testarValidacaoLink()" class="btn-primario text-sm">
+                                Testar Validação de Link
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1957,7 +1978,7 @@
             carregarStatusCache();
             carregarEstatisticasSistema();
             carregarMetricasPerformance();
-            carregarInformacoesDebug();
+            carregarDiagnosticoLinks();
         }
 
         function carregarStatusCache() {
@@ -2083,32 +2104,53 @@
             }
         }
 
-        function carregarInformacoesDebug() {
-            const container = document.getElementById('debug-info');
+        function carregarDiagnosticoLinks() {
+            const container = document.getElementById('diagnostico-links');
             
             try {
-                const debugInfo = {
-                    'Navegador': navigator.userAgent.split(' ')[0] || 'N/A',
-                    'Online': navigator.onLine ? 'Sim' : 'Não',
-                    'LocalStorage': Object.keys(localStorage).filter(k => k.startsWith('task_')).length + ' itens',
-                    'Timestamp': new Date().toLocaleTimeString()
-                };
+                const exemplosLinks = [
+                    'https://1drv.ms/b/s!ABC123def456',
+                    'http://exemplo.com/arquivo.pdf',
+                    'exemplo.com/arquivo', // Inválido - sem protocolo
+                    'htt://exemplo.com', // Inválido - protocolo errado
+                    'https://exemplo' // Inválido - domínio incompleto
+                ];
                 
-                let debugHTML = '<div class="space-y-2">';
-                for (const [key, value] of Object.entries(debugInfo)) {
-                    debugHTML += `
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">${key}:</span>
-                            <span class="text-sm font-medium">${value}</span>
+                let diagnosticoHTML = '<div class="space-y-2">';
+                
+                exemplosLinks.forEach(link => {
+                    const valido = Utils.validarLink(link);
+                    diagnosticoHTML += `
+                        <div class="flex justify-between items-center p-2 ${valido ? 'bg-green-50' : 'bg-red-50'} rounded">
+                            <span class="text-sm font-mono">${link}</span>
+                            <span class="text-xs font-semibold ${valido ? 'text-green-600' : 'text-red-600'}">
+                                ${valido ? 'VÁLIDO' : 'INVÁLIDO'}
+                            </span>
                         </div>
                     `;
-                }
-                debugHTML += '</div>';
+                });
                 
-                container.innerHTML = debugHTML;
+                diagnosticoHTML += `
+                    <div class="mt-3 text-xs text-gray-600">
+                        <p><strong>Dica:</strong> Links devem ter protocolo (http:// ou https://) e domínio válido.</p>
+                    </div>
+                `;
+                
+                container.innerHTML = diagnosticoHTML;
                 
             } catch (error) {
-                container.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar informações</p>`;
+                container.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar diagnóstico</p>`;
+            }
+        }
+
+        function testarValidacaoLink() {
+            const linkTeste = prompt('Digite um link para testar a validação:');
+            if (linkTeste) {
+                const valido = Utils.validarLink(linkTeste);
+                UIManager.showModal(
+                    'Teste de Validação', 
+                    `Link: ${linkTeste}\n\nResultado: ${valido ? 'VÁLIDO ✓' : 'INVÁLIDO ✗'}\n\n${valido ? 'Este link será aceito pelo sistema.' : 'Verifique se o link tem protocolo (http:// ou https://) e é um link válido.'}`
+                );
             }
         }
 
@@ -2118,7 +2160,7 @@
             setTimeout(() => {
                 carregarStatusCache();
                 carregarMetricasPerformance();
-                carregarInformacoesDebug();
+                carregarDiagnosticoLinks();
             }, 1000);
         }
 
@@ -2154,37 +2196,7 @@
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
         window.carregarMetricasPerformance = carregarMetricasPerformance;
+        window.testarValidacaoLink = testarValidacaoLink;
     </script>
-
-    <style>
-        .conteudo-oculto {
-            background-color: #fffbeb;
-            border: 1px solid #fcd34d;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            text-align: center;
-        }
-        
-        .conteudo-formatado {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.5;
-        }
-        
-        .contador.aguardando {
-            color: #6b7280;
-            font-weight: 600;
-        }
-        
-        .contador.disponivel {
-            color: #059669;
-            font-weight: 600;
-        }
-        
-        .contador.expirado {
-            color: #dc2626;
-            font-weight: 600;
-        }
-    </style>
 </body>
 </html>
