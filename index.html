@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.3
+            Desenvolvido por Geovane Modena | Versão 30.4
         </footer>
     </div>
 
@@ -654,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v30.3...');
+                console.log('Inicializando sistema v30.4...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -809,7 +809,7 @@
                         </div>
                         
                         <div class="mt-6 flex space-x-4">
-                            <button onclick="salvarTarefaCorrigida()" class="btn-primario flex-1" id="btnSalvarTarefa">
+                            <button onclick="salvarTarefaUnificada()" class="btn-primario flex-1" id="btnSalvarTarefa">
                                 ${STATE.tarefaEditando ? 'Atualizar Tarefa' : 'Salvar Tarefa'}
                             </button>
                             <button onclick="limparFormulario()" class="btn-secundario flex-1">
@@ -939,7 +939,7 @@
             elemento.classList.toggle('expandido');
         }
 
-        async function salvarTarefaCorrigida() {
+        async function salvarTarefaUnificada() {
             const btnSalvar = document.getElementById('btnSalvarTarefa');
             
             try {
@@ -1019,13 +1019,19 @@
                         };
 
                         console.log(`Enviando dados para turma ${turma}:`, dados);
-                        return await apiPost('criarTarefa', dados);
+                        return await apiPost('criarTarefaUnificada', dados);
                     });
 
                     results = await Promise.all(promises);
                 }
                 
                 console.log('Resultados da criação/edição:', results);
+                
+                // Verificar se houve algum erro
+                const erros = results.filter(r => !r.success);
+                if (erros.length > 0) {
+                    throw new Error(`Erro em ${erros.length} turma(s): ${erros.map(e => e.error || 'Erro desconhecido').join(', ')}`);
+                }
                 
                 UIManager.showModal('Sucesso', `Tarefa ${STATE.tarefaEditando ? 'atualizada' : 'criada'} com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!`);
                 
@@ -1135,7 +1141,7 @@
                 document.getElementById('titulo-formulario').textContent = 'Criar Nova Tarefa';
                 const btn = document.getElementById('btnSalvarTarefa');
                 btn.textContent = 'Salvar Tarefa';
-                btn.setAttribute('onclick', 'salvarTarefaCorrigida()');
+                btn.setAttribute('onclick', 'salvarTarefaUnificada()');
             }
         }
 
@@ -2140,7 +2146,7 @@
         window.exportarParaExcel = exportarParaExcel;
         window.exportarParaPDF = exportarParaPDF;
         window.carregarRelatorioTurma = carregarRelatorioTurma;
-        window.salvarTarefaCorrigida = salvarTarefaCorrigida;
+        window.salvarTarefaUnificada = salvarTarefaUnificada;
         window.excluirTarefaDireto = excluirTarefaDireto;
         window.editarTarefa = editarTarefa;
         window.limparFormulario = limparFormulario;
