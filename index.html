@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 21.8
+            Desenvolvido por Geovane Modena | Versão 21.9
         </footer>
     </div>
 
@@ -654,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v21.8...');
+                console.log('Inicializando sistema v21.9...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1341,6 +1341,7 @@
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
             const linkSalvo = entrega ? entrega.Link : '';
+            const notaParte = entrega ? parseFloat(entrega.Nota) : 0;
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             const temLinkSalvo = linkSalvo && String(linkSalvo).trim() !== '';
             
@@ -1374,10 +1375,10 @@
             if (status.liberada) {
                 if (horaAtual >= 17 && horaAtual < 20) {
                     notaEsperada = '2.5';
-                    horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h): 2.5</div>';
+                    horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h) 2.5</div>';
                 } else if ((horaAtual >= 13 && horaAtual < 17) || (horaAtual >= 20 && horaAtual < 22)) {
                     notaEsperada = '2.0';
-                    horarioInfo = '<div class="horario-info">Nota regular (13h-17h ou 20h-22h): 2.0</div>';
+                    horarioInfo = '<div class="horario-info">Nota regular (13h-17h ou 20h-22h) 2.0</div>';
                 } else {
                     horarioInfo = '<div class="horario-info horario-fora">Fora do horário de entrega (13h-22h)</div>';
                 }
@@ -1399,14 +1400,6 @@
                     break;
             }
             
-            // Determinar classe do input baseado no status
-            let inputClass = '';
-            if (temLinkSalvo) {
-                inputClass = 'link-salvo';
-            } else if (status.expirado) {
-                inputClass = 'link-expirado';
-            }
-            
             // CONTEÚDO DA PARTE - MOSTRAR SEMPRE APÓS O HORÁRIO DE LIBERAÇÃO
             let conteudoParteHTML = '';
             if (status.conteudoLiberado) {
@@ -1415,8 +1408,46 @@
                 conteudoParteHTML = `
                     <div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
                         <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
-                        <p class="text-yellow-600 text-sm mt-1">Aguarde até que esta parte seja liberada para visualizar o conteúdo</p>
                     </div>
+                `;
+            }
+            
+            // Quando o link está salvo, exibimos um link clicável e a nota
+            let linkHTML = '';
+            if (temLinkSalvo) {
+                linkHTML = `
+                    <div class="link-container mt-2">
+                        <a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel">
+                            ${Utils.escapeHTML(linkSalvo)}
+                        </a>
+                        <span class="nota-parte">${notaParte.toFixed(1)}</span>
+                        <button class="btn-secundario btn-link" 
+                                onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                                id="btn-excluir-${tarefa.ID}-${numeroParte}">
+                            Excluir
+                        </button>
+                    </div>
+                    <p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>
+                `;
+            } else {
+                linkHTML = `
+                    <div class="link-container mt-2">
+                        <input type="text" 
+                               class="link-input" 
+                               placeholder="${status.expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui'}" 
+                               id="${inputId}"
+                               value=""
+                               ${status.expirado || !status.liberada ? 'disabled' : ''}>
+                        ${!temLinkSalvo ? `
+                            <button class="btn-primario btn-link" 
+                                    onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                                    id="btn-salvar-${tarefa.ID}-${numeroParte}"
+                                    ${status.expirado || !status.liberada ? 'disabled' : ''}>
+                                Salvar
+                            </button>
+                        ` : ''}
+                    </div>
+                    ${status.expirado && !temLinkSalvo ? '<p class="text-red-600 text-sm mt-1">Prazo de entrega expirado</p>' : ''}
                 `;
             }
             
@@ -1428,30 +1459,7 @@
                 </div>
                 ${conteudoParteHTML}
                 ${horarioInfo}
-                <div class="link-container mt-2">
-                    <input type="text" 
-                           class="link-input ${inputClass}" 
-                           placeholder="${temLinkSalvo ? 'Link já enviado' : (status.expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui')}" 
-                           id="${inputId}"
-                           value="${linkSalvo || ''}"
-                           ${temLinkSalvo || status.expirado || !status.liberada ? 'disabled' : ''}>
-                    ${!temLinkSalvo ? `
-                        <button class="btn-primario btn-link" 
-                                onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                                id="btn-salvar-${tarefa.ID}-${numeroParte}"
-                                ${status.expirado || !status.liberada ? 'disabled' : ''}>
-                            Salvar
-                        </button>
-                    ` : ''}
-                    <button class="btn-secundario btn-link" 
-                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                            id="btn-excluir-${tarefa.ID}-${numeroParte}"
-                            ${!temLinkSalvo ? 'disabled' : ''}>
-                        Excluir
-                    </button>
-                </div>
-                ${temLinkSalvo ? '<p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>' : ''}
-                ${status.expirado && !temLinkSalvo ? '<p class="text-red-600 text-sm mt-1">✗ Prazo de entrega expirado</p>' : ''}
+                ${linkHTML}
             </div>`;
         }
 
@@ -1860,7 +1868,6 @@
                                     <tr>
                                         <th>Tarefa</th>
                                         <th>Parte</th>
-                                        <th class="data-column">Data de Submissão</th>
                                         <th class="data-column">Nota</th>
                                     </tr>
                                 </thead>
@@ -1882,7 +1889,6 @@
                             <tr>
                                 <td>${Utils.escapeHTML(temaTarefa)}</td>
                                 <td>Parte ${entrega.Parte}</td>
-                                <td class="data-column">${Utils.formatarData(entrega.DataSubmissao)}</td>
                                 <td class="data-column font-semibold">${notaEntrega.toFixed(1)}</td>
                             </tr>
                         `;
