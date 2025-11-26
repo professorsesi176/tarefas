@@ -16,9 +16,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
 </head>
-<body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
+<body class="min-h-screen flex items-start justify-center p-4 sm:p-8 bg-gray-50">
     <div id="app-container" class="w-full max-w-6xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
-        <header class="mb-8 border-b pb-4">
+        <header class="mb-8 border-b pb-4 relative">
             <div class="header-content">
                 <h1 class="text-3xl font-extrabold text-red-700 text-center">Sistema de Gestão de Tarefas</h1>
                 <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.2
+            Desenvolvido por Geovane Modena | Versão 30.3
         </footer>
     </div>
 
@@ -654,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v30.2...');
+                console.log('Inicializando sistema v30.3...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
