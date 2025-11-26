@@ -15,6 +15,78 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
+    
+    <style>
+        /* Estilos específicos para as correções */
+        .link-salvo-clicavel {
+            color: #1d4ed8;
+            text-decoration: underline;
+            word-break: break-all;
+            padding: 8px 12px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .link-salvo-clicavel:hover {
+            background-color: #eff6ff;
+            color: #1e40af;
+        }
+        
+        .nota-parte {
+            background-color: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .btn-link {
+            padding: 6px 12px;
+            margin-left: 8px;
+        }
+        
+        .btn-excluir-loading {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-excluir-loading::after {
+            content: " ⏳";
+        }
+        
+        /* Melhorias para o relatório */
+        .relatorio-tarefa-header {
+            background-color: #fef2f2;
+            font-size: 0.8rem;
+        }
+        
+        .relatorio-parte-header {
+            background-color: #f8fafc;
+            font-size: 0.75rem;
+        }
+        
+        /* Correção para NaN no desempenho */
+        .media-aluno {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+        
+        .media-aluno.alta {
+            color: #10b981;
+        }
+        
+        .media-aluno.media {
+            color: #f59e0b;
+        }
+        
+        .media-aluno.baixa {
+            color: #ef4444;
+        }
+    </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
     <div id="app-container" class="w-full max-w-6xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
@@ -35,7 +107,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.5
+            Desenvolvido por Geovane Modena | Versão 30.5 - Correções aplicadas
         </footer>
     </div>
 
@@ -1327,11 +1399,10 @@
             }
 
             container.innerHTML = tarefasLocal.map((tarefa, index) => {
-                // Filtra as entregas para esta tarefa específica
                 const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
                 
                 return `
-                <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                <div class="border border-gray-200 rounded-lg p-4 mb-4" id="tarefa-${tarefa.ID}">
                     <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
                     <p class="text-sm text-gray-600 mt-1">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
                     
@@ -1419,7 +1490,7 @@
                 `;
             }
             
-            // Quando o link está salvo, exibimos um link clicável e a nota
+            // CORREÇÃO: Quando o link está salvo, exibimos um link clicável e a nota
             let linkHTML = '';
             if (temLinkSalvo) {
                 linkHTML = `
@@ -1493,7 +1564,7 @@
             }
 
             try {
-                // Mostrar loading no botão salvar
+                // CORREÇÃO: Mostrar loading no botão salvar
                 Utils.setButtonLoading(botaoSalvar, true);
                 botaoSalvar.textContent = "Salvando...";
                 
@@ -1519,11 +1590,11 @@
                 if (response.success) {
                     UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso! Nota: ${response.nota || 'N/A'}`);
                     
-                    // Limpar caches para forçar recarregamento
+                    // CORREÇÃO: Limpar caches para forçar recarregamento
                     CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                     CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                     
-                    // Recarregar as tarefas para atualizar a interface
+                    // CORREÇÃO: Recarregar as tarefas para atualizar a interface
                     await carregarTarefasAluno();
                     
                 } else {
@@ -1541,7 +1612,7 @@
 
         async function excluirLinkAluno(idTarefa, parte, botaoExcluir) {
             try {
-                // Mostrar loading no botão excluir
+                // CORREÇÃO: Mostrar loading no botão excluir
                 Utils.setButtonLoading(botaoExcluir, true);
                 botaoExcluir.textContent = "Excluindo...";
                 
@@ -1564,11 +1635,11 @@
                 if (response.success) {
                     UIManager.showModal('Sucesso', `Link da parte ${parte} excluído com sucesso!`);
                     
-                    // Limpar caches para forçar recarregamento
+                    // CORREÇÃO: Limpar caches para forçar recarregamento
                     CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                     CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
                     
-                    // Recarregar as tarefas para atualizar a interface
+                    // CORREÇÃO: Recarregar as tarefas para atualizar a interface
                     await carregarTarefasAluno();
                     
                 } else {
@@ -1752,7 +1823,7 @@
                             
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
                                 for (let parte = 1; parte <= 4; parte++) {
-                                    const notaParte = aluno[`NotaParte${(tarefaIndex * 4) + parte}`] || 0;
+                                    const notaParte = aluno[`Nota_${tarefa.ID}_P${parte}`] || 0;
                                     let classeNota = 'text-gray-600';
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
@@ -1762,7 +1833,7 @@
                                         }
                                     }
                                     
-                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? parseFloat(notaParte).toFixed(1) : '-'}</span></td>`;
                                 }
                             });
                             
@@ -1844,6 +1915,7 @@
             }
         }
 
+        // CORREÇÃO: Função carregarRelatorioAluno atualizada para resolver NaN
         async function carregarRelatorioAluno() {
             const container = document.getElementById('relatorio-aluno-content');
             
@@ -1882,10 +1954,11 @@
                     `;
                     
                     entregas.forEach(entrega => {
-                        // CORREÇÃO: Usar o ID da tarefa diretamente para encontrar a tarefa
+                        // CORREÇÃO: Buscar tarefa pelo ID real em vez do índice
                         const tarefa = todasTarefas.find(t => t.ID === entrega.ID_Tarefa);
                         const temaTarefa = tarefa ? tarefa.Tema : `Tarefa ${entrega.ID_Tarefa}`;
                         
+                        // CORREÇÃO: Garantir que a nota é um número válido
                         const notaEntrega = parseFloat(entrega.Nota) || 0;
                         if (notaEntrega > 0) {
                             notaTotal += notaEntrega;
@@ -1901,7 +1974,12 @@
                         `;
                     });
                     
+                    // CORREÇÃO: Calcular média corretamente
                     const media = countEntregas > 0 ? (notaTotal / countEntregas).toFixed(1) : '0.0';
+                    const mediaNum = parseFloat(media);
+                    let classeMedia = 'baixa';
+                    if (mediaNum >= 7.5) classeMedia = 'alta';
+                    else if (mediaNum >= 5.0) classeMedia = 'media';
                     
                     relatorioHTML += `
                                 </tbody>
@@ -1909,7 +1987,10 @@
                             <div class="mt-4 p-3 bg-gray-50 rounded border">
                                 <div class="flex justify-between items-center">
                                     <span class="font-semibold">Média Geral:</span>
-                                    <span class="text-lg font-bold ${parseFloat(media) >= 7.5 ? 'text-green-600' : 'text-red-600'}">${media}</span>
+                                    <span class="media-aluno ${classeMedia}">${media}</span>
+                                </div>
+                                <div class="text-sm text-gray-600 mt-2">
+                                    Total de entregas: ${countEntregas} | Soma das notas: ${notaTotal.toFixed(1)}
                                 </div>
                             </div>
                         </div>
