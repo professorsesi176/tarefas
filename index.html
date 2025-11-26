@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 21.9
+            Desenvolvido por Geovane Modena | Versão 30.2
         </footer>
     </div>
 
@@ -518,7 +518,7 @@
                 diaEntrega.setDate(diaEntrega.getDate() + diasOffset);
 
                 const inicio = new Date(diaEntrega);
-                inicio.setHours(13, 0, 0, 0);
+                inicio.setHours(7, 0, 0, 0); // ALTERADO DE 13h PARA 7h
 
                 const fim = new Date(diaEntrega);
                 fim.setHours(22, 0, 0, 0);
@@ -654,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v21.9...');
+                console.log('Inicializando sistema v30.2...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -791,19 +791,19 @@
                         
                         <div class="mt-4 space-y-4">
                             <div>
-                                <label for="parte1" class="block text-sm font-medium text-gray-700 mb-2">Parte 1 (dia da aula, 13h–22h) <span class="retencao-aviso retencao-50">50% retenção</span></label>
+                                <label for="parte1" class="block text-sm font-medium text-gray-700 mb-2">Parte 1 (dia da aula, 7h–22h) <span class="retencao-aviso retencao-50">50% retenção</span></label>
                                 <textarea id="parte1" placeholder="Descreva a parte 1 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                             </div>
                             <div>
-                                <label for="parte2" class="block text-sm font-medium text-gray-700 mb-2">Parte 2 (7º dia, 13h–22h) <span class="retencao-aviso retencao-25">25% retenção</span></label>
+                                <label for="parte2" class="block text-sm font-medium text-gray-700 mb-2">Parte 2 (7º dia, 7h–22h) <span class="retencao-aviso retencao-25">25% retenção</span></label>
                                 <textarea id="parte2" placeholder="Descreva a parte 2 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                             </div>
                             <div>
-                                <label for="parte3" class="block text-sm font-medium text-gray-700 mb-2">Parte 3 (14º dia, 13h–22h) <span class="retencao-aviso retencao-15">15% retenção</span></label>
+                                <label for="parte3" class="block text-sm font-medium text-gray-700 mb-2">Parte 3 (14º dia, 7h–22h) <span class="retencao-aviso retencao-15">15% retenção</span></label>
                                 <textarea id="parte3" placeholder="Descreva a parte 3 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                             </div>
                             <div>
-                                <label for="parte4" class="block text-sm font-medium text-gray-700 mb-2">Parte 4 (28º dia, 13h–22h) <span class="retencao-aviso retencao-10">9.99% retenção</span></label>
+                                <label for="parte4" class="block text-sm font-medium text-gray-700 mb-2">Parte 4 (28º dia, 7h–22h) <span class="retencao-aviso retencao-10">9.99% retenção</span></label>
                                 <textarea id="parte4" placeholder="Descreva a parte 4 da tarefa. Use Enter para criar parágrafos." rows="4" required maxlength="${CONFIG.MAX_PARTE_LEN}"></textarea>
                             </div>
                         </div>
@@ -1361,7 +1361,7 @@
             dataEntrega.setDate(dataEntrega.getDate() + diasOffset);
             
             const inicio = new Date(dataEntrega);
-            inicio.setHours(13, 0, 0, 0);
+            inicio.setHours(7, 0, 0, 0); // ALTERADO DE 13h PARA 7h
             
             const fim = new Date(dataEntrega);
             fim.setHours(22, 0, 0, 0);
@@ -1376,11 +1376,11 @@
                 if (horaAtual >= 17 && horaAtual < 20) {
                     notaEsperada = '2.5';
                     horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h) 2.5</div>';
-                } else if ((horaAtual >= 13 && horaAtual < 17) || (horaAtual >= 20 && horaAtual < 22)) {
+                } else if ((horaAtual >= 7 && horaAtual < 17) || (horaAtual >= 20 && horaAtual < 22)) {
                     notaEsperada = '2.0';
-                    horarioInfo = '<div class="horario-info">Nota regular (13h-17h ou 20h-22h) 2.0</div>';
+                    horarioInfo = '<div class="horario-info">Nota regular (7h-17h ou 20h-22h) 2.0</div>';
                 } else {
-                    horarioInfo = '<div class="horario-info horario-fora">Fora do horário de entrega (13h-22h)</div>';
+                    horarioInfo = '<div class="horario-info horario-fora">Fora do horário de entrega (7h-22h)</div>';
                 }
             }
 
@@ -1447,7 +1447,7 @@
                             </button>
                         ` : ''}
                     </div>
-                    ${status.expirado && !temLinkSalvo ? '<p class="text-red-600 text-sm mt-1">Prazo de entrega expirado</p>' : ''}
+                    ${status.expirado && !temLinkSalvo ? '' : ''} <!-- REMOVIDA A FRASE "Prazo de entrega expirado" -->
                 `;
             }
             
@@ -1952,15 +1952,7 @@
                             </div>
                         </div>
 
-                        <div class="diagnostico-card">
-                            <h4 class="font-semibold mb-3 text-gray-800">Diagnóstico de Links</h4>
-                            <div id="diagnostico-links">
-                                <div class="text-center py-4">
-                                    <div class="spinner"></div>
-                                    <p class="mt-2 text-gray-600">Carregando diagnóstico...</p>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- REMOVIDO: Card de Diagnóstico de Links -->
                     </div>
 
                     <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1984,7 +1976,7 @@
             carregarStatusCache();
             carregarEstatisticasSistema();
             carregarMetricasPerformance();
-            carregarDiagnosticoLinks();
+            // REMOVIDO: carregarDiagnosticoLinks();
         }
 
         function carregarStatusCache() {
@@ -2110,45 +2102,6 @@
             }
         }
 
-        function carregarDiagnosticoLinks() {
-            const container = document.getElementById('diagnostico-links');
-            
-            try {
-                const exemplosLinks = [
-                    'https://1drv.ms/b/s!ABC123def456',
-                    'http://exemplo.com/arquivo.pdf',
-                    'exemplo.com/arquivo', // Inválido - sem protocolo
-                    'htt://exemplo.com', // Inválido - protocolo errado
-                    'https://exemplo' // Inválido - domínio incompleto
-                ];
-                
-                let diagnosticoHTML = '<div class="space-y-2">';
-                
-                exemplosLinks.forEach(link => {
-                    const valido = Utils.validarLink(link);
-                    diagnosticoHTML += `
-                        <div class="flex justify-between items-center p-2 ${valido ? 'bg-green-50' : 'bg-red-50'} rounded">
-                            <span class="text-sm font-mono">${link}</span>
-                            <span class="text-xs font-semibold ${valido ? 'text-green-600' : 'text-red-600'}">
-                                ${valido ? 'VÁLIDO' : 'INVÁLIDO'}
-                            </span>
-                        </div>
-                    `;
-                });
-                
-                diagnosticoHTML += `
-                    <div class="mt-3 text-xs text-gray-600">
-                        <p><strong>Dica:</strong> Links devem ter protocolo (http:// ou https://) e domínio válido.</p>
-                    </div>
-                `;
-                
-                container.innerHTML = diagnosticoHTML;
-                
-            } catch (error) {
-                container.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar diagnóstico</p>`;
-            }
-        }
-
         function testarValidacaoLink() {
             const linkTeste = prompt('Digite um link para testar a validação:');
             if (linkTeste) {
@@ -2166,7 +2119,6 @@
             setTimeout(() => {
                 carregarStatusCache();
                 carregarMetricasPerformance();
-                carregarDiagnosticoLinks();
             }, 1000);
         }
 
