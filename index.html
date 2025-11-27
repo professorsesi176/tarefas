@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.6
+            Desenvolvido por Geovane Modena | Versão 30.7
         </footer>
     </div>
 
@@ -654,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v30.6...');
+                console.log('Inicializando sistema v30.7...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1722,9 +1722,20 @@
                             
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
                                 for (let parte = 1; parte <= 4; parte++) {
-                                    // CORREÇÃO: Usar a chave correta "Parte" em vez de "NotaParte"
-                                    const chaveNota = `Parte${(tarefaIndex * 4) + parte}`;
-                                    const notaParte = aluno[chaveNota] || 0;
+                                    // CORREÇÃO: Tentar diferentes padrões de chave para as notas das partes
+                                    const chaveNota1 = `Parte${(tarefaIndex * 4) + parte}`;
+                                    const chaveNota2 = `NotaParte${(tarefaIndex * 4) + parte}`;
+                                    const chaveNota3 = `P${parte}_T${tarefaIndex + 1}`;
+                                    
+                                    let notaParte = 0;
+                                    if (aluno[chaveNota1] !== undefined) {
+                                        notaParte = aluno[chaveNota1];
+                                    } else if (aluno[chaveNota2] !== undefined) {
+                                        notaParte = aluno[chaveNota2];
+                                    } else if (aluno[chaveNota3] !== undefined) {
+                                        notaParte = aluno[chaveNota3];
+                                    }
+                                    
                                     let classeNota = 'text-gray-600';
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
