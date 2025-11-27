@@ -15,78 +15,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
-    
-    <style>
-        /* Estilos específicos para as correções */
-        .link-salvo-clicavel {
-            color: #1d4ed8;
-            text-decoration: underline;
-            word-break: break-all;
-            padding: 8px 12px;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            display: block;
-            margin-bottom: 8px;
-        }
-        
-        .link-salvo-clicavel:hover {
-            background-color: #eff6ff;
-            color: #1e40af;
-        }
-        
-        .nota-parte {
-            background-color: #10b981;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-left: 8px;
-        }
-        
-        .btn-link {
-            padding: 6px 12px;
-            margin-left: 8px;
-        }
-        
-        .btn-excluir-loading {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .btn-excluir-loading::after {
-            content: " ⏳";
-        }
-        
-        /* Melhorias para o relatório */
-        .relatorio-tarefa-header {
-            background-color: #fef2f2;
-            font-size: 0.8rem;
-        }
-        
-        .relatorio-parte-header {
-            background-color: #f8fafc;
-            font-size: 0.75rem;
-        }
-        
-        /* Correção para NaN no desempenho */
-        .media-aluno {
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-        
-        .media-aluno.alta {
-            color: #10b981;
-        }
-        
-        .media-aluno.media {
-            color: #f59e0b;
-        }
-        
-        .media-aluno.baixa {
-            color: #ef4444;
-        }
-    </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
     <div id="app-container" class="w-full max-w-6xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
@@ -107,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.5 - Correções aplicadas
+            Desenvolvido por Geovane Modena | Versão 30.5
         </footer>
     </div>
 
@@ -1249,20 +1177,7 @@
                             </div>
                         </div>
                         
-                        <div class="aluno-relatorio-card" onclick="toggleRelatorioAluno()">
-                            <div class="aluno-relatorio-header">
-                                <h4 class="font-semibold text-red-700">Meu Desempenho</h4>
-                                <svg class="expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="m6 9 6 6 6-6"/>
-                                </svg>
-                            </div>
-                            <div class="aluno-relatorio-content" id="relatorio-aluno-content">
-                                <div class="text-center py-4">
-                                    <div class="spinner"></div>
-                                    <p class="mt-2 text-gray-600">Carregando relatório...</p>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- REMOVIDO: Meu Desempenho -->
                         
                         <div class="fundamento-cientifico">
                             <div class="fundamento-title" onclick="toggleFundamentoCientifico()">
@@ -1311,18 +1226,6 @@
         }
 
         // ==================== FUNÇÕES DO ALUNO ====================
-        function toggleRelatorioAluno() {
-            const conteudo = document.getElementById('relatorio-aluno-content');
-            const icon = document.querySelector('.aluno-relatorio-card .expand-icon');
-            
-            conteudo.classList.toggle('expandido');
-            icon.classList.toggle('expandido');
-            
-            if (conteudo.classList.contains('expandido')) {
-                carregarRelatorioAluno();
-            }
-        }
-
         function toggleFundamentoCientifico() {
             const conteudo = document.getElementById('conteudo-fundamento');
             const icon = document.querySelector('.fundamento-cientifico .expand-icon');
@@ -1401,10 +1304,20 @@
             container.innerHTML = tarefasLocal.map((tarefa, index) => {
                 const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
                 
+                // Calcular nota total da tarefa (soma das 4 partes)
+                let notaTotal = 0;
+                entregaTarefa.forEach(entrega => {
+                    notaTotal += parseFloat(entrega.Nota) || 0;
+                });
+                notaTotal = Math.min(notaTotal, 10).toFixed(1);
+                
                 return `
-                <div class="border border-gray-200 rounded-lg p-4 mb-4" id="tarefa-${tarefa.ID}">
-                    <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
-                    <p class="text-sm text-gray-600 mt-1">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
+                <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
+                        <span class="nota-tarefa-aluno">Nota: ${notaTotal}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
                     
                     ${renderParteAluno(tarefa, 1, entregaTarefa)}
                     ${renderParteAluno(tarefa, 2, entregaTarefa)}
@@ -1439,7 +1352,7 @@
             dataEntrega.setDate(dataEntrega.getDate() + diasOffset);
             
             const inicio = new Date(dataEntrega);
-            inicio.setHours(7, 0, 0, 0); // ALTERADO DE 13h PARA 7h
+            inicio.setHours(7, 0, 0, 0);
             
             const fim = new Date(dataEntrega);
             fim.setHours(22, 0, 0, 0);
@@ -1490,7 +1403,7 @@
                 `;
             }
             
-            // CORREÇÃO: Quando o link está salvo, exibimos um link clicável e a nota
+            // Quando o link está salvo, exibimos um link clicável e a nota
             let linkHTML = '';
             if (temLinkSalvo) {
                 linkHTML = `
@@ -1525,7 +1438,6 @@
                             </button>
                         ` : ''}
                     </div>
-                    ${status.expirado && !temLinkSalvo ? '' : ''} <!-- REMOVIDA A FRASE "Prazo de entrega expirado" -->
                 `;
             }
             
@@ -1545,7 +1457,6 @@
         async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             let link = input ? input.value.trim() : '';
-            const botaoExcluir = document.getElementById(`btn-excluir-${idTarefa}-${parte}`);
             
             if (!link) {
                 UIManager.showModal('Atenção', 'Por favor, cole um link válido.');
@@ -1564,7 +1475,7 @@
             }
 
             try {
-                // CORREÇÃO: Mostrar loading no botão salvar
+                // Mostrar loading no botão salvar
                 Utils.setButtonLoading(botaoSalvar, true);
                 botaoSalvar.textContent = "Salvando...";
                 
@@ -1588,13 +1499,7 @@
                 console.log('Resposta do salvamento:', response);
                 
                 if (response.success) {
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso! Nota: ${response.nota || 'N/A'}`);
-                    
-                    // CORREÇÃO: Limpar caches para forçar recarregamento
-                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
-                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
-                    
-                    // CORREÇÃO: Recarregar as tarefas para atualizar a interface
+                    // Recarregar as tarefas para atualizar a interface
                     await carregarTarefasAluno();
                     
                 } else {
@@ -1612,7 +1517,7 @@
 
         async function excluirLinkAluno(idTarefa, parte, botaoExcluir) {
             try {
-                // CORREÇÃO: Mostrar loading no botão excluir
+                // Mostrar loading no botão excluir
                 Utils.setButtonLoading(botaoExcluir, true);
                 botaoExcluir.textContent = "Excluindo...";
                 
@@ -1633,13 +1538,7 @@
                 console.log('Resposta da exclusão:', response);
                 
                 if (response.success) {
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} excluído com sucesso!`);
-                    
-                    // CORREÇÃO: Limpar caches para forçar recarregamento
-                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
-                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
-                    
-                    // CORREÇÃO: Recarregar as tarefas para atualizar a interface
+                    // Recarregar as tarefas para atualizar a interface
                     await carregarTarefasAluno();
                     
                 } else {
@@ -1822,8 +1721,10 @@
                             `;
                             
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
+                                const notaTarefa = aluno[`Nota${tarefaIndex + 1}`] || 0;
+                                
                                 for (let parte = 1; parte <= 4; parte++) {
-                                    const notaParte = aluno[`Nota_${tarefa.ID}_P${parte}`] || 0;
+                                    const notaParte = aluno[`Parte${(tarefaIndex * 4) + parte}`] || 0;
                                     let classeNota = 'text-gray-600';
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
@@ -1833,7 +1734,7 @@
                                         }
                                     }
                                     
-                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? parseFloat(notaParte).toFixed(1) : '-'}</span></td>`;
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
                                 }
                             });
                             
@@ -1912,94 +1813,6 @@
                 doc.save(`relatorio_turma_${turma}.pdf`);
             } catch (error) {
                 UIManager.showModal('Erro', `Erro ao exportar para PDF: ${error.message}`);
-            }
-        }
-
-        // CORREÇÃO: Função carregarRelatorioAluno atualizada para resolver NaN
-        async function carregarRelatorioAluno() {
-            const container = document.getElementById('relatorio-aluno-content');
-            
-            try {
-                // SEMPRE forçar atualização do relatório do aluno
-                const entregasResponse = await apiGet('getEntregasAluno', { 
-                    email: STATE.usuarioLogado.Email, 
-                    turma: STATE.usuarioLogado.Turma 
-                }, true); // forceRefresh: true para sempre buscar dados atualizados
-                const entregas = entregasResponse.data || [];
-                
-                let relatorioHTML = '';
-                
-                if (entregas.length === 0) {
-                    relatorioHTML = `
-                        <p class="text-gray-500 text-center py-4">Nenhuma entrega registrada.</p>
-                    `;
-                } else {
-                    const tarefasResponse = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, true);
-                    const todasTarefas = tarefasResponse.data || [];
-                    
-                    let notaTotal = 0;
-                    let countEntregas = 0;
-                    
-                    relatorioHTML = `
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full compact-table">
-                                <thead>
-                                    <tr>
-                                        <th>Tarefa</th>
-                                        <th>Parte</th>
-                                        <th class="data-column">Nota</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    
-                    entregas.forEach(entrega => {
-                        // CORREÇÃO: Buscar tarefa pelo ID real em vez do índice
-                        const tarefa = todasTarefas.find(t => t.ID === entrega.ID_Tarefa);
-                        const temaTarefa = tarefa ? tarefa.Tema : `Tarefa ${entrega.ID_Tarefa}`;
-                        
-                        // CORREÇÃO: Garantir que a nota é um número válido
-                        const notaEntrega = parseFloat(entrega.Nota) || 0;
-                        if (notaEntrega > 0) {
-                            notaTotal += notaEntrega;
-                            countEntregas++;
-                        }
-                        
-                        relatorioHTML += `
-                            <tr>
-                                <td>${Utils.escapeHTML(temaTarefa)}</td>
-                                <td>Parte ${entrega.Parte}</td>
-                                <td class="data-column font-semibold">${notaEntrega.toFixed(1)}</td>
-                            </tr>
-                        `;
-                    });
-                    
-                    // CORREÇÃO: Calcular média corretamente
-                    const media = countEntregas > 0 ? (notaTotal / countEntregas).toFixed(1) : '0.0';
-                    const mediaNum = parseFloat(media);
-                    let classeMedia = 'baixa';
-                    if (mediaNum >= 7.5) classeMedia = 'alta';
-                    else if (mediaNum >= 5.0) classeMedia = 'media';
-                    
-                    relatorioHTML += `
-                                </tbody>
-                            </table>
-                            <div class="mt-4 p-3 bg-gray-50 rounded border">
-                                <div class="flex justify-between items-center">
-                                    <span class="font-semibold">Média Geral:</span>
-                                    <span class="media-aluno ${classeMedia}">${media}</span>
-                                </div>
-                                <div class="text-sm text-gray-600 mt-2">
-                                    Total de entregas: ${countEntregas} | Soma das notas: ${notaTotal.toFixed(1)}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                container.innerHTML = relatorioHTML;
-            } catch (error) {
-                container.innerHTML = `<p class="text-red-500 text-center py-4">Erro ao carregar relatório: ${Utils.escapeHTML(error.message)}</p>`;
             }
         }
 
@@ -2234,8 +2047,6 @@
         window.limparFormulario = limparFormulario;
         window.salvarLinkAluno = salvarLinkAluno;
         window.excluirLinkAluno = excluirLinkAluno;
-        window.toggleRelatorioAluno = toggleRelatorioAluno;
-        window.carregarRelatorioAluno = carregarRelatorioAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
         window.carregarMetricasPerformance = carregarMetricasPerformance;
