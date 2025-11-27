@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.5
+            Desenvolvido por Geovane Modena | Versão 30.6
         </footer>
     </div>
 
@@ -654,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v30.5...');
+                console.log('Inicializando sistema v30.6...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1721,10 +1721,10 @@
                             `;
                             
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
-                                const notaTarefa = aluno[`Nota${tarefaIndex + 1}`] || 0;
-                                
                                 for (let parte = 1; parte <= 4; parte++) {
-                                    const notaParte = aluno[`Parte${(tarefaIndex * 4) + parte}`] || 0;
+                                    // CORREÇÃO: Usar a chave correta "Parte" em vez de "NotaParte"
+                                    const chaveNota = `Parte${(tarefaIndex * 4) + parte}`;
+                                    const notaParte = aluno[chaveNota] || 0;
                                     let classeNota = 'text-gray-600';
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
@@ -1734,7 +1734,7 @@
                                         }
                                     }
                                     
-                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? parseFloat(notaParte).toFixed(1) : '-'}</span></td>`;
                                 }
                             });
                             
