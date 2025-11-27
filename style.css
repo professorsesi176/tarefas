@@ -1102,5 +1102,20 @@
             color: #dc2626;
             font-weight: 600;
         }
+        .link-salvo-clicavel {
+            color: #1d4ed8;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+
+        .link-salvo-clicavel:hover {
+            color: #1e40af;
+        }
+
+        .nota-tarefa {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-left: 8px;
+        }
 
     </style>
