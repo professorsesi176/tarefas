@@ -1,3 +1,5 @@
-quando editei uma tarefa, o sistema criou outra.
+Faça apenas o que se pede sem mexer em layouts, fontes, estilo ou outras partes do código. 
+Deixe o css como está, em forma de link.
+Gere a próxima versão do front/back completa APENAS do q sofrer alterações
 
-testar se o aluno excluir esta funcionando
+Quando o aluno salvar o link, o botão salvar faz o loading, a tarefa se recarrega, o link deve aparecer, ser clicavel para ir para uma nova página, mas não editável. botão salvar deve desaparecer e o botão excluir ser habilitado. 
