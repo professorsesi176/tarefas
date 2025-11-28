@@ -1406,21 +1406,35 @@
             // Quando o link está salvo, exibimos um link clicável e a nota
             let linkHTML = '';
             if (temLinkSalvo) {
+                // Botão excluir só aparece durante o período de entrega
+                const botaoExcluirHTML = status.liberada ? `
+                    <button class="btn-secundario btn-link" 
+                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                            id="btn-excluir-${tarefa.ID}-${numeroParte}">
+                        Excluir
+                    </button>
+                ` : '';
+                
                 linkHTML = `
                     <div class="link-container mt-2">
                         <a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel">
                             ${Utils.escapeHTML(linkSalvo)}
                         </a>
                         <span class="nota-parte">${notaParte.toFixed(1)}</span>
-                        <button class="btn-secundario btn-link" 
-                                onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                                id="btn-excluir-${tarefa.ID}-${numeroParte}">
-                            Excluir
-                        </button>
+                        ${botaoExcluirHTML}
                     </div>
                     <p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>
                 `;
             } else {
+                // Botão salvar só aparece durante o período de entrega
+                const botaoSalvarHTML = status.liberada ? `
+                    <button class="btn-primario btn-link" 
+                            onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                            id="btn-salvar-${tarefa.ID}-${numeroParte}">
+                        Salvar
+                    </button>
+                ` : '';
+                
                 linkHTML = `
                     <div class="link-container mt-2">
                         <input type="text" 
@@ -1429,14 +1443,7 @@
                                id="${inputId}"
                                value=""
                                ${status.expirado || !status.liberada ? 'disabled' : ''}>
-                        ${!temLinkSalvo ? `
-                            <button class="btn-primario btn-link" 
-                                    onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                                    id="btn-salvar-${tarefa.ID}-${numeroParte}"
-                                    ${status.expirado || !status.liberada ? 'disabled' : ''}>
-                                Salvar
-                            </button>
-                        ` : ''}
+                        ${botaoSalvarHTML}
                     </div>
                 `;
             }
@@ -1499,8 +1506,8 @@
                 console.log('Resposta do salvamento:', response);
                 
                 if (response.success) {
-                    // Recarregar as tarefas para atualizar a interface
-                    await carregarTarefasAluno();
+                    // ALTERAÇÃO 1: Recarregar a página inteira após salvar o link
+                    location.reload();
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -2065,4 +2072,3 @@
     </script>
 </body>
 </html>
-
