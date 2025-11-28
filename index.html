@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.7
+            Desenvolvido por Geovane Modena | Versão 30.8
         </footer>
     </div>
 
@@ -654,7 +654,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v30.7...');
+                console.log('Inicializando sistema v30.8...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1403,7 +1403,7 @@
                 `;
             }
             
-            // Quando o link está salvo, exibimos um link clicável e a nota
+            // CORREÇÃO 2: Exibir apenas o LINK, não o horário
             let linkHTML = '';
             if (temLinkSalvo) {
                 // Botão excluir só aparece durante o período de entrega
@@ -1506,8 +1506,9 @@
                 console.log('Resposta do salvamento:', response);
                 
                 if (response.success) {
-                    // ALTERAÇÃO 1: Recarregar a página inteira após salvar o link
-                    location.reload();
+                    // CORREÇÃO 3: Recarregar apenas as tarefas do aluno, não a página inteira
+                    await carregarTarefasAluno();
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -1664,17 +1665,21 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${relatorio.alunos.map(aluno => `
-                                            <tr>
-                                                <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
-                                                <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                                <td class="px-4 py-3 text-center border-b">
-                                                    <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
-                                                        ${aluno.Media || '0.0'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
+                                        ${relatorio.alunos.map(aluno => {
+                                            // CORREÇÃO 1: Garantir que a média seja exibida como número
+                                            const media = parseFloat(aluno.Media) || 0;
+                                            return `
+                                                <tr>
+                                                    <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
+                                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                                    <td class="px-4 py-3 text-center border-b">
+                                                        <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                                            ${media.toFixed(1)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -1716,13 +1721,16 @@
                         `;
                         
                         relatorio.alunos.forEach((aluno) => {
+                            // CORREÇÃO 1: Garantir que a média seja exibida como número
+                            const media = parseFloat(aluno.Media) || 0;
+                            
                             relatorioTurmaHTML += `
                                 <tr>
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                                     <td class="px-4 py-3 text-center border-b">
-                                        <span class="${parseFloat(aluno.Media) >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
-                                            ${aluno.Media || '0.0'}
+                                        <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                            ${media.toFixed(1)}
                                         </span>
                                     </td>
                             `;
@@ -1834,8 +1842,39 @@
             }
         }
 
-        // ==================== DIAGNÓSTICO SIMPLIFICADO ====================
-        async function mostrarPainelDiagnostico() {
+        // ==================== INICIALIZAÇÃO ====================
+        document.addEventListener('DOMContentLoaded', init);
+
+        // ==================== EXPORTAÇÃO DE FUNÇÕES GLOBAIS ====================
+        window.logout = function() {
+            AuthManager.logout();
+        };
+
+        window.closeModal = function() {
+            UIManager.closeModal();
+        };
+
+        window.toggleRmVisibility = toggleRmVisibility;
+        window.mostrarPainelProfessor = mostrarPainelProfessor;
+        window.mostrarPainelAluno = mostrarPainelAluno;
+        window.mostrarRelatorioProfessor = mostrarRelatorioProfessor;
+        window.exportarParaExcel = exportarParaExcel;
+        window.exportarParaPDF = exportarParaPDF;
+        window.carregarRelatorioTurma = carregarRelatorioTurma;
+        window.salvarTarefaUnificada = salvarTarefaUnificada;
+        window.excluirTarefaDireto = excluirTarefaDireto;
+        window.editarTarefa = editarTarefa;
+        window.limparFormulario = limparFormulario;
+        window.salvarLinkAluno = salvarLinkAluno;
+        window.excluirLinkAluno = excluirLinkAluno;
+        window.toggleFundamentoCientifico = toggleFundamentoCientifico;
+        window.togglePartesTarefa = togglePartesTarefa;
+
+        // ==================== SEÇÃO DIAGNÓSTICO (REMOVÍVEL) ====================
+        // Para remover o diagnóstico, basta excluir ou comentar esta seção inteira
+
+        // Funções de diagnóstico
+        window.mostrarPainelDiagnostico = async function() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
                     <h3 class="text-2xl font-bold text-red-700 mb-6">Painel de Diagnóstico do Sistema</h3>
@@ -1893,7 +1932,7 @@
             carregarStatusCache();
             carregarEstatisticasSistema();
             carregarMetricasPerformance();
-        }
+        };
 
         function carregarStatusCache() {
             const container = document.getElementById('status-cache');
@@ -2018,7 +2057,7 @@
             }
         }
 
-        function testarValidacaoLink() {
+        window.testarValidacaoLink = function() {
             const linkTeste = prompt('Digite um link para testar a validação:');
             if (linkTeste) {
                 const valido = Utils.validarLink(linkTeste);
@@ -2027,48 +2066,20 @@
                     `Link: ${linkTeste}\n\nResultado: ${valido ? 'VÁLIDO ✓' : 'INVÁLIDO ✗'}\n\n${valido ? 'Este link será aceito pelo sistema.' : 'Verifique se o link tem protocolo (http:// ou https://) e é um link válido.'}`
                 );
             }
-        }
+        };
 
-        function limparCache() {
+        window.limparCache = function() {
             CacheManager.clear();
             UIManager.showModal('Sucesso', 'Cache limpo com sucesso!');
             setTimeout(() => {
                 carregarStatusCache();
                 carregarMetricasPerformance();
             }, 1000);
-        }
-
-        // ==================== INICIALIZAÇÃO ====================
-        document.addEventListener('DOMContentLoaded', init);
-
-        // ==================== EXPORTAÇÃO DE FUNÇÕES GLOBAIS ====================
-        window.logout = function() {
-            AuthManager.logout();
         };
 
-        window.closeModal = function() {
-            UIManager.closeModal();
-        };
-
-        window.toggleRmVisibility = toggleRmVisibility;
-        window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
-        window.limparCache = limparCache;
-        window.mostrarPainelProfessor = mostrarPainelProfessor;
-        window.mostrarPainelAluno = mostrarPainelAluno;
-        window.mostrarRelatorioProfessor = mostrarRelatorioProfessor;
-        window.exportarParaExcel = exportarParaExcel;
-        window.exportarParaPDF = exportarParaPDF;
-        window.carregarRelatorioTurma = carregarRelatorioTurma;
-        window.salvarTarefaUnificada = salvarTarefaUnificada;
-        window.excluirTarefaDireto = excluirTarefaDireto;
-        window.editarTarefa = editarTarefa;
-        window.limparFormulario = limparFormulario;
-        window.salvarLinkAluno = salvarLinkAluno;
-        window.excluirLinkAluno = excluirLinkAluno;
-        window.toggleFundamentoCientifico = toggleFundamentoCientifico;
-        window.togglePartesTarefa = togglePartesTarefa;
         window.carregarMetricasPerformance = carregarMetricasPerformance;
-        window.testarValidacaoLink = testarValidacaoLink;
+
+        // FIM DA SEÇÃO DIAGNÓSTICO
     </script>
 </body>
 </html>
