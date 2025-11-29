@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.8
+            Desenvolvido por Geovane Modena | Versão 30.9
         </footer>
     </div>
 
@@ -231,6 +231,13 @@
                 } catch {
                     return false;
                 }
+            },
+
+            // CORREÇÃO: Nova função para validar se um valor é uma data válida
+            isDateString: (value) => {
+                if (!value || typeof value !== 'string') return false;
+                const date = new Date(value);
+                return !isNaN(date.getTime()) && value.includes('-') && value.includes('T');
             }
         };
 
@@ -654,7 +661,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v30.8...');
+                console.log('Inicializando sistema v30.9...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1236,12 +1243,9 @@
 
         async function carregarTarefasAluno() {
             const cacheKey = `tarefas_aluno_${STATE.usuarioLogado.Email}_dados`;
-            const cached = CacheManager.get(cacheKey);
             
-            if (cached) {
-                renderTarefasAlunoFromCache(cached.tarefas, cached.entregas);
-                return;
-            }
+            // SEMPRE recarregar do servidor para garantir dados atualizados
+            CacheManager.remove(cacheKey);
 
             mostrarLoadingTarefasAluno();
             
@@ -1262,6 +1266,7 @@
                         turma: STATE.usuarioLogado.Turma 
                     }, true);
                     entregas = entregasResponse.data || [];
+                    console.log('Entregas carregadas:', entregas);
                 } catch (error) {
                     console.warn('Erro ao carregar entregas do aluno (não crítico):', error);
                 }
@@ -1331,7 +1336,16 @@
         function renderParteAluno(tarefa, numeroParte, entregas) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
-            const linkSalvo = entrega ? entrega.Link : '';
+            
+            // CORREÇÃO: Filtrar corretamente o link - garantir que não seja uma data
+            let linkSalvo = '';
+            if (entrega) {
+                // Verificar se o valor é um link válido (não uma data)
+                if (entrega.Link && !Utils.isDateString(entrega.Link) && entrega.Link.toString().trim() !== '') {
+                    linkSalvo = entrega.Link;
+                }
+            }
+            
             const notaParte = entrega ? parseFloat(entrega.Nota) : 0;
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             const temLinkSalvo = linkSalvo && String(linkSalvo).trim() !== '';
@@ -1403,7 +1417,7 @@
                 `;
             }
             
-            // CORREÇÃO 2: Exibir apenas o LINK, não o horário
+            // CORREÇÃO: Exibir apenas o LINK, não a data
             let linkHTML = '';
             if (temLinkSalvo) {
                 // Botão excluir só aparece durante o período de entrega
@@ -1506,7 +1520,9 @@
                 console.log('Resposta do salvamento:', response);
                 
                 if (response.success) {
-                    // CORREÇÃO 3: Recarregar apenas as tarefas do aluno, não a página inteira
+                    // CORREÇÃO: Limpar cache e recarregar as tarefas do aluno
+                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
+                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                     await carregarTarefasAluno();
                     UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!`);
                     
@@ -1546,8 +1562,11 @@
                 console.log('Resposta da exclusão:', response);
                 
                 if (response.success) {
-                    // Recarregar as tarefas para atualizar a interface
+                    // CORREÇÃO: Limpar cache e recarregar as tarefas do aluno
+                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
+                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
                     await carregarTarefasAluno();
+                    UIManager.showModal('Sucesso', `Entrega da parte ${parte} excluída com sucesso!`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao excluir link');
@@ -1666,8 +1685,17 @@
                                     </thead>
                                     <tbody>
                                         ${relatorio.alunos.map(aluno => {
-                                            // CORREÇÃO 1: Garantir que a média seja exibida como número
-                                            const media = parseFloat(aluno.Media) || 0;
+                                            // CORREÇÃO 1: Garantir que a média seja exibida corretamente como número
+                                            let media = 0;
+                                            if (aluno.Media) {
+                                                // Se for uma string de data, tentar converter de outra forma
+                                                if (Utils.isDateString(aluno.Media)) {
+                                                    // Tentar extrair número de campos alternativos
+                                                    media = parseFloat(aluno.Numero) || 0;
+                                                } else {
+                                                    media = parseFloat(aluno.Media) || 0;
+                                                }
+                                            }
                                             return `
                                                 <tr>
                                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
@@ -1721,8 +1749,17 @@
                         `;
                         
                         relatorio.alunos.forEach((aluno) => {
-                            // CORREÇÃO 1: Garantir que a média seja exibida como número
-                            const media = parseFloat(aluno.Media) || 0;
+                            // CORREÇÃO 1: Garantir que a média seja exibida corretamente como número
+                            let media = 0;
+                            if (aluno.Media) {
+                                // Se for uma string de data, tentar converter de outra forma
+                                if (Utils.isDateString(aluno.Media)) {
+                                    // Tentar extrair número de campos alternativos
+                                    media = parseFloat(aluno.Numero) || 0;
+                                } else {
+                                    media = parseFloat(aluno.Media) || 0;
+                                }
+                            }
                             
                             relatorioTurmaHTML += `
                                 <tr>
