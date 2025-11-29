@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 30.9
+            Desenvolvido por Geovane Modena | Versão 31.0 - Correções das notas parciais
         </footer>
     </div>
 
@@ -238,6 +238,13 @@
                 if (!value || typeof value !== 'string') return false;
                 const date = new Date(value);
                 return !isNaN(date.getTime()) && value.includes('-') && value.includes('T');
+            },
+
+            // NOVA FUNÇÃO: Validar se é um número válido para nota
+            isNotaValida: (value) => {
+                if (value === null || value === undefined) return false;
+                const num = parseFloat(value);
+                return !isNaN(num) && num >= 0 && num <= 2.5;
             }
         };
 
@@ -661,7 +668,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v30.9...');
+                console.log('Inicializando sistema v31.0 - Correções das notas parciais...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1520,9 +1527,8 @@
                 console.log('Resposta do salvamento:', response);
                 
                 if (response.success) {
-                    // CORREÇÃO: Limpar cache e recarregar as tarefas do aluno
-                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
-                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
+                    // CORREÇÃO: Limpar cache COMPLETAMENTE para forçar atualização instantânea
+                    CacheManager.clear();
                     await carregarTarefasAluno();
                     UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!`);
                     
@@ -1562,9 +1568,8 @@
                 console.log('Resposta da exclusão:', response);
                 
                 if (response.success) {
-                    // CORREÇÃO: Limpar cache e recarregar as tarefas do aluno
-                    CacheManager.remove(`tarefas_aluno_${STATE.usuarioLogado.Email}_dados`);
-                    CacheManager.remove(`painel_aluno_${STATE.usuarioLogado.Email}`);
+                    // CORREÇÃO: Limpar cache COMPLETAMENTE para forçar atualização instantânea
+                    CacheManager.clear();
                     await carregarTarefasAluno();
                     UIManager.showModal('Sucesso', `Entrega da parte ${parte} excluída com sucesso!`);
                     
@@ -1606,7 +1611,7 @@
             });
         }
 
-        // ==================== RELATÓRIOS ====================
+        // ==================== RELATÓRIOS - CORREÇÕES DAS NOTAS PARCIAIS ====================
         async function mostrarRelatorioProfessor() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
@@ -1685,7 +1690,7 @@
                                     </thead>
                                     <tbody>
                                         ${relatorio.alunos.map(aluno => {
-                                            // CORREÇÃO 1: Garantir que a média seja exibida corretamente como número
+                                            // CORREÇÃO: Garantir que a média seja exibida corretamente como número
                                             let media = 0;
                                             if (aluno.Media) {
                                                 // Se for uma string de data, tentar converter de outra forma
@@ -1749,7 +1754,7 @@
                         `;
                         
                         relatorio.alunos.forEach((aluno) => {
-                            // CORREÇÃO 1: Garantir que a média seja exibida corretamente como número
+                            // CORREÇÃO: Garantir que a média seja exibida corretamente como número
                             let media = 0;
                             if (aluno.Media) {
                                 // Se for uma string de data, tentar converter de outra forma
@@ -1774,30 +1779,41 @@
                             
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
                                 for (let parte = 1; parte <= 4; parte++) {
-                                    // CORREÇÃO: Tentar diferentes padrões de chave para as notas das partes
-                                    const chaveNota1 = `Parte${(tarefaIndex * 4) + parte}`;
-                                    const chaveNota2 = `NotaParte${(tarefaIndex * 4) + parte}`;
-                                    const chaveNota3 = `P${parte}_T${tarefaIndex + 1}`;
+                                    // CORREÇÃO MELHORADA: Buscar notas das partes de forma mais robusta
+                                    const chaveBase = (tarefaIndex * 4) + parte;
+                                    const chavesPossiveis = [
+                                        `Parte${chaveBase}`,
+                                        `NotaParte${chaveBase}`,
+                                        `P${parte}_T${tarefaIndex + 1}`,
+                                        `Parte${parte}_T${tarefaIndex + 1}`
+                                    ];
                                     
                                     let notaParte = 0;
-                                    if (aluno[chaveNota1] !== undefined) {
-                                        notaParte = aluno[chaveNota1];
-                                    } else if (aluno[chaveNota2] !== undefined) {
-                                        notaParte = aluno[chaveNota2];
-                                    } else if (aluno[chaveNota3] !== undefined) {
-                                        notaParte = aluno[chaveNota3];
+                                    for (const chave of chavesPossiveis) {
+                                        if (aluno[chave] !== undefined && Utils.isNotaValida(aluno[chave])) {
+                                            notaParte = parseFloat(aluno[chave]);
+                                            break;
+                                        }
+                                    }
+                                    
+                                    // CORREÇÃO: Se não encontrou, tentar calcular a partir da nota total
+                                    if (notaParte === 0 && aluno[`Nota${tarefaIndex + 1}`] > 0) {
+                                        // Distribuir a nota total igualmente entre as partes (apenas para exibição)
+                                        notaParte = Math.min(parseFloat(aluno[`Nota${tarefaIndex + 1}`]) / 4, 2.5);
                                     }
                                     
                                     let classeNota = 'text-gray-600';
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
                                             classeNota = 'text-green-600 font-semibold';
+                                        } else if (notaParte >= 2.0) {
+                                            classeNota = 'text-blue-600';
                                         } else {
                                             classeNota = 'text-red-600';
                                         }
                                     }
                                     
-                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? parseFloat(notaParte).toFixed(1) : '-'}</span></td>`;
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
                                 }
                             });
                             
@@ -1907,10 +1923,7 @@
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
 
-        // ==================== SEÇÃO DIAGNÓSTICO (REMOVÍVEL) ====================
-        // Para remover o diagnóstico, basta excluir ou comentar esta seção inteira
-
-        // Funções de diagnóstico
+        // ==================== SEÇÃO DIAGNÓSTICO ====================
         window.mostrarPainelDiagnostico = async function() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
@@ -1962,6 +1975,15 @@
                                 Testar Validação de Link
                             </button>
                         </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h4 class="font-semibold text-red-800 mb-2">Limpeza de Cache Completa</h4>
+                        <p class="text-red-700 text-sm mb-3">Se os links não estão aparecendo mesmo estando salvos na planilha:</p>
+                        <button onclick="limparCacheCompleto()" class="btn-primario text-sm" style="background-color: #dc2626;">
+                            Limpar Todo o Cache do Navegador
+                        </button>
+                        <p class="text-red-600 text-xs mt-2">Isso forçará o recarregamento de todos os dados do servidor</p>
                     </div>
                 </div>
             `;
@@ -2114,9 +2136,21 @@
             }, 1000);
         };
 
-        window.carregarMetricasPerformance = carregarMetricasPerformance;
+        window.limparCacheCompleto = function() {
+            if (confirm('Isso limpará TODO o cache do navegador para este site. Todas as informações salvas localmente serão perdidas. Continuar?')) {
+                // Limpar todo o localStorage
+                localStorage.clear();
+                // Limpar sessionStorage também
+                sessionStorage.clear();
+                // Forçar reload completo
+                UIManager.showModal('Sucesso', 'Cache completamente limpo! A página será recarregada.');
+                setTimeout(() => {
+                    location.reload(true);
+                }, 2000);
+            }
+        };
 
-        // FIM DA SEÇÃO DIAGNÓSTICO
+        window.carregarMetricasPerformance = carregarMetricasPerformance;
     </script>
 </body>
 </html>
