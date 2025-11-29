@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 32.0 - Sistema de Depuração de Células
+            Desenvolvido por Geovane Modena | Versão 32.0 - Sistema Otimizado
         </footer>
     </div>
 
@@ -45,15 +45,6 @@
             <h3 id="modal-title" class="text-lg font-bold mb-2"></h3>
             <p id="modal-message" class="text-gray-700"></p>
             <button onclick="closeModal()" class="btn-primario w-full mt-4">Fechar</button>
-        </div>
-    </div>
-
-    <!-- Modal de Depuração de Células -->
-    <div id="debug-modal-overlay" class="modal-overlay hidden">
-        <div class="modal-content max-w-4xl">
-            <h3 class="text-lg font-bold mb-4 text-red-700">Depuração de Células - Origem dos Dados</h3>
-            <div id="debug-content" class="text-sm space-y-3 max-h-96 overflow-y-auto"></div>
-            <button onclick="closeDebugModal()" class="btn-primario w-full mt-4">Fechar</button>
         </div>
     </div>
 
@@ -80,10 +71,6 @@
                 tempoTotal: 0,
                 memoriaUsada: 0,
                 memoriaTotal: 0
-            },
-            debugInfo: {
-                ultimaTarefaCriada: null,
-                relatorioData: null
             }
         };
 
@@ -273,6 +260,25 @@
                 }
                 
                 return `${colunaLetra}${linha}`;
+            },
+
+            // NOVA FUNÇÃO: Calcular posição da célula para tooltip do aluno
+            calcularPosicaoAluno: (numeroAluno, tarefaIndex, parte) => {
+                // Coluna base para tarefas: 7 (G)
+                const colunaBase = 7;
+                // Cada tarefa ocupa 13 colunas
+                const colunaTarefa = colunaBase + (tarefaIndex * 13);
+                // Cada parte ocupa 3 colunas (Link, DataHora, Nota)
+                const colunaParte = colunaTarefa + 1 + ((parte - 1) * 3);
+                // Linha do aluno: número do aluno + 2 (cabeçalho + linha 1)
+                const linhaAluno = parseInt(numeroAluno) + 2;
+                
+                return {
+                    aba: STATE.usuarioLogado?.Turma || 'Turma',
+                    linha: linhaAluno,
+                    coluna: colunaParte,
+                    celula: Utils.calcularPosicaoCelula(linhaAluno, colunaParte)
+                };
             }
         };
 
@@ -434,9 +440,7 @@
                 tarefasBtn: document.getElementById('tarefasBtn'),
                 modalOverlay: document.getElementById('modal-overlay'),
                 modalTitle: document.getElementById('modal-title'),
-                modalMessage: document.getElementById('modal-message'),
-                debugModalOverlay: document.getElementById('debug-modal-overlay'),
-                debugContent: document.getElementById('debug-content')
+                modalMessage: document.getElementById('modal-message')
             },
 
             showModal: (title, message) => {
@@ -447,15 +451,6 @@
 
             closeModal: () => {
                 UIManager.elements.modalOverlay.classList.add('hidden');
-            },
-
-            showDebugModal: (content) => {
-                UIManager.elements.debugContent.innerHTML = content;
-                UIManager.elements.debugModalOverlay.classList.remove('hidden');
-            },
-
-            closeDebugModal: () => {
-                UIManager.elements.debugModalOverlay.classList.add('hidden');
             },
 
             renderLoading: (message = 'Carregando...') => {
@@ -707,7 +702,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v32.0 - Sistema de Depuração de Células...');
+                console.log('Inicializando sistema v32.0 - Sistema Otimizado...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -820,9 +815,6 @@
                     <div class="card p-6 border-t-4 border-red-600">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-2xl font-bold text-red-700" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Painel de Tarefas'}</h3>
-                            <button onclick="criarTarefaDebug()" class="btn-primario text-sm" style="background-color: #8b5cf6;">
-                                Criar Tarefa Debug
-                            </button>
                         </div>
                         
                         <div class="form-group">
@@ -906,98 +898,6 @@
             await carregarTarefasProfessor();
             
             CacheManager.set(cacheKey, UIManager.elements.contentArea.innerHTML, 2 * 60 * 1000);
-        }
-
-        // NOVA FUNÇÃO: Criar tarefa de debug
-        async function criarTarefaDebug() {
-            try {
-                const turmasSelecionadas = Array.from(document.querySelectorAll('.turma-checkbox:checked'))
-                    .map(cb => cb.value);
-                
-                if (turmasSelecionadas.length === 0) {
-                    UIManager.showModal('Atenção', 'Selecione pelo menos uma turma para criar a tarefa de debug.');
-                    return;
-                }
-
-                const tema = `TAREFA DEBUG - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
-                const dataAula = new Date().toISOString().split('T')[0];
-                
-                const parte1 = `DEBUG PARTE 1 - Esta tarefa serve para testar as posições das células no Excel.
-Linha 1: Conteúdo de teste para a parte 1
-Linha 2: Verificar posição das colunas na planilha
-Linha 3: A coluna StartColumn indica onde começa esta tarefa`;
-
-                const parte2 = `DEBUG PARTE 2 - Teste de estrutura de dados
-• Cada tarefa ocupa 13 colunas
-• StartColumn + 1 = Link Parte 1
-• StartColumn + 2 = DataHora Parte 1  
-• StartColumn + 3 = Nota Parte 1
-• E assim por diante...`;
-
-                const parte3 = `DEBUG PARTE 3 - Informações de depuração
-Turmas selecionadas: ${turmasSelecionadas.join(', ')}
-Data de criação: ${new Date().toLocaleString()}
-ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
-
-                const parte4 = `DEBUG PARTE 4 - Instruções para teste
-1. Use o botão "Ver Células" no relatório
-2. Verifique as posições das notas
-3. Confirme os links salvos nas colunas
-4. Valide as médias calculadas`;
-
-                console.log('Criando tarefa de debug para turmas:', turmasSelecionadas);
-                
-                const promises = turmasSelecionadas.map(async (turma) => {
-                    const dados = {
-                        Turma: turma,
-                        Tema: tema,
-                        Parte1: parte1,
-                        Parte2: parte2,
-                        Parte3: parte3,
-                        Parte4: parte4,
-                        DataAula: dataAula,
-                        professor: STATE.usuarioLogado.NomeCompleto
-                    };
-
-                    console.log(`Enviando dados de debug para turma ${turma}:`, dados);
-                    return await apiPost('criarTarefaUnificada', dados);
-                });
-
-                const results = await Promise.all(promises);
-                
-                console.log('Resultados da criação de debug:', results);
-                
-                // Verificar se houve algum erro
-                const erros = results.filter(r => !r.success);
-                if (erros.length > 0) {
-                    throw new Error(`Erro em ${erros.length} turma(s): ${erros.map(e => e.error || 'Erro desconhecido').join(', ')}`);
-                }
-                
-                // Salvar informações de debug
-                STATE.debugInfo.ultimaTarefaCriada = {
-                    tema: tema,
-                    turmas: turmasSelecionadas,
-                    data: new Date().toISOString(),
-                    resultados: results
-                };
-                
-                UIManager.showModal('Tarefa Debug Criada', 
-                    `Tarefa de debug criada com sucesso para as turmas: ${turmasSelecionadas.join(', ')}!\n\n` +
-                    `Use o botão "Ver Células" no relatório para ver as posições exatas no Excel.`
-                );
-                
-                CacheManager.remove('painel_professor');
-                CacheManager.remove('tarefas_professor_lista');
-                turmasSelecionadas.forEach(turma => {
-                    CacheManager.remove(`relatorio_${turma}`);
-                });
-                
-                await carregarTarefasProfessor();
-                
-            } catch (error) {
-                console.error('Erro ao criar tarefa de debug:', error);
-                UIManager.showModal('Erro', `Erro ao criar tarefa de debug: ${error.message}`);
-            }
         }
 
         function preencherFormularioEdicao() {
@@ -1469,16 +1369,16 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
                     </div>
                     <p class="text-sm text-gray-600">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
                     
-                    ${renderParteAluno(tarefa, 1, entregaTarefa)}
-                    ${renderParteAluno(tarefa, 2, entregaTarefa)}
-                    ${renderParteAluno(tarefa, 3, entregaTarefa)}
-                    ${renderParteAluno(tarefa, 4, entregaTarefa)}
+                    ${renderParteAluno(tarefa, 1, entregaTarefa, index)}
+                    ${renderParteAluno(tarefa, 2, entregaTarefa, index)}
+                    ${renderParteAluno(tarefa, 3, entregaTarefa, index)}
+                    ${renderParteAluno(tarefa, 4, entregaTarefa, index)}
                 </div>
                 `;
             }).join('');
         }
 
-        function renderParteAluno(tarefa, numeroParte, entregas) {
+        function renderParteAluno(tarefa, numeroParte, entregas, tarefaIndex) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
             
@@ -1562,6 +1462,10 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
                 `;
             }
             
+            // CALCULAR POSIÇÃO DA CÉLULA PARA TOOLTIP
+            const posicaoCelula = Utils.calcularPosicaoAluno(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
+            const tooltipAluno = `Aba: ${posicaoCelula.aba}, Linha: ${posicaoCelula.linha}, Coluna: ${posicaoCelula.coluna} (${posicaoCelula.celula})`;
+            
             // CORREÇÃO: Exibir apenas o LINK, não a data
             let linkHTML = '';
             if (temLinkSalvo) {
@@ -1576,7 +1480,7 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
                 
                 linkHTML = `
                     <div class="link-container mt-2">
-                        <a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="Link salvo na planilha - Aba: ${STATE.usuarioLogado.Turma}">
+                        <a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">
                             ${Utils.escapeHTML(linkSalvo)}
                         </a>
                         <span class="nota-parte" title="Nota: ${notaParte.toFixed(1)}">${notaParte.toFixed(1)}</span>
@@ -1749,15 +1653,12 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
             });
         }
 
-        // ==================== RELATÓRIOS - SISTEMA DE DEPURAÇÃO DE CÉLULAS ====================
+        // ==================== RELATÓRIOS - MELHORIAS DE TOOLTIP ====================
         async function mostrarRelatorioProfessor() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-2xl font-bold text-red-700">Relatório por Turma</h3>
-                        <button onclick="mostrarDebugCélulas()" class="btn-primario text-sm" style="background-color: #8b5cf6;">
-                            Ver Células
-                        </button>
                     </div>
                     <div class="turmas-container">
                         <div class="turmas-buttons">
@@ -1785,103 +1686,6 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
             window.turmaSelecionada = null;
         }
 
-        // NOVA FUNÇÃO: Mostrar depuração de células
-        function mostrarDebugCélulas() {
-            if (!STATE.debugInfo.relatorioData) {
-                UIManager.showModal('Informação', 'Carregue primeiro o relatório de uma turma para ver as informações das células.');
-                return;
-            }
-
-            const relatorio = STATE.debugInfo.relatorioData;
-            const turma = window.turmaSelecionada;
-            
-            let debugContent = `
-                <div class="space-y-4">
-                    <div class="p-3 bg-blue-50 border border-blue-200 rounded">
-                        <h4 class="font-semibold text-blue-800 mb-2">Informações da Turma</h4>
-                        <div class="text-sm space-y-1">
-                            <div><strong>Turma:</strong> ${turma}</div>
-                            <div><strong>Total de Alunos:</strong> ${relatorio.alunos?.length || 0}</div>
-                            <div><strong>Total de Tarefas:</strong> ${relatorio.tarefas?.length || 0}</div>
-                            <div><strong>Aba no Excel:</strong> ${turma}</div>
-                        </div>
-                    </div>
-            `;
-
-            if (relatorio.tarefas && relatorio.tarefas.length > 0) {
-                debugContent += `
-                    <div class="p-3 bg-green-50 border border-green-200 rounded">
-                        <h4 class="font-semibold text-green-800 mb-2">Estrutura das Tarefas</h4>
-                        ${relatorio.tarefas.map((tarefa, index) => {
-                            const startCol = tarefa.StartColumn || (6 + (index * 13));
-                            return `
-                                <div class="mb-3 p-2 bg-white rounded border">
-                                    <div class="font-medium">${tarefa.Tema}</div>
-                                    <div class="text-xs text-gray-600 mt-1">
-                                        <div><strong>StartColumn:</strong> ${startCol} (${Utils.calcularPosicaoCelula(1, startCol)})</div>
-                                        <div><strong>Colunas:</strong> ${startCol} a ${startCol + 12}</div>
-                                        <div class="mt-1">
-                                            <strong>Estrutura:</strong><br>
-                                            • Col ${startCol}: Nota${index + 1}<br>
-                                            • Col ${startCol + 1}: Link${(index * 4) + 1}<br>
-                                            • Col ${startCol + 2}: DataHora${(index * 4) + 1}<br>
-                                            • Col ${startCol + 3}: Parte${(index * 4) + 1}<br>
-                                            • Col ${startCol + 4}: Link${(index * 4) + 2}<br>
-                                            • Col ${startCol + 5}: DataHora${(index * 4) + 2}<br>
-                                            • Col ${startCol + 6}: Parte${(index * 4) + 2}<br>
-                                            • Col ${startCol + 7}: Link${(index * 4) + 3}<br>
-                                            • Col ${startCol + 8}: DataHora${(index * 4) + 3}<br>
-                                            • Col ${startCol + 9}: Parte${(index * 4) + 3}<br>
-                                            • Col ${startCol + 10}: Link${(index * 4) + 4}<br>
-                                            • Col ${startCol + 11}: DataHora${(index * 4) + 4}<br>
-                                            • Col ${startCol + 12}: Parte${(index * 4) + 4}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-            }
-
-            if (relatorio.alunos && relatorio.alunos.length > 0) {
-                debugContent += `
-                    <div class="p-3 bg-purple-50 border border-purple-200 rounded">
-                        <h4 class="font-semibold text-purple-800 mb-2">Exemplo de Aluno</h4>
-                        <div class="text-sm space-y-2">
-                            <div><strong>Nome:</strong> ${relatorio.alunos[0].NomeCompleto}</div>
-                            <div><strong>Número:</strong> ${relatorio.alunos[0].Numero}</div>
-                            <div><strong>Email:</strong> ${relatorio.alunos[0].Email}</div>
-                            <div><strong>Média:</strong> Coluna F (F${relatorio.alunos[0].Numero + 1})</div>
-                            <div class="mt-2">
-                                <strong>Posições das Notas:</strong><br>
-                                ${relatorio.tarefas && relatorio.tarefas.map((tarefa, index) => {
-                                    const startCol = tarefa.StartColumn || (6 + (index * 13));
-                                    return `• Tarefa ${index + 1}: Col ${startCol} (${Utils.calcularPosicaoCelula(relatorio.alunos[0].Numero + 2, startCol)})<br>`;
-                                }).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            debugContent += `
-                <div class="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                    <h4 class="font-semibold text-yellow-800 mb-2">Como Interpretar</h4>
-                    <div class="text-sm space-y-1">
-                        <div><strong>Formato Célula:</strong> LetraColunaNúmeroLinha (ex: A1, BC15)</div>
-                        <div><strong>Linha 1:</strong> Cabeçalhos</div>
-                        <div><strong>Linha 2+:</strong> Dados dos alunos (linha = número do aluno + 1)</div>
-                        <div><strong>Colunas 1-6:</strong> Dados fixos do aluno (Nº, Nome, Email, RM, Turma, Média)</div>
-                        <div><strong>Colunas 7+:</strong> Dados das tarefas (cada tarefa usa 13 colunas)</div>
-                    </div>
-                </div>
-            </div>
-            `;
-
-            UIManager.showDebugModal(debugContent);
-        }
-
         async function carregarRelatorioTurma(turma) {
             document.querySelectorAll('.btn-turma-compact').forEach(btn => {
                 btn.classList.remove('active');
@@ -1900,9 +1704,6 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
             try {
                 const response = await apiGet('getRelatorioTurma', { turma: turma }, true);
                 const relatorio = response.data || {};
-                
-                // Salvar dados para debug
-                STATE.debugInfo.relatorioData = relatorio;
                 
                 let relatorioTurmaHTML = `
                     <div class="relatorio-header">
@@ -1949,7 +1750,7 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
                                                 <tr>
                                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                                    <td class="px-4 py-3 text-center border-b" title="Célula: ${celulaMedia}">
+                                                    <td class="px-4 py-3 text-center border-b" title="Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: 6 (${celulaMedia})">
                                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                                             ${media.toFixed(1)}
                                                         </span>
@@ -2016,7 +1817,7 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
                                 <tr>
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                    <td class="px-4 py-3 text-center border-b" title="Célula: ${celulaMedia}">
+                                    <td class="px-4 py-3 text-center border-b" title="Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: 6 (${celulaMedia})">
                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                             ${media.toFixed(1)}
                                         </span>
@@ -2054,7 +1855,7 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
                                     const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 2, colunaNota);
                                     
                                     let classeNota = 'text-gray-600';
-                                    let tooltip = `Célula: ${celulaNota}`;
+                                    let tooltip = `Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: ${colunaNota} (${celulaNota})`;
                                     
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
@@ -2165,10 +1966,6 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
             UIManager.closeModal();
         };
 
-        window.closeDebugModal = function() {
-            UIManager.closeDebugModal();
-        };
-
         window.toggleRmVisibility = toggleRmVisibility;
         window.mostrarPainelProfessor = mostrarPainelProfessor;
         window.mostrarPainelAluno = mostrarPainelAluno;
@@ -2184,8 +1981,6 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
         window.excluirLinkAluno = excluirLinkAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
-        window.criarTarefaDebug = criarTarefaDebug;
-        window.mostrarDebugCélulas = mostrarDebugCélulas;
 
         // ==================== SEÇÃO DIAGNÓSTICO ====================
         window.mostrarPainelDiagnostico = async function() {
@@ -2226,39 +2021,16 @@ ID do usuário: ${STATE.usuarioLogado?.Email || 'N/A'}`;
                     </div>
 
                     <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h4 class="font-semibold text-blue-800 mb-2">Solução de Problemas - Link Inválido</h4>
-                        <p class="text-blue-700 text-sm mb-3">Se estiver com erro "Link de entrega inválido", verifique:</p>
-                        <ol class="list-decimal list-inside text-blue-700 text-sm space-y-1">
-                            <li>O link deve começar com http:// ou https://</li>
-                            <li>Links do OneDrive devem ser públicos (compartilhamento público)</li>
-                            <li>Exemplo válido: https://1drv.ms/b/s!ABC123def456...</li>
-                            <li>Teste o link em uma nova aba do navegador antes de enviar</li>
-                        </ol>
-                        <div class="mt-3">
-                            <button onclick="testarValidacaoLink()" class="btn-primario text-sm">
-                                Testar Validação de Link
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                        <h4 class="font-semibold text-purple-800 mb-2">Sistema de Depuração de Células</h4>
-                        <p class="text-purple-700 text-sm mb-3">Use as ferramentas de debug para identificar problemas:</p>
-                        <div class="space-y-2">
-                            <button onclick="criarTarefaDebug()" class="btn-primario text-sm w-full" style="background-color: #8b5cf6;">
-                                Criar Tarefa de Debug
-                            </button>
-                            <button onclick="mostrarDebugCélulas()" class="btn-primario text-sm w-full" style="background-color: #7c3aed;">
-                                Ver Informações das Células
-                            </button>
-                        </div>
+                        <h4 class="font-semibold text-blue-800 mb-2">Teste de Validação de Link</h4>
+                        <button onclick="testarValidacaoLink()" class="btn-primario text-sm">
+                            Testar Validação de Link
+                        </button>
                     </div>
 
                     <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <h4 class="font-semibold text-red-800 mb-2">Limpeza de Cache Completa</h4>
-                        <p class="text-red-700 text-sm mb-3">Se os links não estão aparecendo mesmo estando salvos na planilha:</p>
+                        <h4 class="font-semibold text-red-800 mb-2">Limpeza de Cache</h4>
                         <button onclick="limparCacheCompleto()" class="btn-primario text-sm" style="background-color: #dc2626;">
-                            Limpar Todo o Cache do Navegador
+                            Limpar Todo o Cache
                         </button>
                         <p class="text-red-600 text-xs mt-2">Isso forçará o recarregamento de todos os dados do servidor</p>
                     </div>
