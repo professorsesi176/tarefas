@@ -1382,16 +1382,24 @@
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
             
-            // CORREÇÃO: Filtrar corretamente o link - garantir que não seja uma data
+            // CORREÇÃO MELHORADA: Filtrar corretamente o link e obter dados completos
             let linkSalvo = '';
+            let dataHoraSalva = '';
+            let notaParte = 0;
+            
             if (entrega) {
                 // Verificar se o valor é um link válido (não uma data)
                 if (entrega.Link && !Utils.isDateString(entrega.Link) && entrega.Link.toString().trim() !== '') {
                     linkSalvo = entrega.Link;
                 }
+                // Obter data/hora se disponível
+                if (entrega.DataSubmissao) {
+                    dataHoraSalva = new Date(entrega.DataSubmissao).toLocaleString('pt-BR');
+                }
+                // Obter nota
+                notaParte = parseFloat(entrega.Nota) || 0;
             }
             
-            const notaParte = entrega ? parseFloat(entrega.Nota) : 0;
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             const temLinkSalvo = linkSalvo && String(linkSalvo).trim() !== '';
             
@@ -1466,7 +1474,7 @@
             const posicaoCelula = Utils.calcularPosicaoAluno(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
             const tooltipAluno = `Aba: ${posicaoCelula.aba}, Linha: ${posicaoCelula.linha}, Coluna: ${posicaoCelula.coluna} (${posicaoCelula.celula})`;
             
-            // CORREÇÃO: Exibir apenas o LINK, não a data
+            // CORREÇÃO: Exibir LINK, HORÁRIO e NOTA quando disponível
             let linkHTML = '';
             if (temLinkSalvo) {
                 // Botão excluir só aparece durante o período de entrega
@@ -1486,7 +1494,9 @@
                         <span class="nota-parte" title="Nota: ${notaParte.toFixed(1)}">${notaParte.toFixed(1)}</span>
                         ${botaoExcluirHTML}
                     </div>
-                    <p class="text-green-600 text-sm mt-1">✓ Link salvo com sucesso</p>
+                    <p class="text-green-600 text-sm mt-1">
+                        ✓ Link salvo com sucesso ${dataHoraSalva ? `em ${dataHoraSalva}` : ''}
+                    </p>
                 `;
             } else {
                 // Botão salvar só aparece durante o período de entrega
@@ -1512,7 +1522,7 @@
             }
             
             return `
-            <div class="mt-3 p-3 bg-gray-50 rounded border">
+            <div class="mt-3 p-3 bg-gray-50 rounded border" id="parte-${tarefa.ID}-${numeroParte}">
                 <div class="flex justify-between items-center">
                     <strong>Parte ${numeroParte} ${retencaoLabel}</strong>
                     <span class="contador ${status.classe}">${status.texto}</span>
@@ -1569,10 +1579,9 @@
                 console.log('Resposta do salvamento:', response);
                 
                 if (response.success) {
-                    // CORREÇÃO: Limpar cache COMPLETAMENTE para forçar atualização instantânea
-                    CacheManager.clear();
-                    await carregarTarefasAluno();
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!`);
+                    // ATUALIZAÇÃO IMEDIATA DA INTERFACE - NOVA LÓGICA
+                    await atualizarInterfaceAposSalvamento(idTarefa, parte, link, response.data);
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso! Nota: ${response.data.nota}`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -1584,6 +1593,44 @@
             } finally {
                 Utils.setButtonLoading(botaoSalvar, false);
                 botaoSalvar.textContent = "Salvar";
+            }
+        }
+
+        // NOVA FUNÇÃO: Atualizar interface imediatamente após salvamento
+        async function atualizarInterfaceAposSalvamento(idTarefa, parte, link, dadosResposta) {
+            const containerParte = document.querySelector(`#parte-${idTarefa}-${parte}`);
+            if (!containerParte) return;
+
+            // Criar HTML atualizado com os dados recebidos
+            const novaInterface = `
+                <div class="link-container mt-2">
+                    <a href="${Utils.escapeHTML(link)}" target="_blank" class="link-salvo-clicavel">
+                        ${Utils.escapeHTML(link)}
+                    </a>
+                    <span class="nota-parte" title="Nota: ${dadosResposta.nota}">${dadosResposta.nota}</span>
+                    <button class="btn-secundario btn-link" 
+                            onclick="excluirLinkAluno('${idTarefa}', ${parte}, this)"
+                            id="btn-excluir-${idTarefa}-${parte}">
+                        Excluir
+                    </button>
+                </div>
+                <p class="text-green-600 text-sm mt-1">
+                    ✓ Link salvo com sucesso em ${new Date(dadosResposta.dataHora).toLocaleString('pt-BR')}
+                </p>
+            `;
+
+            // Substituir o conteúdo da parte
+            const linkContainer = containerParte.querySelector('.link-container');
+            const mensagemContainer = containerParte.querySelector('.text-green-600');
+            
+            if (linkContainer && mensagemContainer) {
+                linkContainer.innerHTML = novaInterface.split('</div>')[0] + '</div>';
+                mensagemContainer.textContent = `✓ Link salvo com sucesso em ${new Date(dadosResposta.dataHora).toLocaleString('pt-BR')}`;
+            } else {
+                // Se não encontrar os elementos, recarrega completamente
+                setTimeout(() => {
+                    carregarTarefasAluno();
+                }, 500);
             }
         }
 
@@ -2200,6 +2247,7 @@
         };
 
         window.carregarMetricasPerformance = carregarMetricasPerformance;
+        window.atualizarInterfaceAposSalvamento = atualizarInterfaceAposSalvamento;
     </script>
 </body>
 </html>
