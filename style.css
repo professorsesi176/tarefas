@@ -1117,5 +1117,42 @@
             color: #6b7280;
             margin-left: 8px;
         }
+/* CORREÇÃO 10: Estilos para a nova formatação de notas */
+.nota-parte {
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-left: 0.5rem;
+}
 
+.link-salvo-clicavel {
+    color: #2563eb;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.link-salvo-texto {
+    color: #6b7280;
+    font-style: italic;
+}
+
+.link-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.nota-tarefa-aluno {
+    background-color: #dcfce7;
+    border: 1px solid #22c55e;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    color: #166534;
+}
     </style>
