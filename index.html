@@ -66,6 +66,7 @@
             contadoresAtivos: [],
             rmVisible: false,
             relatorioAlunoVisivel: false,
+            tarefasExpandidas: new Set(), // Para controlar quais tarefas estão expandidas
             metricasPerformance: {
                 chamadasAPI: 0,
                 tempoTotal: 0,
@@ -262,13 +263,26 @@
                 const colunaBase = 7;
                 const colunaTarefa = colunaBase + (tarefaIndex * 13);
                 const colunaParte = colunaTarefa + 1 + ((parte - 1) * 3);
-                const linhaAluno = parseInt(numeroAluno) + 2;
+                const linhaAluno = parseInt(numeroAluno) + 1; // CORREÇÃO: +1 em vez de +2 para corresponder ao Excel
                 
                 return {
                     aba: STATE.usuarioLogado?.Turma || 'Turma',
                     linha: linhaAluno,
                     coluna: colunaParte,
                     celula: Utils.calcularPosicaoCelula(linhaAluno, colunaParte)
+                };
+            },
+
+            calcularPosicaoNotaFinal: (numeroAluno, tarefaIndex) => {
+                const colunaBase = 7;
+                const colunaTarefa = colunaBase + (tarefaIndex * 13);
+                const linhaAluno = parseInt(numeroAluno) + 1; // CORREÇÃO: +1 em vez de +2
+                
+                return {
+                    aba: STATE.usuarioLogado?.Turma || 'Turma',
+                    linha: linhaAluno,
+                    coluna: colunaTarefa,
+                    celula: Utils.calcularPosicaoCelula(linhaAluno, colunaTarefa)
                 };
             },
 
@@ -342,6 +356,12 @@
                     console.error('Erro ao buscar dados do aluno:', error);
                     return null;
                 }
+            },
+
+            // NOVA FUNÇÃO: Formatar tooltip no formato reduzido (turma coluna linha)
+            formatarTooltipReduzido: (aba, celula) => {
+                // Remove o emoji e formata como "3A U35"
+                return `${aba} ${celula}`.replace('📍 Célula: ', '');
             }
         };
 
@@ -561,6 +581,7 @@
                 STATE.usuarioLogado = null;
                 STATE.tarefaEditando = null;
                 STATE.relatorioAlunoVisivel = false;
+                STATE.tarefasExpandidas.clear();
                 UIManager.elements.logoutBtn.classList.add('hidden');
                 UIManager.elements.relatorioBtn.classList.add('hidden');
                 UIManager.elements.diagnosticoBtn.classList.add('hidden');
@@ -1260,7 +1281,7 @@
             }
         }
 
-        // ==================== PAINEL DO ALUNO - CORRIGIDO ====================
+        // ==================== PAINEL DO ALUNO - CORRIGIDO E COM EXPANSÃO ====================
         async function mostrarPainelAluno() {
             const cacheKey = `painel_aluno_${STATE.usuarioLogado.Email}`;
             const cached = CacheManager.get(cacheKey);
@@ -1503,22 +1524,66 @@
                 });
                 notaTotal = Math.min(notaTotal, 10).toFixed(1);
                 
+                // Calcular posição da nota final para tooltip
+                const posicaoNotaFinal = Utils.calcularPosicaoNotaFinal(STATE.usuarioLogado.Numero, index);
+                const tooltipNotaFinal = Utils.formatarTooltipReduzido(posicaoNotaFinal.aba, posicaoNotaFinal.celula);
+                
+                // Verificar se a tarefa está expandida
+                const tarefaId = tarefa.ID || `tarefa-${index}`;
+                const isExpandida = STATE.tarefasExpandidas.has(tarefaId);
+                
                 return `
-                <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container" data-tarefa-id="${tarefaId}">
                     <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
-                        <span class="nota-tarefa-aluno">Nota: ${notaTotal}</span>
+                        <div class="flex items-center">
+                            <button class="expandir-tarefa-btn mr-2 text-gray-500 hover:text-gray-700 transition-colors" 
+                                    onclick="toggleExpandirTarefaAluno('${tarefaId}')"
+                                    title="${isExpandida ? 'Recolher tarefa' : 'Expandir tarefa'}">
+                                <svg class="w-5 h-5 transform transition-transform ${isExpandida ? 'rotate-180' : ''}" 
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">${Utils.formatarData(tarefa.DataAula)}</span>
+                            <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${notaTotal}</span>
+                        </div>
                     </div>
-                    <p class="text-sm text-gray-600">Data da aula: ${Utils.formatarData(tarefa.DataAula)}</p>
                     
-                    ${renderParteAluno(tarefa, 1, entregaTarefa, index)}
-                    ${renderParteAluno(tarefa, 2, entregaTarefa, index)}
-                    ${renderParteAluno(tarefa, 3, entregaTarefa, index)}
-                    ${renderParteAluno(tarefa, 4, entregaTarefa, index)}
+                    <div class="partes-tarefa-container transition-all duration-300 overflow-hidden ${isExpandida ? 'max-h-full opacity-100' : 'max-h-0 opacity-0'}">
+                        ${isExpandida ? `
+                            ${renderParteAluno(tarefa, 1, entregaTarefa, index)}
+                            ${renderParteAluno(tarefa, 2, entregaTarefa, index)}
+                            ${renderParteAluno(tarefa, 3, entregaTarefa, index)}
+                            ${renderParteAluno(tarefa, 4, entregaTarefa, index)}
+                        ` : ''}
+                    </div>
                 </div>
                 `;
             }).join('');
         }
+
+        // NOVA FUNÇÃO: Alternar expansão de tarefas do aluno
+        window.toggleExpandirTarefaAluno = function(tarefaId) {
+            if (STATE.tarefasExpandidas.has(tarefaId)) {
+                STATE.tarefasExpandidas.delete(tarefaId);
+            } else {
+                STATE.tarefasExpandidas.add(tarefaId);
+            }
+            
+            // Recarregar apenas as tarefas para atualizar a visualização
+            const container = document.getElementById('tarefas-aluno-container');
+            if (container) {
+                // Buscar dados em cache e re-renderizar
+                const cacheKey = `tarefas_aluno_${STATE.usuarioLogado.Email}_dados`;
+                const cached = CacheManager.get(cacheKey);
+                if (cached) {
+                    renderTarefasAluno(cached.tarefas, cached.entregas, container);
+                }
+            }
+        };
 
         function renderParteAluno(tarefa, numeroParte, entregas, tarefaIndex) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
@@ -1617,13 +1682,13 @@
             // CALCULAR POSIÇÃO DA CÉLULA PARA TOOLTIP - CORREÇÃO DA POSIÇÃO
             const posicaoCelula = Utils.calcularPosicaoAluno(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
             
+            // CORREÇÃO: Usar formato reduzido para tooltip
+            const tooltipAluno = Utils.formatarTooltipReduzido(posicaoCelula.aba, posicaoCelula.celula);
+            
             // CORREÇÃO: Exibir informações completas da célula para debug
             const infoLink = Utils.obterInfoCelulaCompleta(linkSalvo, posicaoCelula.linha, posicaoCelula.coluna, posicaoCelula.celula);
             const infoNota = Utils.obterInfoCelulaCompleta(notaParte, posicaoCelula.linha, posicaoCelula.coluna + 2, Utils.calcularPosicaoCelula(posicaoCelula.linha, posicaoCelula.coluna + 2));
             const infoData = Utils.obterInfoCelulaCompleta(dataHoraSalva, posicaoCelula.linha, posicaoCelula.coluna + 1, Utils.calcularPosicaoCelula(posicaoCelula.linha, posicaoCelula.coluna + 1));
-            
-            const tooltipAluno = `Aba: ${posicaoCelula.aba}, Linha: ${posicaoCelula.linha}, Coluna: ${posicaoCelula.coluna} (${posicaoCelula.celula})
-Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${infoNota.valorFormatado}`;
             
             // CORREÇÃO: Exibir LINK, HORÁRIO e NOTA quando disponível - SEM RESTRIÇÕES
             let linkHTML = '';
@@ -1649,14 +1714,11 @@ Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${in
                 linkHTML = `
                     <div class="link-container mt-2">
                         ${linkDisplay}
-                        <span class="nota-parte" title="Nota: ${notaFormatada}">${notaFormatada}</span>
+                        <span class="nota-parte" title="${tooltipAluno}">${notaFormatada}</span>
                         ${botaoExcluirHTML}
                     </div>
                     <p class="text-green-600 text-sm mt-1">
                         ✓ Dados salvos com sucesso em ${dataFormatada}
-                    </p>
-                    <p class="text-xs text-gray-500 mt-1" title="${tooltipAluno}">
-                        📍 Célula: ${posicaoCelula.celula}
                     </p>
                 `;
             } else {
@@ -1679,9 +1741,6 @@ Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${in
                                ${status.expirado || !status.liberada ? 'disabled' : ''}>
                         ${botaoSalvarHTML}
                     </div>
-                    <p class="text-xs text-gray-500 mt-1" title="${tooltipAluno}">
-                        📍 Célula: ${posicaoCelula.celula}
-                    </p>
                 `;
             }
             
@@ -1922,14 +1981,15 @@ Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${in
                                                     media = parseFloat(media);
                                                 }
                                             }
-                                            const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 2, 6);
-                                            const infoMedia = Utils.obterInfoCelulaCompleta(aluno.Media, parseInt(aluno.Numero) + 2, 6, celulaMedia);
+                                            const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, 6); // CORREÇÃO: +1 em vez de +2
+                                            const infoMedia = Utils.obterInfoCelulaCompleta(aluno.Media, parseInt(aluno.Numero) + 1, 6, celulaMedia);
+                                            const tooltipMedia = Utils.formatarTooltipReduzido(turma, celulaMedia);
                                             
                                             return `
                                                 <tr>
                                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                                    <td class="px-4 py-3 text-center border-b" title="${infoMedia.valor} (${infoMedia.celula})">
+                                                    <td class="px-4 py-3 text-center border-b" title="${tooltipMedia}">
                                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                                             ${media.toFixed(1)}
                                                         </span>
@@ -1989,14 +2049,15 @@ Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${in
                                 }
                             }
                             
-                            const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 2, 6);
-                            const infoMedia = Utils.obterInfoCelulaCompleta(aluno.Media, parseInt(aluno.Numero) + 2, 6, celulaMedia);
+                            const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, 6); // CORREÇÃO: +1 em vez de +2
+                            const infoMedia = Utils.obterInfoCelulaCompleta(aluno.Media, parseInt(aluno.Numero) + 1, 6, celulaMedia);
+                            const tooltipMedia = Utils.formatarTooltipReduzido(turma, celulaMedia);
                             
                             relatorioTurmaHTML += `
                                 <tr>
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                    <td class="px-4 py-3 text-center border-b" title="${infoMedia.valor} (${infoMedia.celula})">
+                                    <td class="px-4 py-3 text-center border-b" title="${tooltipMedia}">
                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                             ${media.toFixed(1)}
                                         </span>
@@ -2009,7 +2070,8 @@ Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${in
                                 for (let parte = 1; parte <= 4; parte++) {
                                     // CORREÇÃO CRÍTICA: Cálculo correto das colunas para cada parte
                                     const colunaNota = startCol + 2 + ((parte - 1) * 3);
-                                    const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 2, colunaNota);
+                                    const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, colunaNota); // CORREÇÃO: +1 em vez de +2
+                                    const tooltipNota = Utils.formatarTooltipReduzido(turma, celulaNota);
                                     
                                     // CORREÇÃO: Buscar nota usando múltiplas chaves possíveis
                                     const parteGlobal = (tarefaIndex * 4) + parte;
@@ -2044,28 +2106,21 @@ Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${in
                                         chaveEncontrada = `Nota${tarefaIndex + 1} (calculada)`;
                                     }
                                     
-                                    const infoNota = Utils.obterInfoCelulaCompleta(valorOriginal, parseInt(aluno.Numero) + 2, colunaNota, celulaNota);
+                                    const infoNota = Utils.obterInfoCelulaCompleta(valorOriginal, parseInt(aluno.Numero) + 1, colunaNota, celulaNota);
                                     
                                     let classeNota = 'text-gray-600';
-                                    let tooltip = `Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: ${colunaNota} (${celulaNota})
-Chave: ${chaveEncontrada} | Valor: ${infoNota.valor} | Tipo: ${infoNota.tipo}`;
                                     
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
                                             classeNota = 'text-green-600 font-semibold';
-                                            tooltip += ' - Nota máxima';
                                         } else if (notaParte >= 2.0) {
                                             classeNota = 'text-blue-600';
-                                            tooltip += ' - Nota regular';
                                         } else {
                                             classeNota = 'text-red-600';
-                                            tooltip += ' - Nota baixa';
                                         }
-                                    } else {
-                                        tooltip += ' - Não entregue';
                                     }
                                     
-                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b" title="${tooltip}"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b" title="${tooltipNota}"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
                                 }
                             });
                             
@@ -2174,6 +2229,7 @@ Chave: ${chaveEncontrada} | Valor: ${infoNota.valor} | Tipo: ${infoNota.tipo}`;
         window.excluirLinkAluno = excluirLinkAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
+        window.toggleExpandirTarefaAluno = toggleExpandirTarefaAluno;
 
         // ==================== SEÇÃO DIAGNÓSTICO ====================
         window.mostrarPainelDiagnostico = async function() {
