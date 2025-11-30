@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 33.0 - Sistema Corrigido
+            Desenvolvido por Geovane Modena | Versão 33.1 - Exibição Corrigida
         </footer>
     </div>
 
@@ -280,6 +280,46 @@
                 } catch {
                     return 'N/A';
                 }
+            },
+
+            // NOVA FUNÇÃO: Exibir dados brutos da célula sem restrições
+            formatarDadoBruto: (valor) => {
+                if (valor === null || valor === undefined || valor === '') {
+                    return 'N/A';
+                }
+                
+                const tipo = typeof valor;
+                const valorStr = String(valor);
+                
+                // Se for uma data válida, formata como data
+                if (Utils.isDateString(valorStr)) {
+                    return Utils.formatarDataHora(valorStr);
+                }
+                
+                // Se for número, mantém como número
+                if (!isNaN(parseFloat(valorStr)) && valorStr.trim() !== '') {
+                    return parseFloat(valorStr).toString();
+                }
+                
+                // Para texto, retorna o texto original
+                return valorStr;
+            },
+
+            // NOVA FUNÇÃO: Buscar dados completos da célula para debug
+            obterInfoCelulaCompleta: (valor, linha, coluna, celula) => {
+                const info = {
+                    valor: valor,
+                    valorFormatado: Utils.formatarDadoBruto(valor),
+                    tipo: typeof valor,
+                    linha: linha,
+                    coluna: coluna,
+                    celula: celula,
+                    isDate: Utils.isDateString(valor),
+                    isNumber: !isNaN(parseFloat(valor)) && valor !== null && valor !== undefined && String(valor).trim() !== '',
+                    isEmpty: valor === null || valor === undefined || String(valor).trim() === ''
+                };
+                
+                return info;
             }
         };
 
@@ -703,7 +743,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v33.0 - Sistema Corrigido...');
+                console.log('Inicializando sistema v33.1 - Exibição Corrigida...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1378,21 +1418,31 @@
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
             
-            // CORREÇÃO: Buscar dados completos da entrega
+            // CORREÇÃO: Buscar dados completos da entrega SEM FILTROS
             let linkSalvo = '';
             let dataHoraSalva = '';
             let notaParte = 0;
             
             if (entrega) {
+                // REMOVIDO TODAS AS RESTRIÇÕES - mostra qualquer dado que estiver na célula
                 linkSalvo = entrega.Link || '';
                 dataHoraSalva = entrega.DataSubmissao || '';
                 notaParte = parseFloat(entrega.Nota) || 0;
                 
-                console.log(`Parte ${numeroParte} - Entrega encontrada:`, { linkSalvo, dataHoraSalva, notaParte });
+                console.log(`Parte ${numeroParte} - Entrega encontrada:`, { 
+                    linkSalvo, 
+                    dataHoraSalva, 
+                    notaParte,
+                    tipoLink: typeof linkSalvo,
+                    tipoData: typeof dataHoraSalva,
+                    tipoNota: typeof notaParte
+                });
             }
             
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
-            const temLinkSalvo = linkSalvo && String(linkSalvo).trim() !== '' && !Utils.isDateString(linkSalvo);
+            
+            // CORREÇÃO: Mostrar dados independentemente do tipo de conteúdo
+            const temDadosSalvos = linkSalvo !== '' && linkSalvo !== null && linkSalvo !== undefined;
             
             const agora = new Date();
             const dataAula = new Date(tarefa.DataAula);
@@ -1461,13 +1511,20 @@
                 `;
             }
             
-            // CALCULAR POSIÇÃO DA CÉLULA PARA TOOLTIP
+            // CALCULAR POSIÇÃO DA CÉLULA PARA TOOLTIP - CORREÇÃO DA POSIÇÃO
             const posicaoCelula = Utils.calcularPosicaoAluno(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
-            const tooltipAluno = `Aba: ${posicaoCelula.aba}, Linha: ${posicaoCelula.linha}, Coluna: ${posicaoCelula.coluna} (${posicaoCelula.celula})`;
             
-            // CORREÇÃO: Exibir LINK, HORÁRIO e NOTA quando disponível
+            // CORREÇÃO: Exibir informações completas da célula para debug
+            const infoLink = Utils.obterInfoCelulaCompleta(linkSalvo, posicaoCelula.linha, posicaoCelula.coluna, posicaoCelula.celula);
+            const infoNota = Utils.obterInfoCelulaCompleta(notaParte, posicaoCelula.linha, posicaoCelula.coluna + 2, Utils.calcularPosicaoCelula(posicaoCelula.linha, posicaoCelula.coluna + 2));
+            const infoData = Utils.obterInfoCelulaCompleta(dataHoraSalva, posicaoCelula.linha, posicaoCelula.coluna + 1, Utils.calcularPosicaoCelula(posicaoCelula.linha, posicaoCelula.coluna + 1));
+            
+            const tooltipAluno = `Aba: ${posicaoCelula.aba}, Linha: ${posicaoCelula.linha}, Coluna: ${posicaoCelula.coluna} (${posicaoCelula.celula})
+Link: ${infoLink.valorFormatado} | Data: ${infoData.valorFormatado} | Nota: ${infoNota.valorFormatado}`;
+            
+            // CORREÇÃO: Exibir LINK, HORÁRIO e NOTA quando disponível - SEM RESTRIÇÕES
             let linkHTML = '';
-            if (temLinkSalvo) {
+            if (temDadosSalvos) {
                 // Botão excluir só aparece durante o período de entrega
                 const botaoExcluirHTML = status.liberada ? `
                     <button class="btn-secundario btn-link" 
@@ -1477,18 +1534,26 @@
                     </button>
                 ` : '';
                 
-                const dataFormatada = dataHoraSalva ? Utils.formatarDataHora(dataHoraSalva) : 'Data não disponível';
+                const dataFormatada = Utils.formatarDadoBruto(dataHoraSalva);
+                const notaFormatada = Utils.formatarDadoBruto(notaParte);
+                const linkFormatado = Utils.formatarDadoBruto(linkSalvo);
+                
+                // CORREÇÃO: Exibir link clicável apenas se for uma URL válida, senão mostrar texto
+                const linkDisplay = Utils.validarLink(linkSalvo) ? 
+                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</a>` :
+                    `<span class="link-salvo-texto" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</span>`;
                 
                 linkHTML = `
                     <div class="link-container mt-2">
-                        <a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">
-                            ${Utils.escapeHTML(linkSalvo)}
-                        </a>
-                        <span class="nota-parte" title="Nota: ${notaParte.toFixed(1)}">${notaParte.toFixed(1)}</span>
+                        ${linkDisplay}
+                        <span class="nota-parte" title="Nota: ${notaFormatada}">${notaFormatada}</span>
                         ${botaoExcluirHTML}
                     </div>
                     <p class="text-green-600 text-sm mt-1">
-                        ✓ Link salvo com sucesso em ${dataFormatada}
+                        ✓ Dados salvos com sucesso em ${dataFormatada}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1" title="${tooltipAluno}">
+                        📍 Célula: ${posicaoCelula.celula}
                     </p>
                 `;
             } else {
@@ -1511,6 +1576,9 @@
                                ${status.expirado || !status.liberada ? 'disabled' : ''}>
                         ${botaoSalvarHTML}
                     </div>
+                    <p class="text-xs text-gray-500 mt-1" title="${tooltipAluno}">
+                        📍 Célula: ${posicaoCelula.celula}
+                    </p>
                 `;
             }
             
@@ -1660,7 +1728,7 @@
             });
         }
 
-        // ==================== RELATÓRIOS ====================
+        // ==================== RELATÓRIOS - CORRIGIDOS ====================
         async function mostrarRelatorioProfessor() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
@@ -1743,18 +1811,22 @@
                                         ${relatorio.alunos.map(aluno => {
                                             let media = 0;
                                             if (aluno.Media) {
-                                                if (Utils.isDateString(aluno.Media)) {
-                                                    media = parseFloat(aluno.Numero) || 0;
+                                                // CORREÇÃO: Aceitar qualquer formato de média
+                                                media = Utils.formatarDadoBruto(aluno.Media);
+                                                if (isNaN(parseFloat(media))) {
+                                                    media = 0;
                                                 } else {
-                                                    media = parseFloat(aluno.Media) || 0;
+                                                    media = parseFloat(media);
                                                 }
                                             }
                                             const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 2, 6);
+                                            const infoMedia = Utils.obterInfoCelulaCompleta(aluno.Media, parseInt(aluno.Numero) + 2, 6, celulaMedia);
+                                            
                                             return `
                                                 <tr>
                                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                                    <td class="px-4 py-3 text-center border-b" title="Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: 6 (${celulaMedia})">
+                                                    <td class="px-4 py-3 text-center border-b" title="${infoMedia.valor} (${infoMedia.celula})">
                                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                                             ${media.toFixed(1)}
                                                         </span>
@@ -1805,20 +1877,23 @@
                         relatorio.alunos.forEach((aluno) => {
                             let media = 0;
                             if (aluno.Media) {
-                                if (Utils.isDateString(aluno.Media)) {
-                                    media = parseFloat(aluno.Numero) || 0;
+                                // CORREÇÃO: Aceitar qualquer formato de média
+                                media = Utils.formatarDadoBruto(aluno.Media);
+                                if (isNaN(parseFloat(media))) {
+                                    media = 0;
                                 } else {
-                                    media = parseFloat(aluno.Media) || 0;
+                                    media = parseFloat(media);
                                 }
                             }
                             
                             const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 2, 6);
+                            const infoMedia = Utils.obterInfoCelulaCompleta(aluno.Media, parseInt(aluno.Numero) + 2, 6, celulaMedia);
                             
                             relatorioTurmaHTML += `
                                 <tr>
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                    <td class="px-4 py-3 text-center border-b" title="Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: 6 (${celulaMedia})">
+                                    <td class="px-4 py-3 text-center border-b" title="${infoMedia.valor} (${infoMedia.celula})">
                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                             ${media.toFixed(1)}
                                         </span>
@@ -1838,22 +1913,32 @@
                                     ];
                                     
                                     let notaParte = 0;
+                                    let valorOriginal = '';
+                                    
+                                    // CORREÇÃO: Buscar qualquer dado disponível
                                     for (const chave of chavesPossiveis) {
-                                        if (aluno[chave] !== undefined && Utils.isNotaValida(aluno[chave])) {
-                                            notaParte = parseFloat(aluno[chave]);
-                                            break;
+                                        if (aluno[chave] !== undefined && aluno[chave] !== null && aluno[chave] !== '') {
+                                            valorOriginal = aluno[chave];
+                                            const valorNumerico = parseFloat(aluno[chave]);
+                                            if (!isNaN(valorNumerico) && valorNumerico >= 0 && valorNumerico <= 2.5) {
+                                                notaParte = valorNumerico;
+                                                break;
+                                            }
                                         }
                                     }
                                     
+                                    // CORREÇÃO: Se não encontrou nota válida, tentar alternativa
                                     if (notaParte === 0 && aluno[`Nota${tarefaIndex + 1}`] > 0) {
                                         notaParte = Math.min(parseFloat(aluno[`Nota${tarefaIndex + 1}`]) / 4, 2.5);
                                     }
                                     
                                     const colunaNota = startCol + 2 + ((parte - 1) * 3);
                                     const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 2, colunaNota);
+                                    const infoNota = Utils.obterInfoCelulaCompleta(valorOriginal, parseInt(aluno.Numero) + 2, colunaNota, celulaNota);
                                     
                                     let classeNota = 'text-gray-600';
-                                    let tooltip = `Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: ${colunaNota} (${celulaNota})`;
+                                    let tooltip = `Aba: ${turma}, Linha: ${parseInt(aluno.Numero) + 2}, Coluna: ${colunaNota} (${celulaNota})
+Valor: ${infoNota.valor} | Tipo: ${infoNota.tipo} | Formatado: ${infoNota.valorFormatado}`;
                                     
                                     if (notaParte > 0) {
                                         if (notaParte >= 2.5) {
