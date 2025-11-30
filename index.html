@@ -1509,23 +1509,15 @@
                 return;
             }
 
-            container.innerHTML = tarefasLocal.map((tarefa, index) => {
+            // Usar Promise.all para buscar todas as notas de forma assíncrona
+            const tarefasPromises = tarefasLocal.map(async (tarefa, index) => {
                 const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
                 
-                // CORREÇÃO 1: Buscar nota total da tarefa diretamente da planilha (G34, G47, etc.)
-                let notaTotal = 0;
-                const chaveNotaTarefa = `Nota${index + 1}`;
-                if (alunoData && alunoData[chaveNotaTarefa] !== undefined && alunoData[chaveNotaTarefa] !== null) {
-                    notaTotal = parseFloat(alunoData[chaveNotaTarefa]) || 0;
-                } else {
-                    // Fallback: calcular soma das partes
-                    entregaTarefa.forEach(entrega => {
-                        notaTotal += parseFloat(entrega.Nota) || 0;
-                    });
-                }
-                notaTotal = Math.min(notaTotal, 10).toFixed(1);
+                // CORREÇÃO 2 & 3: Buscar nota total usando a função corrigida
+                const notaTotal = await buscarNotaTotalTarefa(STATE.usuarioLogado.Email, STATE.usuarioLogado.Turma, index);
+                const notaTotalFormatada = Math.min(notaTotal, 10).toFixed(1);
                 
-                // Calcular posição da nota final para tooltip (G34 para tarefa 1)
+                // Calcular posição da nota final para tooltip
                 const posicaoNotaFinal = Utils.calcularPosicaoNotaFinal(STATE.usuarioLogado.Numero, index);
                 const tooltipNotaFinal = Utils.formatarTooltipReduzido(posicaoNotaFinal.aba, posicaoNotaFinal.celula);
                 
@@ -1548,7 +1540,7 @@
                         </div>
                         <div class="flex items-center space-x-4">
                             <span class="text-sm text-gray-600">${Utils.formatarData(tarefa.DataAula)}</span>
-                            <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${notaTotal}</span>
+                            <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${notaTotalFormatada}</span>
                         </div>
                     </div>
                     
@@ -1562,7 +1554,79 @@
                     </div>
                 </div>
                 `;
-            }).join('');
+            });
+
+            // Aguardar todas as promises e renderizar
+            Promise.all(tarefasPromises).then(tarefasHTML => {
+                container.innerHTML = tarefasHTML.join('');
+            }).catch(error => {
+                console.error('Erro ao renderizar tarefas:', error);
+                container.innerHTML = '<div class="text-center text-red-500 py-8">Erro ao carregar tarefas</div>';
+            });
+        }
+
+        // CORREÇÃO 3: Função para buscar nota da parte corrigida
+        async function buscarNotaParteAluno(email, turma, tarefaIndex, parte) {
+            try {
+                const alunoData = await Utils.buscarDadosAlunoPlanilha(email, turma);
+                if (!alunoData) return 0;
+
+                const startCol = 7 + (tarefaIndex * 13);
+                const colunaNota = startCol + 3 + ((parte - 1) * 3); // Coluna J, M, P, S
+                
+                const chavesNota = [
+                    `Parte${((tarefaIndex * 4) + parte)}`,
+                    `NotaParte${((tarefaIndex * 4) + parte)}`,
+                    `P${parte}_T${tarefaIndex + 1}`
+                ];
+                
+                for (const chave of chavesNota) {
+                    if (alunoData[chave] !== undefined && alunoData[chave] !== null && alunoData[chave] !== '') {
+                        const nota = parseFloat(alunoData[chave]);
+                        if (!isNaN(nota)) return Math.min(nota, 2.5);
+                    }
+                }
+                
+                return 0;
+            } catch (error) {
+                console.error('Erro ao buscar nota da parte:', error);
+                return 0;
+            }
+        }
+
+        // CORREÇÃO 4: Função para buscar nota total da tarefa corrigida
+        async function buscarNotaTotalTarefa(email, turma, tarefaIndex) {
+            try {
+                const alunoData = await Utils.buscarDadosAlunoPlanilha(email, turma);
+                if (!alunoData) return 0;
+
+                const colunaNotaTotal = 7 + (tarefaIndex * 13); // Coluna G, T, etc.
+                
+                const chavesNotaTotal = [
+                    `Nota${tarefaIndex + 1}`,
+                    `Tarefa${tarefaIndex + 1}`,
+                    `NotaTarefa${tarefaIndex + 1}`
+                ];
+                
+                for (const chave of chavesNotaTotal) {
+                    if (alunoData[chave] !== undefined && alunoData[chave] !== null && alunoData[chave] !== '') {
+                        const nota = parseFloat(alunoData[chave]);
+                        if (!isNaN(nota)) return Math.min(nota, 10);
+                    }
+                }
+                
+                // Fallback: calcular soma das partes se a nota total não for encontrada
+                let somaPartes = 0;
+                for (let parte = 1; parte <= 4; parte++) {
+                    const notaParte = await buscarNotaParteAluno(email, turma, tarefaIndex, parte);
+                    somaPartes += notaParte;
+                }
+                return Math.min(somaPartes, 10);
+                
+            } catch (error) {
+                console.error('Erro ao buscar nota total da tarefa:', error);
+                return 0;
+            }
         }
 
         window.toggleExpandirTarefaAluno = function(tarefaId) {
@@ -1691,10 +1755,11 @@
                     `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</a>` :
                     `<span class="link-salvo-texto" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</span>`;
                 
+                // CORREÇÃO 1: Adicionar "Nota Parte X:" antes da nota
                 linkHTML = `
                     <div class="link-container mt-2">
                         ${linkDisplay}
-                        <span class="nota-parte" title="${tooltipNota}">${notaFormatada}</span>
+                        <span class="nota-parte" title="${tooltipNota}">Nota Parte ${numeroParte}: ${notaFormatada}</span>
                         ${botaoExcluirHTML}
                     </div>
                     <p class="text-green-600 text-sm mt-1">
