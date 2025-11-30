@@ -1324,7 +1324,7 @@
                                 </svg>
                             </div>
                             <div class="fundamento-content" id="conteudo-fundamento">
-                                <p class="mb-4">A curva de esquecimento de Ebbinghaus e os estudos modernos de neuroaprendizagem mostram que:</p>
+                                <p class="mb-4">A curva de esquecimento de Ebbinghaus e os estudos modernos de neuroaprendizagem show that:</p>
                                 <ol class="fundamento-list">
                                     <li>O cérebro consolida melhor a memória entre 6h e 9h após o aprendizado inicial.</li>
                                     <li>O sono tem papel essencial — é durante o sono que ocorre a consolidação sináptica (transformar memórias de curto em longo prazo).</li>
@@ -1565,35 +1565,6 @@
             });
         }
 
-        // CORREÇÃO 3: Função para buscar nota da parte corrigida
-        async function buscarNotaParteAluno(email, turma, tarefaIndex, parte) {
-            try {
-                const alunoData = await Utils.buscarDadosAlunoPlanilha(email, turma);
-                if (!alunoData) return 0;
-
-                const startCol = 7 + (tarefaIndex * 13);
-                const colunaNota = startCol + 3 + ((parte - 1) * 3); // Coluna J, M, P, S
-                
-                const chavesNota = [
-                    `Parte${((tarefaIndex * 4) + parte)}`,
-                    `NotaParte${((tarefaIndex * 4) + parte)}`,
-                    `P${parte}_T${tarefaIndex + 1}`
-                ];
-                
-                for (const chave of chavesNota) {
-                    if (alunoData[chave] !== undefined && alunoData[chave] !== null && alunoData[chave] !== '') {
-                        const nota = parseFloat(alunoData[chave]);
-                        if (!isNaN(nota)) return Math.min(nota, 2.5);
-                    }
-                }
-                
-                return 0;
-            } catch (error) {
-                console.error('Erro ao buscar nota da parte:', error);
-                return 0;
-            }
-        }
-
         // CORREÇÃO 4: Função para buscar nota total da tarefa corrigida
         async function buscarNotaTotalTarefa(email, turma, tarefaIndex) {
             try {
@@ -1625,6 +1596,35 @@
                 
             } catch (error) {
                 console.error('Erro ao buscar nota total da tarefa:', error);
+                return 0;
+            }
+        }
+
+        // CORREÇÃO 3: Função para buscar nota da parte corrigida
+        async function buscarNotaParteAluno(email, turma, tarefaIndex, parte) {
+            try {
+                const alunoData = await Utils.buscarDadosAlunoPlanilha(email, turma);
+                if (!alunoData) return 0;
+
+                const startCol = 7 + (tarefaIndex * 13);
+                const colunaNota = startCol + 3 + ((parte - 1) * 3); // Coluna J, M, P, S
+                
+                const chavesNota = [
+                    `Parte${((tarefaIndex * 4) + parte)}`,
+                    `NotaParte${((tarefaIndex * 4) + parte)}`,
+                    `P${parte}_T${tarefaIndex + 1}`
+                ];
+                
+                for (const chave of chavesNota) {
+                    if (alunoData[chave] !== undefined && alunoData[chave] !== null && alunoData[chave] !== '') {
+                        const nota = parseFloat(alunoData[chave]);
+                        if (!isNaN(nota)) return Math.min(nota, 2.5);
+                    }
+                }
+                
+                return 0;
+            } catch (error) {
+                console.error('Erro ao buscar nota da parte:', error);
                 return 0;
             }
         }
