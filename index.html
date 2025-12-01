@@ -1324,7 +1324,7 @@
                                 </svg>
                             </div>
                             <div class="fundamento-content" id="conteudo-fundamento">
-                                <p class="mb-4">A curva de esquecimento de Ebbinghaus e os estudos modernos de neuroaprendizagem show that:</p>
+                                <p class="mb-4">A curva de esquecimento de Ebbinghaus e os estudos modernos de neuroaprendizagem mostram que:</p>
                                 <ol class="fundamento-list">
                                     <li>O cérebro consolida melhor a memória entre 6h e 9h após o aprendizado inicial.</li>
                                     <li>O sono tem papel essencial — é durante o sono que ocorre a consolidação sináptica (transformar memórias de curto em longo prazo).</li>
@@ -1371,58 +1371,289 @@
         }
 
         async function carregarTarefasAluno() {
-            const cacheKey = `tarefas_aluno_${STATE.usuarioLogado.Email}_dados`;
-            
-            CacheManager.remove(cacheKey);
+            const container = document.getElementById('tarefas-aluno-container');
+            if (!container) {
+                console.error('Container de tarefas do aluno não encontrado');
+                return;
+            }
 
             mostrarLoadingTarefasAluno();
             
             try {
+                console.log('Carregando tarefas para aluno:', STATE.usuarioLogado.Email, 'Turma:', STATE.usuarioLogado.Turma);
+                
+                // Buscar tarefas da turma do aluno
                 const response = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, true);
-                const container = document.getElementById('tarefas-aluno-container');
+                console.log('Resposta da API getTarefasPorTurma:', response);
                 
                 if (!response.data || response.data.length === 0) {
                     container.innerHTML = '<div class="text-center text-gray-500 py-8">Nenhuma tarefa disponível para sua turma.</div>';
-                    CacheManager.set(cacheKey, {tarefas: [], entregas: []}, 2 * 60 * 1000);
                     return;
                 }
 
-                let entregas = [];
+                // Buscar dados completos do aluno
                 let alunoData = null;
+                let entregas = [];
                 
                 try {
-                    alunoData = await Utils.buscarDadosAlunoPlanilha(STATE.usuarioLogado.Email, STATE.usuarioLogado.Turma);
+                    const alunoResponse = await Utils.buscarDadosAlunoPlanilha(STATE.usuarioLogado.Email, STATE.usuarioLogado.Turma);
+                    console.log('Dados do aluno encontrados:', alunoResponse);
                     
-                    if (alunoData) {
-                        console.log('Dados do aluno encontrados diretamente na planilha:', alunoData);
-                        entregas = extrairEntregasDeAlunoData(alunoData, response.data);
+                    if (alunoResponse) {
+                        alunoData = alunoResponse;
+                        entregas = extrairEntregasDeAlunoData(alunoResponse, response.data);
                     } else {
+                        // Fallback: buscar entregas via API
                         const entregasResponse = await apiGet('getEntregasAluno', { 
                             email: STATE.usuarioLogado.Email, 
                             turma: STATE.usuarioLogado.Turma 
                         }, true);
-                        
-                        console.log('Resposta completa das entregas (API):', entregasResponse);
                         entregas = entregasResponse.data || [];
                     }
-                    
-                    console.log('Entregas carregadas:', entregas);
                 } catch (error) {
-                    console.warn('Erro ao carregar entregas do aluno:', error);
+                    console.warn('Erro ao buscar dados do aluno, usando dados básicos:', error);
+                    // Continuar com dados básicos
                 }
 
-                CacheManager.set(cacheKey, {tarefas: response.data, entregas: entregas, alunoData: alunoData}, 2 * 60 * 1000);
+                console.log('Tarefas carregadas:', response.data.length);
+                console.log('Entregas encontradas:', entregas.length);
                 
-                renderTarefasAluno(response.data, entregas, alunoData, container);
+                // Renderizar tarefas de forma síncrona
+                renderTarefasAlunoCorrigido(response.data, entregas, alunoData, container);
                 
             } catch (error) {
-                document.getElementById('tarefas-aluno-container').innerHTML = 
-                    `<div class="text-center text-red-500 py-8">Erro ao carregar tarefas: ${Utils.escapeHTML(error.message || String(error))}</div>`;
+                console.error('Erro detalhado ao carregar tarefas do aluno:', error);
+                container.innerHTML = 
+                    `<div class="text-center text-red-500 py-8">
+                        <p>Erro ao carregar tarefas: ${Utils.escapeHTML(error.message || String(error))}</p>
+                        <button onclick="carregarTarefasAluno()" class="btn-primario mt-4">Tentar Novamente</button>
+                    </div>`;
             }
         }
 
+        // Função renderTarefasAluno corrigida (síncrona)
+        function renderTarefasAlunoCorrigido(tarefasLocal, entregas, alunoData, container) {
+            console.log('Renderizando tarefas corrigidas:', tarefasLocal.length);
+            
+            if (!tarefasLocal || tarefasLocal.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-8">Nenhuma tarefa disponível para sua turma.</div>';
+                return;
+            }
+
+            const tarefasHTML = tarefasLocal.map((tarefa, index) => {
+                const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
+                
+                // Buscar nota total de forma síncrona
+                let notaTotal = 0;
+                if (alunoData) {
+                    const chaveNotaTarefa = `Nota${index + 1}`;
+                    if (alunoData[chaveNotaTarefa] !== undefined && alunoData[chaveNotaTarefa] !== null) {
+                        notaTotal = parseFloat(alunoData[chaveNotaTarefa]) || 0;
+                    } else {
+                        // Fallback: calcular soma das partes
+                        entregaTarefa.forEach(entrega => {
+                            notaTotal += parseFloat(entrega.Nota) || 0;
+                        });
+                    }
+                } else {
+                    // Sem dados do aluno, calcular das entregas
+                    entregaTarefa.forEach(entrega => {
+                        notaTotal += parseFloat(entrega.Nota) || 0;
+                    });
+                }
+                
+                notaTotal = Math.min(notaTotal, 10).toFixed(1);
+                
+                // Calcular posição da nota final para tooltip
+                const posicaoNotaFinal = Utils.calcularPosicaoNotaFinal(STATE.usuarioLogado.Numero, index);
+                const tooltipNotaFinal = Utils.formatarTooltipReduzido(posicaoNotaFinal.aba, posicaoNotaFinal.celula);
+                
+                const tarefaId = tarefa.ID || `tarefa-${index}`;
+                const isExpandida = STATE.tarefasExpandidas.has(tarefaId);
+                
+                return `
+                <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container" data-tarefa-id="${tarefaId}">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center">
+                            <button class="expandir-tarefa-btn mr-2 text-gray-500 hover:text-gray-700 transition-colors" 
+                                    onclick="toggleExpandirTarefaAluno('${tarefaId}')"
+                                    title="${isExpandida ? 'Recolher tarefa' : 'Expandir tarefa'}">
+                                <svg class="w-5 h-5 transform transition-transform ${isExpandida ? 'rotate-180' : ''}" 
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">${Utils.formatarData(tarefa.DataAula)}</span>
+                            <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${notaTotal}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="partes-tarefa-container transition-all duration-300 overflow-hidden ${isExpandida ? 'max-h-full opacity-100' : 'max-h-0 opacity-0'}">
+                        ${isExpandida ? `
+                            ${renderParteAlunoCorrigido(tarefa, 1, entregaTarefa, index, alunoData)}
+                            ${renderParteAlunoCorrigido(tarefa, 2, entregaTarefa, index, alunoData)}
+                            ${renderParteAlunoCorrigido(tarefa, 3, entregaTarefa, index, alunoData)}
+                            ${renderParteAlunoCorrigido(tarefa, 4, entregaTarefa, index, alunoData)}
+                        ` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            container.innerHTML = tarefasHTML;
+            console.log('Tarefas renderizadas com sucesso');
+        }
+
+        // Função renderParteAluno corrigida
+        function renderParteAlunoCorrigido(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
+            const parteConteudo = tarefa[`Parte${numeroParte}`];
+            const entrega = entregas.find(e => e.Parte === numeroParte);
+            
+            let linkSalvo = '';
+            let dataHoraSalva = '';
+            let notaParte = 0;
+            
+            if (entrega) {
+                linkSalvo = entrega.Link || '';
+                dataHoraSalva = entrega.DataSubmissao || '';
+                notaParte = parseFloat(entrega.Nota) || 0;
+            }
+            
+            const inputId = `link-${tarefa.ID}-${numeroParte}`;
+            
+            const temDadosSalvos = linkSalvo !== '' && linkSalvo !== null && linkSalvo !== undefined;
+            
+            const agora = new Date();
+            const dataAula = new Date(tarefa.DataAula);
+            
+            let diasOffset = 0;
+            switch(numeroParte) {
+                case 1: diasOffset = 0; break;
+                case 2: diasOffset = 7; break;
+                case 3: diasOffset = 14; break;
+                case 4: diasOffset = 28; break;
+                default: diasOffset = 0;
+            }
+            
+            const status = TimeManager.calcularStatusParteDiaUnico(dataAula, diasOffset);
+            
+            const horaAtual = agora.getHours();
+            let horarioInfo = '';
+            
+            if (status.liberada) {
+                if (horaAtual >= 17 && horaAtual < 20) {
+                    horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h) 2.5</div>';
+                } else if ((horaAtual >= 7 && horaAtual < 17) || (horaAtual >= 20 && horaAtual < 22)) {
+                    horarioInfo = '<div class="horario-info">Nota regular (7h-17h ou 20h-22h) 2.0</div>';
+                } else {
+                    horarioInfo = '<div class="horario-info horario-fora">Fora do horário de entrega (7h-22h)</div>';
+                }
+            }
+
+            let retencaoLabel = '';
+            switch(numeroParte) {
+                case 1:
+                    retencaoLabel = '<span class="retencao-aviso retencao-50">50% retenção</span>';
+                    break;
+                case 2:
+                    retencaoLabel = '<span class="retencao-aviso retencao-25">25% retenção</span>';
+                    break;
+                case 3:
+                    retencaoLabel = '<span class="retencao-aviso retencao-15">15% retenção</span>';
+                    break;
+                case 4:
+                    retencaoLabel = '<span class="retencao-aviso retencao-10">9.99% retenção</span>';
+                    break;
+            }
+            
+            let conteudoParteHTML = '';
+            if (status.conteudoLiberado) {
+                conteudoParteHTML = `<div class="conteudo-formatado mt-2">${Utils.formatarConteudoParaExibicao(parteConteudo)}</div>`;
+            } else {
+                conteudoParteHTML = `
+                    <div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                        <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
+                    </div>
+                `;
+            }
+            
+            const posicaoNota = Utils.calcularPosicaoNotaParte(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
+            const tooltipNota = Utils.formatarTooltipReduzido(posicaoNota.aba, posicaoNota.celula);
+            
+            const posicaoCelula = Utils.calcularPosicaoAluno(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
+            const tooltipAluno = Utils.formatarTooltipReduzido(posicaoCelula.aba, posicaoCelula.celula);
+            
+            let linkHTML = '';
+            if (temDadosSalvos) {
+                const botaoExcluirHTML = status.liberada ? `
+                    <button class="btn-secundario btn-link" 
+                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                            id="btn-excluir-${tarefa.ID}-${numeroParte}">
+                        Excluir
+                    </button>
+                ` : '';
+                
+                const dataFormatada = Utils.formatarDadoBruto(dataHoraSalva);
+                const notaFormatada = Utils.formatarDadoBruto(notaParte);
+                const linkFormatado = Utils.formatarDadoBruto(linkSalvo);
+                
+                const linkDisplay = Utils.validarLink(linkSalvo) ? 
+                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</a>` :
+                    `<span class="link-salvo-texto" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</span>`;
+                
+                // CORREÇÃO: Adicionar "Nota Parte X:" antes da nota
+                linkHTML = `
+                    <div class="link-container mt-2">
+                        ${linkDisplay}
+                        <span class="nota-parte" title="${tooltipNota}">Nota Parte ${numeroParte}: ${notaFormatada}</span>
+                        ${botaoExcluirHTML}
+                    </div>
+                    <p class="text-green-600 text-sm mt-1">
+                        ✓ Dados salvos com sucesso em ${dataFormatada}
+                    </p>
+                `;
+            } else {
+                const botaoSalvarHTML = status.liberada ? `
+                    <button class="btn-primario btn-link" 
+                            onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                            id="btn-salvar-${tarefa.ID}-${numeroParte}">
+                        Salvar
+                    </button>
+                ` : '';
+                
+                linkHTML = `
+                    <div class="link-container mt-2">
+                        <input type="text" 
+                               class="link-input" 
+                               placeholder="${status.expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui'}" 
+                               id="${inputId}"
+                               value=""
+                               ${status.expirado || !status.liberada ? 'disabled' : ''}>
+                        ${botaoSalvarHTML}
+                    </div>
+                `;
+            }
+            
+            return `
+            <div class="mt-3 p-3 bg-gray-50 rounded border" id="parte-${tarefa.ID}-${numeroParte}">
+                <div class="flex justify-between items-center">
+                    <strong>Parte ${numeroParte} ${retencaoLabel}</strong>
+                    <span class="contador ${status.classe}">${status.texto}</span>
+                </div>
+                ${conteudoParteHTML}
+                ${horarioInfo}
+                ${linkHTML}
+            </div>`;
+        }
+
+        // Função auxiliar para extrair entregas corrigida
         function extrairEntregasDeAlunoData(alunoData, tarefas) {
             const entregas = [];
+            
+            if (!alunoData || !tarefas) return entregas;
             
             tarefas.forEach((tarefa, tarefaIndex) => {
                 const startCol = tarefa.StartColumn || (7 + (tarefaIndex * 13));
@@ -1501,134 +1732,7 @@
             `;
         }
 
-        function renderTarefasAluno(tarefasLocal, entregas, alunoData, container) {
-            container.innerHTML = '';
-            
-            if (!tarefasLocal || tarefasLocal.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-8">Nenhuma tarefa disponível para sua turma.</div>';
-                return;
-            }
-
-            // Usar Promise.all para buscar todas as notas de forma assíncrona
-            const tarefasPromises = tarefasLocal.map(async (tarefa, index) => {
-                const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
-                
-                // CORREÇÃO 2 & 3: Buscar nota total usando a função corrigida
-                const notaTotal = await buscarNotaTotalTarefa(STATE.usuarioLogado.Email, STATE.usuarioLogado.Turma, index);
-                const notaTotalFormatada = Math.min(notaTotal, 10).toFixed(1);
-                
-                // Calcular posição da nota final para tooltip
-                const posicaoNotaFinal = Utils.calcularPosicaoNotaFinal(STATE.usuarioLogado.Numero, index);
-                const tooltipNotaFinal = Utils.formatarTooltipReduzido(posicaoNotaFinal.aba, posicaoNotaFinal.celula);
-                
-                const tarefaId = tarefa.ID || `tarefa-${index}`;
-                const isExpandida = STATE.tarefasExpandidas.has(tarefaId);
-                
-                return `
-                <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container" data-tarefa-id="${tarefaId}">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="flex items-center">
-                            <button class="expandir-tarefa-btn mr-2 text-gray-500 hover:text-gray-700 transition-colors" 
-                                    onclick="toggleExpandirTarefaAluno('${tarefaId}')"
-                                    title="${isExpandida ? 'Recolher tarefa' : 'Expandir tarefa'}">
-                                <svg class="w-5 h-5 transform transition-transform ${isExpandida ? 'rotate-180' : ''}" 
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                            <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                            <span class="text-sm text-gray-600">${Utils.formatarData(tarefa.DataAula)}</span>
-                            <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${notaTotalFormatada}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="partes-tarefa-container transition-all duration-300 overflow-hidden ${isExpandida ? 'max-h-full opacity-100' : 'max-h-0 opacity-0'}">
-                        ${isExpandida ? `
-                            ${renderParteAluno(tarefa, 1, entregaTarefa, index, alunoData)}
-                            ${renderParteAluno(tarefa, 2, entregaTarefa, index, alunoData)}
-                            ${renderParteAluno(tarefa, 3, entregaTarefa, index, alunoData)}
-                            ${renderParteAluno(tarefa, 4, entregaTarefa, index, alunoData)}
-                        ` : ''}
-                    </div>
-                </div>
-                `;
-            });
-
-            // Aguardar todas as promises e renderizar
-            Promise.all(tarefasPromises).then(tarefasHTML => {
-                container.innerHTML = tarefasHTML.join('');
-            }).catch(error => {
-                console.error('Erro ao renderizar tarefas:', error);
-                container.innerHTML = '<div class="text-center text-red-500 py-8">Erro ao carregar tarefas</div>';
-            });
-        }
-
-        // CORREÇÃO 4: Função para buscar nota total da tarefa corrigida
-        async function buscarNotaTotalTarefa(email, turma, tarefaIndex) {
-            try {
-                const alunoData = await Utils.buscarDadosAlunoPlanilha(email, turma);
-                if (!alunoData) return 0;
-
-                const colunaNotaTotal = 7 + (tarefaIndex * 13); // Coluna G, T, etc.
-                
-                const chavesNotaTotal = [
-                    `Nota${tarefaIndex + 1}`,
-                    `Tarefa${tarefaIndex + 1}`,
-                    `NotaTarefa${tarefaIndex + 1}`
-                ];
-                
-                for (const chave of chavesNotaTotal) {
-                    if (alunoData[chave] !== undefined && alunoData[chave] !== null && alunoData[chave] !== '') {
-                        const nota = parseFloat(alunoData[chave]);
-                        if (!isNaN(nota)) return Math.min(nota, 10);
-                    }
-                }
-                
-                // Fallback: calcular soma das partes se a nota total não for encontrada
-                let somaPartes = 0;
-                for (let parte = 1; parte <= 4; parte++) {
-                    const notaParte = await buscarNotaParteAluno(email, turma, tarefaIndex, parte);
-                    somaPartes += notaParte;
-                }
-                return Math.min(somaPartes, 10);
-                
-            } catch (error) {
-                console.error('Erro ao buscar nota total da tarefa:', error);
-                return 0;
-            }
-        }
-
-        // CORREÇÃO 3: Função para buscar nota da parte corrigida
-        async function buscarNotaParteAluno(email, turma, tarefaIndex, parte) {
-            try {
-                const alunoData = await Utils.buscarDadosAlunoPlanilha(email, turma);
-                if (!alunoData) return 0;
-
-                const startCol = 7 + (tarefaIndex * 13);
-                const colunaNota = startCol + 3 + ((parte - 1) * 3); // Coluna J, M, P, S
-                
-                const chavesNota = [
-                    `Parte${((tarefaIndex * 4) + parte)}`,
-                    `NotaParte${((tarefaIndex * 4) + parte)}`,
-                    `P${parte}_T${tarefaIndex + 1}`
-                ];
-                
-                for (const chave of chavesNota) {
-                    if (alunoData[chave] !== undefined && alunoData[chave] !== null && alunoData[chave] !== '') {
-                        const nota = parseFloat(alunoData[chave]);
-                        if (!isNaN(nota)) return Math.min(nota, 2.5);
-                    }
-                }
-                
-                return 0;
-            } catch (error) {
-                console.error('Erro ao buscar nota da parte:', error);
-                return 0;
-            }
-        }
-
+        // Função toggleExpandirTarefaAluno corrigida
         window.toggleExpandirTarefaAluno = function(tarefaId) {
             if (STATE.tarefasExpandidas.has(tarefaId)) {
                 STATE.tarefasExpandidas.delete(tarefaId);
@@ -1636,169 +1740,19 @@
                 STATE.tarefasExpandidas.add(tarefaId);
             }
             
-            const container = document.getElementById('tarefas-aluno-container');
+            // Recarregar apenas a tarefa específica
+            const container = document.querySelector(`[data-tarefa-id="${tarefaId}"] .partes-tarefa-container`);
             if (container) {
-                const cacheKey = `tarefas_aluno_${STATE.usuarioLogado.Email}_dados`;
-                const cached = CacheManager.get(cacheKey);
-                if (cached) {
-                    renderTarefasAluno(cached.tarefas, cached.entregas, cached.alunoData, container);
+                const isExpandida = STATE.tarefasExpandidas.has(tarefaId);
+                if (isExpandida) {
+                    container.classList.remove('max-h-0', 'opacity-0');
+                    container.classList.add('max-h-full', 'opacity-100');
+                } else {
+                    container.classList.remove('max-h-full', 'opacity-100');
+                    container.classList.add('max-h-0', 'opacity-0');
                 }
             }
         };
-
-        function renderParteAluno(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
-            const parteConteudo = tarefa[`Parte${numeroParte}`];
-            const entrega = entregas.find(e => e.Parte === numeroParte);
-            
-            let linkSalvo = '';
-            let dataHoraSalva = '';
-            let notaParte = 0;
-            
-            if (entrega) {
-                linkSalvo = entrega.Link || '';
-                dataHoraSalva = entrega.DataSubmissao || '';
-                notaParte = parseFloat(entrega.Nota) || 0;
-            }
-            
-            const inputId = `link-${tarefa.ID}-${numeroParte}`;
-            
-            const temDadosSalvos = linkSalvo !== '' && linkSalvo !== null && linkSalvo !== undefined;
-            
-            const agora = new Date();
-            const dataAula = new Date(tarefa.DataAula);
-            
-            let diasOffset = 0;
-            switch(numeroParte) {
-                case 1: diasOffset = 0; break;
-                case 2: diasOffset = 7; break;
-                case 3: diasOffset = 14; break;
-                case 4: diasOffset = 28; break;
-                default: diasOffset = 0;
-            }
-            
-            const dataEntrega = new Date(dataAula);
-            dataEntrega.setDate(dataEntrega.getDate() + diasOffset);
-            
-            const inicio = new Date(dataEntrega);
-            inicio.setHours(7, 0, 0, 0);
-            
-            const fim = new Date(dataEntrega);
-            fim.setHours(22, 0, 0, 0);
-            
-            const status = TimeManager.calcularStatusParteDiaUnico(dataAula, diasOffset);
-            
-            const horaAtual = agora.getHours();
-            let notaEsperada = '0.0';
-            let horarioInfo = '';
-            
-            if (status.liberada) {
-                if (horaAtual >= 17 && horaAtual < 20) {
-                    notaEsperada = '2.5';
-                    horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h) 2.5</div>';
-                } else if ((horaAtual >= 7 && horaAtual < 17) || (horaAtual >= 20 && horaAtual < 22)) {
-                    notaEsperada = '2.0';
-                    horarioInfo = '<div class="horario-info">Nota regular (7h-17h ou 20h-22h) 2.0</div>';
-                } else {
-                    horarioInfo = '<div class="horario-info horario-fora">Fora do horário de entrega (7h-22h)</div>';
-                }
-            }
-
-            let retencaoLabel = '';
-            switch(numeroParte) {
-                case 1:
-                    retencaoLabel = '<span class="retencao-aviso retencao-50">50% retenção</span>';
-                    break;
-                case 2:
-                    retencaoLabel = '<span class="retencao-aviso retencao-25">25% retenção</span>';
-                    break;
-                case 3:
-                    retencaoLabel = '<span class="retencao-aviso retencao-15">15% retenção</span>';
-                    break;
-                case 4:
-                    retencaoLabel = '<span class="retencao-aviso retencao-10">9.99% retenção</span>';
-                    break;
-            }
-            
-            let conteudoParteHTML = '';
-            if (status.conteudoLiberado) {
-                conteudoParteHTML = `<div class="conteudo-formatado mt-2">${Utils.escapeHTML(parteConteudo)}</div>`;
-            } else {
-                conteudoParteHTML = `
-                    <div class="conteudo-oculto mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
-                        <p class="text-yellow-700 font-medium">Conteúdo será liberado no horário programado</p>
-                    </div>
-                `;
-            }
-            
-            // CORREÇÃO 2: Usar a nova função calcularPosicaoNotaParte que aponta para J34, M34, etc.
-            const posicaoNota = Utils.calcularPosicaoNotaParte(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
-            const tooltipNota = Utils.formatarTooltipReduzido(posicaoNota.aba, posicaoNota.celula);
-            
-            const posicaoCelula = Utils.calcularPosicaoAluno(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
-            const tooltipAluno = Utils.formatarTooltipReduzido(posicaoCelula.aba, posicaoCelula.celula);
-            
-            let linkHTML = '';
-            if (temDadosSalvos) {
-                const botaoExcluirHTML = status.liberada ? `
-                    <button class="btn-secundario btn-link" 
-                            onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                            id="btn-excluir-${tarefa.ID}-${numeroParte}">
-                        Excluir
-                    </button>
-                ` : '';
-                
-                const dataFormatada = Utils.formatarDadoBruto(dataHoraSalva);
-                const notaFormatada = Utils.formatarDadoBruto(notaParte);
-                const linkFormatado = Utils.formatarDadoBruto(linkSalvo);
-                
-                const linkDisplay = Utils.validarLink(linkSalvo) ? 
-                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</a>` :
-                    `<span class="link-salvo-texto" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</span>`;
-                
-                // CORREÇÃO 1: Adicionar "Nota Parte X:" antes da nota
-                linkHTML = `
-                    <div class="link-container mt-2">
-                        ${linkDisplay}
-                        <span class="nota-parte" title="${tooltipNota}">Nota Parte ${numeroParte}: ${notaFormatada}</span>
-                        ${botaoExcluirHTML}
-                    </div>
-                    <p class="text-green-600 text-sm mt-1">
-                        ✓ Dados salvos com sucesso em ${dataFormatada}
-                    </p>
-                `;
-            } else {
-                const botaoSalvarHTML = status.liberada ? `
-                    <button class="btn-primario btn-link" 
-                            onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                            id="btn-salvar-${tarefa.ID}-${numeroParte}">
-                        Salvar
-                    </button>
-                ` : '';
-                
-                linkHTML = `
-                    <div class="link-container mt-2">
-                        <input type="text" 
-                               class="link-input" 
-                               placeholder="${status.expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui'}" 
-                               id="${inputId}"
-                               value=""
-                               ${status.expirado || !status.liberada ? 'disabled' : ''}>
-                        ${botaoSalvarHTML}
-                    </div>
-                `;
-            }
-            
-            return `
-            <div class="mt-3 p-3 bg-gray-50 rounded border" id="parte-${tarefa.ID}-${numeroParte}">
-                <div class="flex justify-between items-center">
-                    <strong>Parte ${numeroParte} ${retencaoLabel}</strong>
-                    <span class="contador ${status.classe}">${status.texto}</span>
-                </div>
-                ${conteudoParteHTML}
-                ${horarioInfo}
-                ${linkHTML}
-            </div>`;
-        }
 
         async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
