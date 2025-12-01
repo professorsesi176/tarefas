@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 35.2 - Tooltips Corrigidos
+            Desenvolvido por Geovane Modena | Versão 35.3 - Correção Estrutural de Colunas
         </footer>
     </div>
 
@@ -257,23 +257,22 @@
             },
 
             calcularPosicaoAluno: (numeroAluno, tarefaIndex, parte) => {
-                const colunaBase = 7;
-                const colunaTarefa = colunaBase + (tarefaIndex * 13);
-                const colunaParte = colunaTarefa + 1 + ((parte - 1) * 3);
+                const colunaBase = 8; // Coluna H (Link1)
+                const colunaLink = colunaBase + ((parte - 1) * 3) + (tarefaIndex * 12);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
                     aba: STATE.usuarioLogado?.Turma || 'Turma',
                     linha: linhaAluno,
-                    coluna: colunaParte,
-                    celula: Utils.calcularPosicaoCelula(linhaAluno, colunaParte)
+                    coluna: colunaLink,
+                    celula: Utils.calcularPosicaoCelula(linhaAluno, colunaLink)
                 };
             },
 
-            // CORREÇÃO: Nota final da tarefa - deve vir da coluna F (6), não G (7)
+            // CORREÇÃO: Nota final da tarefa - deve vir da coluna G (7) para a primeira tarefa
             calcularPosicaoNotaFinal: (numeroAluno, tarefaIndex) => {
-                const colunaBase = 6; // CORREÇÃO: Alterado de 7 para 6 (coluna F)
-                const colunaTarefa = colunaBase + (tarefaIndex * 13);
+                const colunaBase = 7; // Coluna G (Nota1)
+                const colunaTarefa = colunaBase + (tarefaIndex * 12); // Cada tarefa ocupa 12 colunas
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
@@ -284,12 +283,10 @@
                 };
             },
 
-            // CORREÇÃO: Nota da parte - deve vir da coluna I (9), não J (10)
+            // CORREÇÃO: Nota da parte - deve vir da coluna J (10) para parte 1, M (13) para parte 2, etc.
             calcularPosicaoNotaParte: (numeroAluno, tarefaIndex, parte) => {
-                const colunaBase = 7;
-                const colunaTarefa = colunaBase + (tarefaIndex * 13);
-                // CORREÇÃO: +2 em vez de +3 para pegar a coluna da nota (I, L, O, R)
-                const colunaNota = colunaTarefa + 2 + ((parte - 1) * 3);
+                const colunaBase = 10; // Coluna J (Parte1)
+                const colunaNota = colunaBase + ((parte - 1) * 3) + (tarefaIndex * 12);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
@@ -367,6 +364,23 @@
 
             formatarTooltipReduzido: (aba, celula) => {
                 return `${aba} ${celula}`.replace('📍 Célula: ', '');
+            },
+
+            // Nova função: calcular coluna da nota baseada na estrutura real
+            calcularColunaNotaParteReal: (tarefaIndex, parte) => {
+                // Colunas: G=7 (Nota1), H=8 (Link1), I=9 (DataHora1), J=10 (Parte1)
+                const colunaBase = 7; // G
+                const deslocamentoTarefa = tarefaIndex * 12; // 12 colunas por tarefa
+                const deslocamentoParte = (parte - 1) * 3; // 3 colunas por parte
+                
+                return colunaBase + deslocamentoTarefa + 3 + deslocamentoParte; // +3 para ir de G para J
+            },
+
+            calcularColunaNotaFinalReal: (tarefaIndex) => {
+                // Coluna G (7) para Nota1, T (20) para Nota2, etc.
+                const colunaBase = 7; // G
+                const deslocamentoTarefa = tarefaIndex * 12; // 12 colunas por tarefa
+                return colunaBase + deslocamentoTarefa;
             }
         };
 
@@ -788,7 +802,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v35.2 - Tooltips Corrigidos...');
+                console.log('Inicializando sistema v35.3 - Correção Estrutural de Colunas...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1462,9 +1476,11 @@
                 
                 notaTotal = Math.min(notaTotal, 10).toFixed(1);
                 
-                // Calcular posição da nota final para tooltip - CORREÇÃO APLICADA
-                const posicaoNotaFinal = Utils.calcularPosicaoNotaFinal(STATE.usuarioLogado.Numero, index);
-                const tooltipNotaFinal = Utils.formatarTooltipReduzido(posicaoNotaFinal.aba, posicaoNotaFinal.celula);
+                // Calcular posição da nota final para tooltip - USANDO CÁLCULO REAL
+                const colunaNotaFinal = Utils.calcularColunaNotaFinalReal(index);
+                const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
+                const celulaNotaFinal = Utils.calcularPosicaoCelula(linhaAluno, colunaNotaFinal);
+                const tooltipNotaFinal = `${STATE.usuarioLogado.Turma} ${celulaNotaFinal}`;
                 
                 return `
                 <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container">
@@ -1565,12 +1581,16 @@
                 `;
             }
             
-            // CORREÇÃO APLICADA: usar a função corrigida para calcular posição da nota da parte
-            const posicaoNota = Utils.calcularPosicaoNotaParte(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
-            const tooltipNota = Utils.formatarTooltipReduzido(posicaoNota.aba, posicaoNota.celula);
+            // CORREÇÃO: Usar cálculo real da coluna da nota
+            const colunaNotaParte = Utils.calcularColunaNotaParteReal(tarefaIndex, numeroParte);
+            const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
+            const celulaNotaParte = Utils.calcularPosicaoCelula(linhaAluno, colunaNotaParte);
+            const tooltipNota = `${STATE.usuarioLogado.Turma} ${celulaNotaParte}`;
             
-            const posicaoCelula = Utils.calcularPosicaoAluno(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
-            const tooltipAluno = Utils.formatarTooltipReduzido(posicaoCelula.aba, posicaoCelula.celula);
+            // Cálculo da coluna do link
+            const colunaLink = 8 + ((numeroParte - 1) * 3) + (tarefaIndex * 12);
+            const celulaLink = Utils.calcularPosicaoCelula(linhaAluno, colunaLink);
+            const tooltipAluno = `${STATE.usuarioLogado.Turma} ${celulaLink}`;
             
             let linkHTML = '';
             if (temDadosSalvos) {
@@ -1641,28 +1661,24 @@
             if (!alunoData || !tarefas) return entregas;
             
             tarefas.forEach((tarefa, tarefaIndex) => {
-                const startCol = tarefa.StartColumn || (7 + (tarefaIndex * 13));
-                
                 for (let parte = 1; parte <= 4; parte++) {
-                    const linkCol = startCol + 1 + ((parte - 1) * 3);
-                    const dataHoraCol = linkCol + 1;
-                    const notaCol = dataHoraCol + 1;
-                    
+                    const parteGlobal = (tarefaIndex * 4) + parte;
                     const chavesLink = [
-                        `Link${((tarefaIndex * 4) + parte)}`,
+                        `Link${parteGlobal}`,
                         `P${parte}_T${tarefaIndex + 1}`,
-                        `Parte${((tarefaIndex * 4) + parte)}`
+                        `Parte${parteGlobal}`
                     ];
                     
                     const chavesData = [
-                        `DataHora${((tarefaIndex * 4) + parte)}`,
-                        `Data${((tarefaIndex * 4) + parte)}`
+                        `DataHora${parteGlobal}`,
+                        `Data${parteGlobal}`
                     ];
                     
                     const chavesNota = [
-                        `NotaParte${((tarefaIndex * 4) + parte)}`,
-                        `Parte${((tarefaIndex * 4) + parte)}Nota`,
-                        `NotaP${parte}`
+                        `Parte${parteGlobal}`,
+                        `NotaParte${parteGlobal}`,
+                        `P${parte}_T${tarefaIndex + 1}`,
+                        `Parte${parte}_T${tarefaIndex + 1}`
                     ];
                     
                     let link = '';
@@ -2014,12 +2030,13 @@
                             `;
                             
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
-                                const startCol = tarefa.StartColumn || (7 + (tarefaIndex * 13));
+                                // CORREÇÃO: Usar cálculo real das colunas
+                                const colunaNotaFinal = Utils.calcularColunaNotaFinalReal(tarefaIndex);
                                 
                                 for (let parte = 1; parte <= 4; parte++) {
-                                    // CORREÇÃO APLICADA: usar cálculo correto da coluna da nota (I, L, O, R)
-                                    const colunaNota = startCol + 2 + ((parte - 1) * 3);
-                                    const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, colunaNota);
+                                    // CORREÇÃO: Usar cálculo real da coluna da nota da parte
+                                    const colunaNotaParte = Utils.calcularColunaNotaParteReal(tarefaIndex, parte);
+                                    const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, colunaNotaParte);
                                     const tooltipNota = Utils.formatarTooltipReduzido(turma, celulaNota);
                                     
                                     const parteGlobal = (tarefaIndex * 4) + parte;
