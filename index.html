@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 35.2 - Tarefas Expandidas
+            Desenvolvido por Geovane Modena | Versão 35.1 - Notas Corrigidas
         </footer>
     </div>
 
@@ -66,7 +66,6 @@
             contadoresAtivos: [],
             rmVisible: false,
             relatorioAlunoVisivel: false,
-            tarefasExpandidas: new Set(),
             metricasPerformance: {
                 chamadasAPI: 0,
                 tempoTotal: 0,
@@ -271,6 +270,7 @@
                 };
             },
 
+            // CORREÇÃO 1: Nota final da tarefa - deve vir da coluna G (7)
             calcularPosicaoNotaFinal: (numeroAluno, tarefaIndex) => {
                 const colunaBase = 7;
                 const colunaTarefa = colunaBase + (tarefaIndex * 13);
@@ -284,9 +284,11 @@
                 };
             },
 
+            // CORREÇÃO 2: Nota da parte - deve vir da coluna J (10) para parte 1, não da I (9)
             calcularPosicaoNotaParte: (numeroAluno, tarefaIndex, parte) => {
                 const colunaBase = 7;
                 const colunaTarefa = colunaBase + (tarefaIndex * 13);
+                // CORREÇÃO: +3 em vez de +2 para pegar a coluna da nota (J, M, P, S)
                 const colunaNota = colunaTarefa + 3 + ((parte - 1) * 3);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
@@ -584,7 +586,6 @@
                 STATE.usuarioLogado = null;
                 STATE.tarefaEditando = null;
                 STATE.relatorioAlunoVisivel = false;
-                STATE.tarefasExpandidas.clear();
                 UIManager.elements.logoutBtn.classList.add('hidden');
                 UIManager.elements.relatorioBtn.classList.add('hidden');
                 UIManager.elements.diagnosticoBtn.classList.add('hidden');
@@ -787,7 +788,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v35.2 - Tarefas Expandidas...');
+                console.log('Inicializando sistema v35.1 - Notas Corrigidas...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1281,7 +1282,7 @@
             }
         }
 
-        // ==================== PAINEL DO ALUNO - CORREÇÃO DE EXPANSÃO ====================
+        // ==================== PAINEL DO ALUNO - SEM EXPANSÃO/CONTRAÇÃO ====================
         async function mostrarPainelAluno() {
             const cacheKey = `painel_aluno_${STATE.usuarioLogado.Email}`;
             const cached = CacheManager.get(cacheKey);
@@ -1289,8 +1290,6 @@
             if (cached) {
                 UIManager.elements.contentArea.innerHTML = cached;
                 TimeManager.iniciarAtualizacaoContadores();
-                // CORREÇÃO: Expandir todas as tarefas após carregar do cache
-                setTimeout(expandirTodasTarefasAluno, 100);
                 return;
             }
             
@@ -1355,30 +1354,20 @@
                 </div>
             `;
 
-            // CORREÇÃO: Chamar carregarTarefasAluno e expandir todas após carregar
             await carregarTarefasAluno();
             TimeManager.iniciarAtualizacaoContadores();
             
             CacheManager.set(cacheKey, UIManager.elements.contentArea.innerHTML, 2 * 60 * 1000);
         }
 
-        // CORREÇÃO: Nova função para expandir todas as tarefas
-        function expandirTodasTarefasAluno() {
-            const containers = document.querySelectorAll('.tarefa-aluno-container');
-            containers.forEach(container => {
-                const tarefaId = container.getAttribute('data-tarefa-id');
-                if (tarefaId && !STATE.tarefasExpandidas.has(tarefaId)) {
-                    STATE.tarefasExpandidas.add(tarefaId);
-                    const partesContainer = container.querySelector('.partes-tarefa-container');
-                    if (partesContainer) {
-                        partesContainer.classList.remove('max-h-0', 'opacity-0');
-                        partesContainer.classList.add('max-h-full', 'opacity-100');
-                    }
-                }
-            });
+        function toggleFundamentoCientifico() {
+            const conteudo = document.getElementById('conteudo-fundamento');
+            const icon = document.querySelector('.fundamento-cientifico .expand-icon');
+            
+            conteudo.classList.toggle('expandido');
+            icon.classList.toggle('expandido');
         }
 
-        // CORREÇÃO: Função carregarTarefasAluno modificada para expandir automaticamente
         async function carregarTarefasAluno() {
             const container = document.getElementById('tarefas-aluno-container');
             if (!container) {
@@ -1427,14 +1416,8 @@
                 console.log('Tarefas carregadas:', response.data.length);
                 console.log('Entregas encontradas:', entregas.length);
                 
-                // CORREÇÃO: Expandir automaticamente todas as tarefas
-                response.data.forEach((tarefa, index) => {
-                    const tarefaId = tarefa.ID || `tarefa-${index}`;
-                    STATE.tarefasExpandidas.add(tarefaId);
-                });
-                
-                // Renderizar tarefas
-                renderTarefasAlunoCorrigido(response.data, entregas, alunoData, container);
+                // Renderizar tarefas de forma síncrona - SEM EXPANSÃO/CONTRAÇÃO
+                renderTarefasAlunoSemExpansao(response.data, entregas, alunoData, container);
                 
             } catch (error) {
                 console.error('Erro detalhado ao carregar tarefas do aluno:', error);
@@ -1446,9 +1429,9 @@
             }
         }
 
-        // CORREÇÃO: Função renderTarefasAluno corrigida para mostrar expandido por padrão
-        function renderTarefasAlunoCorrigido(tarefasLocal, entregas, alunoData, container) {
-            console.log('Renderizando tarefas corrigidas:', tarefasLocal.length);
+        // Função renderTarefasAluno SEM expansão/contração
+        function renderTarefasAlunoSemExpansao(tarefasLocal, entregas, alunoData, container) {
+            console.log('Renderizando tarefas SEM expansão:', tarefasLocal.length);
             
             if (!tarefasLocal || tarefasLocal.length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-500 py-8">Nenhuma tarefa disponível para sua turma.</div>';
@@ -1483,22 +1466,10 @@
                 const posicaoNotaFinal = Utils.calcularPosicaoNotaFinal(STATE.usuarioLogado.Numero, index);
                 const tooltipNotaFinal = Utils.formatarTooltipReduzido(posicaoNotaFinal.aba, posicaoNotaFinal.celula);
                 
-                const tarefaId = tarefa.ID || `tarefa-${index}`;
-                // CORREÇÃO: Sempre expandido por padrão
-                const isExpandida = STATE.tarefasExpandidas.has(tarefaId);
-                
                 return `
-                <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container" data-tarefa-id="${tarefaId}">
+                <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container">
                     <div class="flex justify-between items-center mb-2">
                         <div class="flex items-center">
-                            <button class="expandir-tarefa-btn mr-2 text-gray-500 hover:text-gray-700 transition-colors" 
-                                    onclick="toggleExpandirTarefaAluno('${tarefaId}')"
-                                    title="${isExpandida ? 'Recolher tarefa' : 'Expandir tarefa'}">
-                                <svg class="w-5 h-5 transform transition-transform ${isExpandida ? 'rotate-180' : ''}" 
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
                             <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
                         </div>
                         <div class="flex items-center space-x-4">
@@ -1507,7 +1478,7 @@
                         </div>
                     </div>
                     
-                    <div class="partes-tarefa-container transition-all duration-300 overflow-hidden ${isExpandida ? 'max-h-full opacity-100' : 'max-h-0 opacity-0'}">
+                    <div class="partes-tarefa-container">
                         ${renderParteAlunoCorrigido(tarefa, 1, entregaTarefa, index, alunoData)}
                         ${renderParteAlunoCorrigido(tarefa, 2, entregaTarefa, index, alunoData)}
                         ${renderParteAlunoCorrigido(tarefa, 3, entregaTarefa, index, alunoData)}
@@ -1518,10 +1489,10 @@
             }).join('');
 
             container.innerHTML = tarefasHTML;
-            console.log('Tarefas renderizadas com sucesso');
+            console.log('Tarefas renderizadas com sucesso (sem expansão)');
         }
 
-        // CORREÇÃO: Função renderParteAluno corrigida
+        // Função renderParteAluno corrigida
         function renderParteAlunoCorrigido(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
@@ -1663,7 +1634,7 @@
             </div>`;
         }
 
-        // CORREÇÃO: Função auxiliar para extrair entregas corrigida
+        // Função auxiliar para extrair entregas corrigida
         function extrairEntregasDeAlunoData(alunoData, tarefas) {
             const entregas = [];
             
@@ -1733,31 +1704,6 @@
             
             return entregas;
         }
-
-        // CORREÇÃO: Função toggleExpandirTarefaAluno corrigida
-        window.toggleExpandirTarefaAluno = function(tarefaId) {
-            if (STATE.tarefasExpandidas.has(tarefaId)) {
-                STATE.tarefasExpandidas.delete(tarefaId);
-            } else {
-                STATE.tarefasExpandidas.add(tarefaId);
-            }
-            
-            // Recarregar apenas a tarefa específica
-            const container = document.querySelector(`[data-tarefa-id="${tarefaId}"] .partes-tarefa-container`);
-            const button = document.querySelector(`[data-tarefa-id="${tarefaId}"] .expandir-tarefa-btn svg`);
-            if (container && button) {
-                const isExpandida = STATE.tarefasExpandidas.has(tarefaId);
-                if (isExpandida) {
-                    container.classList.remove('max-h-0', 'opacity-0');
-                    container.classList.add('max-h-full', 'opacity-100');
-                    button.classList.add('rotate-180');
-                } else {
-                    container.classList.remove('max-h-full', 'opacity-100');
-                    container.classList.add('max-h-0', 'opacity-0');
-                    button.classList.remove('rotate-180');
-                }
-            }
-        };
 
         function mostrarLoadingTarefasAluno() {
             const container = document.getElementById('tarefas-aluno-container');
@@ -1897,15 +1843,307 @@
             });
         }
 
-        function toggleFundamentoCientifico() {
-            const conteudo = document.getElementById('conteudo-fundamento');
-            const icon = document.querySelector('.fundamento-cientifico .expand-icon');
+        // ==================== RELATÓRIOS ====================
+        async function mostrarRelatorioProfessor() {
+            UIManager.elements.contentArea.innerHTML = `
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold text-red-700">Relatório por Turma</h3>
+                    </div>
+                    <div class="turmas-container">
+                        <div class="turmas-buttons">
+                            ${CONFIG.TURMAS.map(turma => `
+                                <button onclick="carregarRelatorioTurma('${turma}')" class="btn-turma-compact" id="btn-turma-${turma}">
+                                    ${turma}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="export-buttons-container">
+                            <button onclick="exportarParaExcel(window.turmaSelecionada)" class="btn-exportar" id="btn-excel">
+                                Exportar Excel
+                            </button>
+                            <button onclick="exportarParaPDF(window.turmaSelecionada)" class="btn-exportar" id="btn-pdf">
+                                Exportar PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div id="relatorio-turma-container" class="mt-4">
+                        <p class="text-gray-500 text-center py-8">Selecione uma turma para visualizar o relatório</p>
+                    </div>
+                </div>
+            `;
             
-            conteudo.classList.toggle('expandido');
-            icon.classList.toggle('expandido');
+            window.turmaSelecionada = null;
         }
 
-        // ... (o restante do código permanece igual, incluindo as funções de relatório, diagnóstico, etc.)
+        async function carregarRelatorioTurma(turma) {
+            document.querySelectorAll('.btn-turma-compact').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn-turma-${turma}`).classList.add('active');
+            
+            window.turmaSelecionada = turma;
+            
+            document.getElementById('relatorio-turma-container').innerHTML = `
+                <div class="text-center py-8">
+                    <div class="spinner"></div>
+                    <p class="mt-4 text-gray-600">Carregando relatório da turma ${Utils.escapeHTML(turma)}...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await apiGet('getRelatorioTurma', { turma: turma }, true);
+                const relatorio = response.data || {};
+                
+                let relatorioTurmaHTML = `
+                    <div class="relatorio-header">
+                        <h4 class="text-lg font-semibold text-red-700">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
+                    </div>
+                    <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
+                        Total de alunos: ${relatorio.alunos?.length || 0} | Total de tarefas: ${relatorio.tarefas?.length || 0} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
+                    </div>
+                `;
+                
+                if (!relatorio.alunos || relatorio.alunos.length === 0) {
+                    relatorioTurmaHTML += `
+                        <div class="text-center py-8">
+                            <p class="text-gray-500 mb-4">Nenhum aluno encontrado na turma ${Utils.escapeHTML(turma)}.</p>
+                        </div>
+                    `;
+                } else {
+                    if (!relatorio.tarefas || relatorio.tarefas.length === 0) {
+                        relatorioTurmaHTML += `
+                            <div class="overflow-x-auto border rounded-lg mt-4">
+                                <table class="min-w-full compact-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">Média</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${relatorio.alunos.map(aluno => {
+                                            let media = 0;
+                                            if (aluno.Media) {
+                                                media = Utils.formatarDadoBruto(aluno.Media);
+                                                if (isNaN(parseFloat(media))) {
+                                                    media = 0;
+                                                } else {
+                                                    media = parseFloat(media);
+                                                }
+                                            }
+                                            const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, 6);
+                                            const tooltipMedia = Utils.formatarTooltipReduzido(turma, celulaMedia);
+                                            
+                                            return `
+                                                <tr>
+                                                    <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
+                                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                                    <td class="px-4 py-3 text-center border-b" title="${tooltipMedia}">
+                                                        <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                                            ${media.toFixed(1)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    } else {
+                        relatorioTurmaHTML += `
+                            <div class="overflow-x-auto border rounded-lg mt-4">
+                                <table class="min-w-full compact-table" id="tabela-relatorio">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b" rowspan="2">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Média</th>
+                        `;
+                        
+                        relatorio.tarefas.forEach((tarefa, index) => {
+                            relatorioTurmaHTML += `
+                                <th class="px-2 py-3 text-center font-semibold border-b relatorio-tarefa-header" colspan="4">
+                                    ${Utils.escapeHTML(tarefa.Tema)}
+                                </th>
+                            `;
+                        });
+                        
+                        relatorioTurmaHTML += `</tr><tr>`;
+                        
+                        relatorio.tarefas.forEach(() => {
+                            relatorioTurmaHTML += `
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P1</th>
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P2</th>
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P3</th>
+                                <th class="px-1 py-2 text-center border-b relatorio-parte-header">P4</th>
+                            `;
+                        });
+                        
+                        relatorioTurmaHTML += `
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+                        
+                        relatorio.alunos.forEach((aluno) => {
+                            let media = 0;
+                            if (aluno.Media) {
+                                media = Utils.formatarDadoBruto(aluno.Media);
+                                if (isNaN(parseFloat(media))) {
+                                    media = 0;
+                                } else {
+                                    media = parseFloat(media);
+                                }
+                            }
+                            
+                            const celulaMedia = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, 6);
+                            const tooltipMedia = Utils.formatarTooltipReduzido(turma, celulaMedia);
+                            
+                            relatorioTurmaHTML += `
+                                <tr>
+                                    <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                    <td class="px-4 py-3 text-center border-b" title="${tooltipMedia}">
+                                        <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
+                                            ${media.toFixed(1)}
+                                        </span>
+                                    </td>
+                            `;
+                            
+                            relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
+                                const startCol = tarefa.StartColumn || (7 + (tarefaIndex * 13));
+                                
+                                for (let parte = 1; parte <= 4; parte++) {
+                                    const colunaNota = startCol + 2 + ((parte - 1) * 3);
+                                    const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, colunaNota);
+                                    const tooltipNota = Utils.formatarTooltipReduzido(turma, celulaNota);
+                                    
+                                    const parteGlobal = (tarefaIndex * 4) + parte;
+                                    const chavesNota = [
+                                        `Parte${parteGlobal}`,
+                                        `NotaParte${parteGlobal}`,
+                                        `P${parte}_T${tarefaIndex + 1}`,
+                                        `Parte${parte}_T${tarefaIndex + 1}`,
+                                        `Nota${parteGlobal}`
+                                    ];
+                                    
+                                    let notaParte = 0;
+                                    let valorOriginal = '';
+                                    let chaveEncontrada = '';
+                                    
+                                    for (const chave of chavesNota) {
+                                        if (aluno[chave] !== undefined && aluno[chave] !== null && aluno[chave] !== '') {
+                                            valorOriginal = aluno[chave];
+                                            chaveEncontrada = chave;
+                                            const valorNumerico = parseFloat(aluno[chave]);
+                                            if (!isNaN(valorNumerico)) {
+                                                notaParte = Math.min(valorNumerico, 2.5);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (notaParte === 0 && aluno[`Nota${tarefaIndex + 1}`] > 0) {
+                                        notaParte = Math.min(parseFloat(aluno[`Nota${tarefaIndex + 1}`]) / 4, 2.5);
+                                        chaveEncontrada = `Nota${tarefaIndex + 1} (calculada)`;
+                                    }
+                                    
+                                    let classeNota = 'text-gray-600';
+                                    
+                                    if (notaParte > 0) {
+                                        if (notaParte >= 2.5) {
+                                            classeNota = 'text-green-600 font-semibold';
+                                        } else if (notaParte >= 2.0) {
+                                            classeNota = 'text-blue-600';
+                                        } else {
+                                            classeNota = 'text-red-600';
+                                        }
+                                    }
+                                    
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b" title="${tooltipNota}"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
+                                }
+                            });
+                            
+                            relatorioTurmaHTML += `</tr>`;
+                        });
+                        
+                        relatorioTurmaHTML += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                }
+                
+                document.getElementById('relatorio-turma-container').innerHTML = relatorioTurmaHTML;
+                
+            } catch (error) {
+                console.error('Erro ao carregar relatório:', error);
+                document.getElementById('relatorio-turma-container').innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Erro ao carregar relatório: ${Utils.escapeHTML(error.message || String(error))}</p>
+                        <button onclick="carregarRelatorioTurma('${turma}')" class="btn-secundario mt-4">
+                            Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function exportarParaExcel(turma) {
+            if (!turma) {
+                UIManager.showModal('Atenção', 'Selecione uma turma primeiro.');
+                return;
+            }
+            
+            try {
+                const table = document.getElementById('tabela-relatorio');
+                if (!table) {
+                    UIManager.showModal('Erro', 'Tabela não encontrada para exportação.');
+                    return;
+                }
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.table_to_sheet(table);
+                XLSX.utils.book_append_sheet(wb, ws, `Turma ${turma}`);
+                XLSX.writeFile(wb, `relatorio_turma_${turma}.xlsx`);
+            } catch (error) {
+                UIManager.showModal('Erro', `Erro ao exportar para Excel: ${error.message}`);
+            }
+        }
+
+        function exportarParaPDF(turma) {
+            if (!turma) {
+                UIManager.showModal('Atenção', 'Selecione uma turma primeiro.');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                doc.setFontSize(16);
+                doc.text(`Relatório da Turma ${turma}`, 14, 15);
+
+                doc.setFontSize(10);
+                doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, 14, 22);
+
+                const table = document.getElementById('tabela-relatorio');
+                doc.autoTable({
+                    html: table,
+                    startY: 30,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [204, 0, 0] }
+                });
+
+                doc.save(`relatorio_turma_${turma}.pdf`);
+            } catch (error) {
+                UIManager.showModal('Erro', `Erro ao exportar para PDF: ${error.message}`);
+            }
+        }
 
         // ==================== INICIALIZAÇÃO ====================
         document.addEventListener('DOMContentLoaded', init);
@@ -1934,8 +2172,6 @@
         window.excluirLinkAluno = excluirLinkAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
-        window.toggleExpandirTarefaAluno = toggleExpandirTarefaAluno;
-        window.expandirTodasTarefasAluno = expandirTodasTarefasAluno;
 
         // ==================== SEÇÃO DIAGNÓSTICO ====================
         window.mostrarPainelDiagnostico = async function() {
