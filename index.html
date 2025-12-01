@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 35.1 - Notas Corrigidas
+            Desenvolvido por Geovane Modena | Versão 35.2 - Tooltips Corrigidos
         </footer>
     </div>
 
@@ -270,9 +270,9 @@
                 };
             },
 
-            // CORREÇÃO 1: Nota final da tarefa - deve vir da coluna G (7)
+            // CORREÇÃO: Nota final da tarefa - deve vir da coluna F (6), não G (7)
             calcularPosicaoNotaFinal: (numeroAluno, tarefaIndex) => {
-                const colunaBase = 7;
+                const colunaBase = 6; // CORREÇÃO: Alterado de 7 para 6 (coluna F)
                 const colunaTarefa = colunaBase + (tarefaIndex * 13);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
@@ -284,12 +284,12 @@
                 };
             },
 
-            // CORREÇÃO 2: Nota da parte - deve vir da coluna J (10) para parte 1, não da I (9)
+            // CORREÇÃO: Nota da parte - deve vir da coluna I (9), não J (10)
             calcularPosicaoNotaParte: (numeroAluno, tarefaIndex, parte) => {
                 const colunaBase = 7;
                 const colunaTarefa = colunaBase + (tarefaIndex * 13);
-                // CORREÇÃO: +3 em vez de +2 para pegar a coluna da nota (J, M, P, S)
-                const colunaNota = colunaTarefa + 3 + ((parte - 1) * 3);
+                // CORREÇÃO: +2 em vez de +3 para pegar a coluna da nota (I, L, O, R)
+                const colunaNota = colunaTarefa + 2 + ((parte - 1) * 3);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
@@ -788,7 +788,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v35.1 - Notas Corrigidas...');
+                console.log('Inicializando sistema v35.2 - Tooltips Corrigidos...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1462,7 +1462,7 @@
                 
                 notaTotal = Math.min(notaTotal, 10).toFixed(1);
                 
-                // Calcular posição da nota final para tooltip
+                // Calcular posição da nota final para tooltip - CORREÇÃO APLICADA
                 const posicaoNotaFinal = Utils.calcularPosicaoNotaFinal(STATE.usuarioLogado.Numero, index);
                 const tooltipNotaFinal = Utils.formatarTooltipReduzido(posicaoNotaFinal.aba, posicaoNotaFinal.celula);
                 
@@ -1565,6 +1565,7 @@
                 `;
             }
             
+            // CORREÇÃO APLICADA: usar a função corrigida para calcular posição da nota da parte
             const posicaoNota = Utils.calcularPosicaoNotaParte(STATE.usuarioLogado.Numero, tarefaIndex, numeroParte);
             const tooltipNota = Utils.formatarTooltipReduzido(posicaoNota.aba, posicaoNota.celula);
             
@@ -1589,11 +1590,10 @@
                     `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</a>` :
                     `<span class="link-salvo-texto" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</span>`;
                 
-                // CORREÇÃO: Adicionar "Nota Parte X:" antes da nota
                 linkHTML = `
                     <div class="link-container mt-2">
                         ${linkDisplay}
-                        <span class="nota-parte" title="${tooltipNota}">Nota Parte ${numeroParte}: ${notaFormatada}</span>
+                        <span class="nota-parte" title="${tooltipNota}">Nota: ${notaFormatada}</span>
                         ${botaoExcluirHTML}
                     </div>
                     <p class="text-green-600 text-sm mt-1">
@@ -2017,6 +2017,7 @@
                                 const startCol = tarefa.StartColumn || (7 + (tarefaIndex * 13));
                                 
                                 for (let parte = 1; parte <= 4; parte++) {
+                                    // CORREÇÃO APLICADA: usar cálculo correto da coluna da nota (I, L, O, R)
                                     const colunaNota = startCol + 2 + ((parte - 1) * 3);
                                     const celulaNota = Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, colunaNota);
                                     const tooltipNota = Utils.formatarTooltipReduzido(turma, celulaNota);
