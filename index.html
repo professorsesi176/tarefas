@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 35.5 - Correção de Cabeçalhos de Tarefa
+            Desenvolvido por Geovane Modena | Versão 35.6 - Correções Solicitadas
         </footer>
     </div>
 
@@ -276,10 +276,9 @@
                 };
             },
 
-            // CORREÇÃO: Nota final da tarefa - deve vir da coluna G (7) para a primeira tarefa
             calcularPosicaoNotaFinal: (numeroAluno, tarefaIndex) => {
                 const colunaBase = 7; // Coluna G (Nota1)
-                const colunaTarefa = colunaBase + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA); // Cada tarefa ocupa 12 colunas
+                const colunaTarefa = colunaBase + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
@@ -290,7 +289,6 @@
                 };
             },
 
-            // CORREÇÃO: Nota da parte - deve vir da coluna J (10) para parte 1, M (13) para parte 2, etc.
             calcularPosicaoNotaParte: (numeroAluno, tarefaIndex, parte) => {
                 const colunaBase = 10; // Coluna J (Parte1)
                 const colunaNota = colunaBase + ((parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE) + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA);
@@ -327,10 +325,19 @@
                 }
                 
                 if (!isNaN(parseFloat(valorStr)) && valorStr.trim() !== '') {
-                    return parseFloat(valorStr).toString();
+                    const num = parseFloat(valorStr);
+                    return num % 1 === 0 ? num.toString() : num.toFixed(1);
                 }
                 
                 return valorStr;
+            },
+
+            formatarNota: (nota) => {
+                if (nota === null || nota === undefined) return '-';
+                const num = parseFloat(nota);
+                if (isNaN(num)) return '-';
+                // Se for inteiro, mostra sem decimal, senão com uma casa
+                return num % 1 === 0 ? num.toString() : num.toFixed(1);
             },
 
             obterInfoCelulaCompleta: (valor, linha, coluna, celula) => {
@@ -373,24 +380,20 @@
                 return `${aba} ${celula}`.replace('📍 Célula: ', '');
             },
 
-            // Nova função: calcular coluna da nota baseada na estrutura real
             calcularColunaNotaParteReal: (tarefaIndex, parte) => {
-                // Colunas: G=7 (Nota1), H=8 (Link1), I=9 (DataHora1), J=10 (Parte1)
                 const colunaBase = 7; // G
-                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA; // 12 colunas por tarefa
-                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE; // 3 colunas por parte
+                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA;
+                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE;
                 
-                return colunaBase + deslocamentoTarefa + 3 + deslocamentoParte; // +3 para ir de G para J
+                return colunaBase + deslocamentoTarefa + 3 + deslocamentoParte;
             },
 
             calcularColunaNotaFinalReal: (tarefaIndex) => {
-                // Coluna G (7) para Nota1, T (20) para Nota2, etc.
                 const colunaBase = 7; // G
-                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA; // 12 colunas por tarefa
+                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA;
                 return colunaBase + deslocamentoTarefa;
             },
 
-            // Nova função: validar e corrigir nota (0, 2, 2.5)
             validarNota: (valor) => {
                 const num = parseFloat(valor);
                 if (isNaN(num)) return 0;
@@ -402,12 +405,10 @@
                 return 0;
             },
 
-            // Nova função: calcular posição da célula do link para tooltip
             calcularColunaLinkReal: (tarefaIndex, parte) => {
-                // Colunas: H=8 (Link1), K=11 (Link2), N=14 (Link3), Q=17 (Link4)
                 const colunaBase = 8; // H
-                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA; // 12 colunas por tarefa
-                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE; // 3 colunas por parte
+                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA;
+                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE;
                 
                 return colunaBase + deslocamentoTarefa + deslocamentoParte;
             }
@@ -831,7 +832,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v35.5 - Correção de Cabeçalhos de Tarefa...');
+                console.log('Inicializando sistema v35.6 - Correções Solicitadas...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1325,7 +1326,7 @@
             }
         }
 
-        // ==================== PAINEL DO ALUNO - SEM EXPANSÃO/CONTRAÇÃO ====================
+        // ==================== PAINEL DO ALUNO ====================
         async function mostrarPainelAluno() {
             const cacheKey = `painel_aluno_${STATE.usuarioLogado.Email}`;
             const cached = CacheManager.get(cacheKey);
@@ -1354,6 +1355,13 @@
                             <div class="text-center py-8">
                                 <div class="spinner"></div>
                                 <p class="mt-4 text-gray-600">Carregando tarefas...</p>
+                            </div>
+                        </div>
+                        
+                        <div id="media-aluno-container" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg hidden">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-gray-800">Média Geral:</span>
+                                <span class="text-lg font-bold text-red-700" id="media-geral-aluno">0.0</span>
                             </div>
                         </div>
                         
@@ -1459,8 +1467,8 @@
                 console.log('Tarefas carregadas:', response.data.length);
                 console.log('Entregas encontradas:', entregas.length);
                 
-                // Renderizar tarefas de forma síncrona - SEM EXPANSÃO/CONTRAÇÃO
-                renderTarefasAlunoSemExpansao(response.data, entregas, alunoData, container);
+                // Renderizar tarefas de forma síncrona
+                renderTarefasAlunoComMedia(response.data, entregas, alunoData, container);
                 
             } catch (error) {
                 console.error('Erro detalhado ao carregar tarefas do aluno:', error);
@@ -1472,19 +1480,21 @@
             }
         }
 
-        // Função renderTarefasAluno SEM expansão/contração
-        function renderTarefasAlunoSemExpansao(tarefasLocal, entregas, alunoData, container) {
-            console.log('Renderizando tarefas SEM expansão:', tarefasLocal.length);
+        function renderTarefasAlunoComMedia(tarefasLocal, entregas, alunoData, container) {
+            console.log('Renderizando tarefas com média:', tarefasLocal.length);
             
             if (!tarefasLocal || tarefasLocal.length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-500 py-8">Nenhuma tarefa disponível para sua turma.</div>';
                 return;
             }
 
+            let somaTotalNotas = 0;
+            let contadorTarefasComNota = 0;
+
             const tarefasHTML = tarefasLocal.map((tarefa, index) => {
                 const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
                 
-                // Buscar nota total de forma síncrona
+                // Buscar nota total da tarefa
                 let notaTotal = 0;
                 if (alunoData) {
                     const chaveNotaTarefa = `Nota${index + 1}`;
@@ -1503,9 +1513,15 @@
                     });
                 }
                 
-                notaTotal = Math.min(notaTotal, 10).toFixed(1);
+                // Adicionar à soma para média
+                if (notaTotal > 0) {
+                    somaTotalNotas += notaTotal;
+                    contadorTarefasComNota++;
+                }
                 
-                // Calcular posição da nota final para tooltip - USANDO CÁLCULO REAL
+                notaTotal = Math.min(notaTotal, 10);
+                
+                // Calcular posição da nota final para tooltip
                 const colunaNotaFinal = Utils.calcularColunaNotaFinalReal(index);
                 const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
                 const celulaNotaFinal = Utils.calcularPosicaoCelula(linhaAluno, colunaNotaFinal);
@@ -1515,30 +1531,40 @@
                 <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container">
                     <div class="flex justify-between items-center mb-2">
                         <div class="flex items-center">
-                            <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(tarefa.Tema)}</h4>
+                            <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(String(tarefa.Tema))}</h4>
                         </div>
                         <div class="flex items-center space-x-4">
                             <span class="text-sm text-gray-600">${Utils.formatarData(tarefa.DataAula)}</span>
-                            <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${notaTotal}</span>
+                            <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${Utils.formatarNota(notaTotal)}</span>
                         </div>
                     </div>
                     
                     <div class="partes-tarefa-container">
-                        ${renderParteAlunoCorrigido(tarefa, 1, entregaTarefa, index, alunoData)}
-                        ${renderParteAlunoCorrigido(tarefa, 2, entregaTarefa, index, alunoData)}
-                        ${renderParteAlunoCorrigido(tarefa, 3, entregaTarefa, index, alunoData)}
-                        ${renderParteAlunoCorrigido(tarefa, 4, entregaTarefa, index, alunoData)}
+                        ${renderParteAlunoComNotaCorreta(tarefa, 1, entregaTarefa, index, alunoData)}
+                        ${renderParteAlunoComNotaCorreta(tarefa, 2, entregaTarefa, index, alunoData)}
+                        ${renderParteAlunoComNotaCorreta(tarefa, 3, entregaTarefa, index, alunoData)}
+                        ${renderParteAlunoComNotaCorreta(tarefa, 4, entregaTarefa, index, alunoData)}
                     </div>
                 </div>
                 `;
             }).join('');
 
             container.innerHTML = tarefasHTML;
-            console.log('Tarefas renderizadas com sucesso (sem expansão)');
+            
+            // Calcular e exibir média
+            const mediaContainer = document.getElementById('media-aluno-container');
+            const mediaElement = document.getElementById('media-geral-aluno');
+            
+            if (contadorTarefasComNota > 0) {
+                const mediaGeral = somaTotalNotas / contadorTarefasComNota;
+                mediaElement.textContent = mediaGeral.toFixed(1);
+                mediaContainer.classList.remove('hidden');
+            }
+            
+            console.log('Tarefas renderizadas com sucesso com média calculada');
         }
 
-        // Função renderParteAluno corrigida
-        function renderParteAlunoCorrigido(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
+        function renderParteAlunoComNotaCorreta(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
             
@@ -1613,13 +1639,32 @@
                 `;
             }
             
-            // CORREÇÃO: Usar o tooltip correto para a nota da parte
-            // Buscar tooltip do alunoData ou calcular
+            // Buscar tooltip da nota da parte
             let tooltipNota = '';
             
-            if (alunoData && alunoData[`tooltip_nota_${tarefaIndex}_${numeroParte}`]) {
-                tooltipNota = alunoData[`tooltip_nota_${tarefaIndex}_${numeroParte}`].celula;
-            } else {
+            if (alunoData) {
+                // Tentar encontrar a nota da parte nos dados do aluno
+                const parteGlobal = (tarefaIndex * 4) + numeroParte;
+                const chavesNota = [
+                    `Parte${parteGlobal}`,
+                    `NotaParte${parteGlobal}`,
+                    `P${numeroParte}_T${tarefaIndex + 1}`,
+                    `Parte${numeroParte}_T${tarefaIndex + 1}`
+                ];
+                
+                // Encontrar tooltip correspondente
+                for (const chave of chavesNota) {
+                    if (alunoData[chave] !== undefined) {
+                        const colunaNotaParte = Utils.calcularColunaNotaParteReal(tarefaIndex, numeroParte);
+                        const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
+                        const celulaNotaParte = Utils.calcularPosicaoCelula(linhaAluno, colunaNotaParte);
+                        tooltipNota = `${STATE.usuarioLogado.Turma} ${celulaNotaParte}`;
+                        break;
+                    }
+                }
+            }
+            
+            if (!tooltipNota) {
                 // Calcular tooltip se não estiver disponível
                 const colunaNotaParte = Utils.calcularColunaNotaParteReal(tarefaIndex, numeroParte);
                 const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
@@ -1627,7 +1672,7 @@
                 tooltipNota = `${STATE.usuarioLogado.Turma} ${celulaNotaParte}`;
             }
             
-            // Cálculo da coluna do link usando estrutura correta
+            // Cálculo da coluna do link
             const colunaLink = Utils.calcularColunaLinkReal(tarefaIndex, numeroParte);
             const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
             const celulaLink = Utils.calcularPosicaoCelula(linhaAluno, colunaLink);
@@ -1644,7 +1689,7 @@
                 ` : '';
                 
                 const dataFormatada = Utils.formatarDadoBruto(dataHoraSalva);
-                const notaFormatada = Utils.formatarDadoBruto(notaParte);
+                const notaFormatada = Utils.formatarNota(notaParte);
                 const linkFormatado = Utils.formatarDadoBruto(linkSalvo);
                 
                 const linkDisplay = Utils.validarLink(linkSalvo) ? 
@@ -1695,7 +1740,6 @@
             </div>`;
         }
 
-        // Função auxiliar para extrair entregas corrigida
         function extrairEntregasDeAlunoData(alunoData, tarefas) {
             const entregas = [];
             
@@ -1824,7 +1868,7 @@
                     
                     const nota = response.data?.nota || 0;
                     const dataHora = response.data?.dataHora || new Date().toISOString();
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nNota: ${nota}\nHorário: ${Utils.formatarDataHora(dataHora)}`);
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nNota: ${Utils.formatarNota(nota)}\nHorário: ${Utils.formatarDataHora(dataHora)}`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -1890,7 +1934,7 @@
                     const contadores = TimeManager.calcularContadoresOtimizado(tarefa.DataAula);
                     
                     [1, 2, 3, 4].forEach(parte => {
-                        const contadorElement = container.querySelector(`.parte-${parte} .contador`);
+                        const contadorElement = container.querySelector(`#parte-${tarefa.ID}-${parte} .contador`);
                         if (contadorElement) {
                             const contador = contadores[`parte${parte}`];
                             if (contadorElement.textContent !== contador.texto) {
@@ -1958,9 +2002,6 @@
                 let relatorioTurmaHTML = `
                     <div class="relatorio-header">
                         <h4 class="text-lg font-semibold text-red-700">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
-                        <button onclick="validarNotasTurma('${turma}')" class="btn-secundario text-sm mt-2" style="background-color: #dc2626;">
-                            Validar e Corrigir Notas
-                        </button>
                     </div>
                     <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
                         Total de alunos: ${relatorio.alunos?.length || 0} | Total de tarefas: ${relatorio.tarefas?.length || 0} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
@@ -1989,22 +2030,14 @@
                                         ${relatorio.alunos.map(aluno => {
                                             let media = 0;
                                             if (aluno.Media) {
-                                                media = Utils.formatarDadoBruto(aluno.Media);
-                                                if (isNaN(parseFloat(media))) {
-                                                    media = 0;
-                                                } else {
-                                                    media = parseFloat(media);
-                                                }
+                                                media = parseFloat(aluno.Media) || 0;
                                             }
-                                            
-                                            // CORREÇÃO: Usar tooltip correto da média
-                                            const tooltipMedia = aluno.tooltip_media?.celula || `${turma} ${Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, 6)}`;
                                             
                                             return `
                                                 <tr>
                                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                                    <td class="px-4 py-3 text-center border-b" title="${tooltipMedia}">
+                                                    <td class="px-4 py-3 text-center border-b">
                                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                                             ${media.toFixed(1)}
                                                         </span>
@@ -2030,7 +2063,7 @@
                         relatorio.tarefas.forEach((tarefa, index) => {
                             relatorioTurmaHTML += `
                                 <th class="px-2 py-3 text-center font-semibold border-b relatorio-tarefa-header" colspan="4">
-                                    ${Utils.escapeHTML(tarefa.Tema)}
+                                    ${Utils.escapeHTML(String(tarefa.Tema))}
                                 </th>
                             `;
                         });
@@ -2055,22 +2088,14 @@
                         relatorio.alunos.forEach((aluno) => {
                             let media = 0;
                             if (aluno.Media) {
-                                media = Utils.formatarDadoBruto(aluno.Media);
-                                if (isNaN(parseFloat(media))) {
-                                    media = 0;
-                                } else {
-                                    media = parseFloat(media);
-                                }
+                                media = parseFloat(aluno.Media) || 0;
                             }
-                            
-                            // CORREÇÃO: Usar tooltip correto da média
-                            const tooltipMedia = aluno.tooltip_media?.celula || `${turma} ${Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, 6)}`;
                             
                             relatorioTurmaHTML += `
                                 <tr>
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                                    <td class="px-4 py-3 text-center border-b" title="${tooltipMedia}">
+                                    <td class="px-4 py-3 text-center border-b">
                                         <span class="${media >= 7.5 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
                                             ${media.toFixed(1)}
                                         </span>
@@ -2078,15 +2103,7 @@
                             `;
                             
                             relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
-                                // CORREÇÃO: Usar tooltip correto da nota final
-                                const tooltipNotaFinal = aluno[`tooltip_nota_final_${tarefaIndex}`]?.celula || 
-                                                       `${turma} ${Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, Utils.calcularColunaNotaFinalReal(tarefaIndex))}`;
-                                
                                 for (let parte = 1; parte <= 4; parte++) {
-                                    // CORREÇÃO: Usar tooltip correto da nota da parte
-                                    const tooltipNota = aluno[`tooltip_nota_${tarefaIndex}_${parte}`]?.celula || 
-                                                      `${turma} ${Utils.calcularPosicaoCelula(parseInt(aluno.Numero) + 1, Utils.calcularColunaNotaParteReal(tarefaIndex, parte))}`;
-                                    
                                     const parteGlobal = (tarefaIndex * 4) + parte;
                                     const chavesNota = [
                                         `Parte${parteGlobal}`,
@@ -2103,11 +2120,10 @@
                                             const valor = aluno[chave];
                                             const valorNumerico = parseFloat(valor);
                                             if (!isNaN(valorNumerico)) {
-                                                // VALIDAÇÃO: Garantir que a nota seja 0, 2 ou 2.5
                                                 if ([0, 2, 2.5].includes(valorNumerico)) {
                                                     notaParte = valorNumerico;
                                                 } else {
-                                                    notaParte = 0; // Se for valor inválido (como 0.6), considera 0
+                                                    notaParte = 0;
                                                 }
                                                 break;
                                             }
@@ -2119,19 +2135,7 @@
                                         notaParte = Utils.validarNota(notaParte);
                                     }
                                     
-                                    let classeNota = 'text-gray-600';
-                                    
-                                    if (notaParte > 0) {
-                                        if (notaParte >= 2.5) {
-                                            classeNota = 'text-green-600 font-semibold';
-                                        } else if (notaParte >= 2.0) {
-                                            classeNota = 'text-blue-600';
-                                        } else {
-                                            classeNota = 'text-red-600';
-                                        }
-                                    }
-                                    
-                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b" title="${tooltipNota}"><span class="${classeNota}">${notaParte > 0 ? notaParte.toFixed(1) : '-'}</span></td>`;
+                                    relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="text-gray-600">${notaParte > 0 ? Utils.formatarNota(notaParte) : '-'}</span></td>`;
                                 }
                             });
                             
@@ -2213,27 +2217,6 @@
             }
         }
 
-        // NOVA FUNÇÃO: Validar notas da turma
-        async function validarNotasTurma(turma) {
-            if (!confirm(`Esta ação irá validar e corrigir todas as notas da turma ${turma}.\n\nValores inválidos (como 0.6) serão corrigidos para 0.\n\nDeseja continuar?`)) {
-                return;
-            }
-            
-            try {
-                const response = await apiPost('validarNotasTurma', { turma: turma });
-                
-                if (response.success) {
-                    UIManager.showModal('Sucesso', response.message);
-                    // Recarregar o relatório
-                    await carregarRelatorioTurma(turma);
-                } else {
-                    throw new Error(response.error || 'Erro desconhecido');
-                }
-            } catch (error) {
-                UIManager.showModal('Erro', `Falha ao validar notas: ${error.message}`);
-            }
-        }
-
         // ==================== INICIALIZAÇÃO ====================
         document.addEventListener('DOMContentLoaded', init);
 
@@ -2253,7 +2236,6 @@
         window.exportarParaExcel = exportarParaExcel;
         window.exportarParaPDF = exportarParaPDF;
         window.carregarRelatorioTurma = carregarRelatorioTurma;
-        window.validarNotasTurma = validarNotasTurma;
         window.salvarTarefaUnificada = salvarTarefaUnificada;
         window.excluirTarefaDireto = excluirTarefaDireto;
         window.editarTarefa = editarTarefa;
