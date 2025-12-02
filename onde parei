@@ -9,3 +9,5 @@ Relatório da Turma 3A
 Validar e Corrigir Notas
 3.Quando a nota no relatório for 2, coloque apenas 2 e não 2.0
 4.tanto a nota 2.0 quanto 2,5 estão com cores azul e verde, remova a coloração.
+5. a mesma função que alimenta a nota parcial 1 do aluno alimenta a nota P1 por exemplo do relatório do professor? Se não, faça isso assim o professor verá exatamente o que o aluno ve. Faça o mesmo com a como a média e mostre ela para o aluno no final, abaixo das tarefas.
+
