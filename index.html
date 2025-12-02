@@ -1488,9 +1488,6 @@
                 return;
             }
 
-            let somaTotalNotas = 0;
-            let contadorTarefasComNota = 0;
-
             const tarefasHTML = tarefasLocal.map((tarefa, index) => {
                 const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
                 
@@ -1511,12 +1508,6 @@
                     entregaTarefa.forEach(entrega => {
                         notaTotal += parseFloat(entrega.Nota) || 0;
                     });
-                }
-                
-                // Adicionar à soma para média
-                if (notaTotal > 0) {
-                    somaTotalNotas += notaTotal;
-                    contadorTarefasComNota++;
                 }
                 
                 notaTotal = Math.min(notaTotal, 10);
