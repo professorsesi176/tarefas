@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 35.4 - Correção de Valores de Nota e Tooltips
+            Desenvolvido por Geovane Modena | Versão 35.5 - Correção de Cabeçalhos de Tarefa
         </footer>
     </div>
 
@@ -56,6 +56,13 @@
             MAX_TEMA_LEN: 200,
             MAX_PARTE_LEN: 4000,
             TURMAS: ["1A", "1B", "2A", "2B", "3A", "3B"]
+        };
+
+        // ==================== ESTRUTURA DA TAREFA (ALINHADA COM BACKEND) ====================
+        const ESTRUTURA_TAREFA = {
+            COLUNAS_POR_TAREFA: 12, // 12 colunas por tarefa (G a S)
+            COLUNAS_POR_PARTE: 3,   // 3 colunas por parte (Link, DataHora, Nota)
+            NUMERO_PARTES: 4        // 4 partes por tarefa
         };
 
         // ==================== ESTADO GLOBAL ====================
@@ -258,7 +265,7 @@
 
             calcularPosicaoAluno: (numeroAluno, tarefaIndex, parte) => {
                 const colunaBase = 8; // Coluna H (Link1)
-                const colunaLink = colunaBase + ((parte - 1) * 3) + (tarefaIndex * 12);
+                const colunaLink = colunaBase + ((parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE) + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
@@ -272,7 +279,7 @@
             // CORREÇÃO: Nota final da tarefa - deve vir da coluna G (7) para a primeira tarefa
             calcularPosicaoNotaFinal: (numeroAluno, tarefaIndex) => {
                 const colunaBase = 7; // Coluna G (Nota1)
-                const colunaTarefa = colunaBase + (tarefaIndex * 12); // Cada tarefa ocupa 12 colunas
+                const colunaTarefa = colunaBase + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA); // Cada tarefa ocupa 12 colunas
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
@@ -286,7 +293,7 @@
             // CORREÇÃO: Nota da parte - deve vir da coluna J (10) para parte 1, M (13) para parte 2, etc.
             calcularPosicaoNotaParte: (numeroAluno, tarefaIndex, parte) => {
                 const colunaBase = 10; // Coluna J (Parte1)
-                const colunaNota = colunaBase + ((parte - 1) * 3) + (tarefaIndex * 12);
+                const colunaNota = colunaBase + ((parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE) + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA);
                 const linhaAluno = parseInt(numeroAluno) + 1;
                 
                 return {
@@ -370,8 +377,8 @@
             calcularColunaNotaParteReal: (tarefaIndex, parte) => {
                 // Colunas: G=7 (Nota1), H=8 (Link1), I=9 (DataHora1), J=10 (Parte1)
                 const colunaBase = 7; // G
-                const deslocamentoTarefa = tarefaIndex * 12; // 12 colunas por tarefa
-                const deslocamentoParte = (parte - 1) * 3; // 3 colunas por parte
+                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA; // 12 colunas por tarefa
+                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE; // 3 colunas por parte
                 
                 return colunaBase + deslocamentoTarefa + 3 + deslocamentoParte; // +3 para ir de G para J
             },
@@ -379,7 +386,7 @@
             calcularColunaNotaFinalReal: (tarefaIndex) => {
                 // Coluna G (7) para Nota1, T (20) para Nota2, etc.
                 const colunaBase = 7; // G
-                const deslocamentoTarefa = tarefaIndex * 12; // 12 colunas por tarefa
+                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA; // 12 colunas por tarefa
                 return colunaBase + deslocamentoTarefa;
             },
 
@@ -393,6 +400,16 @@
                 }
                 
                 return 0;
+            },
+
+            // Nova função: calcular posição da célula do link para tooltip
+            calcularColunaLinkReal: (tarefaIndex, parte) => {
+                // Colunas: H=8 (Link1), K=11 (Link2), N=14 (Link3), Q=17 (Link4)
+                const colunaBase = 8; // H
+                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA; // 12 colunas por tarefa
+                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE; // 3 colunas por parte
+                
+                return colunaBase + deslocamentoTarefa + deslocamentoParte;
             }
         };
 
@@ -814,7 +831,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v35.4 - Correção de Valores de Nota e Tooltips...');
+                console.log('Inicializando sistema v35.5 - Correção de Cabeçalhos de Tarefa...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1610,8 +1627,8 @@
                 tooltipNota = `${STATE.usuarioLogado.Turma} ${celulaNotaParte}`;
             }
             
-            // Cálculo da coluna do link
-            const colunaLink = 8 + ((numeroParte - 1) * 3) + (tarefaIndex * 12);
+            // Cálculo da coluna do link usando estrutura correta
+            const colunaLink = Utils.calcularColunaLinkReal(tarefaIndex, numeroParte);
             const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
             const celulaLink = Utils.calcularPosicaoCelula(linhaAluno, colunaLink);
             const tooltipAluno = `${STATE.usuarioLogado.Turma} ${celulaLink}`;
