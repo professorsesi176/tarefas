@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 35.7 - Correção de Médias
+            Desenvolvido por Geovane Modena | Versão 35.9 - Médias Automáticas
         </footer>
     </div>
 
@@ -832,7 +832,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v35.7 - Correção de Médias...');
+                console.log('Inicializando sistema v35.9 - Médias Automáticas...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1360,7 +1360,7 @@
                         
                         <div id="media-aluno-container" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg hidden">
                             <div class="flex justify-between items-center">
-                                <span class="font-semibold text-gray-800">Média Geral:</span>
+                                <span class="font-semibold text-gray-800">Média Geral (calculada na planilha):</span>
                                 <span class="text-lg font-bold text-red-700" id="media-geral-aluno">0.0</span>
                             </div>
                         </div>
@@ -1481,7 +1481,7 @@
         }
 
         function renderTarefasAlunoComMedia(tarefasLocal, entregas, alunoData, container) {
-            console.log('Renderizando tarefas com média:', tarefasLocal.length);
+            console.log('Renderizando tarefas com média já calculada na planilha:', tarefasLocal.length);
             
             if (!tarefasLocal || tarefasLocal.length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-500 py-8">Nenhuma tarefa disponível para sua turma.</div>';
@@ -1542,44 +1542,48 @@
 
             container.innerHTML = tarefasHTML;
             
-            // CALCULAR MÉDIA CORRETAMENTE - BASEADO NO TOTAL DE TAREFAS
+            // EXIBIR MÉDIA QUE JÁ VEM CALCULADA DA PLANILHA
             const mediaContainer = document.getElementById('media-aluno-container');
             const mediaElement = document.getElementById('media-geral-aluno');
             
-            let somaNotasFinais = 0;
-            const totalTarefas = tarefasLocal.length;
-            
-            // Usar as notas reais das tarefas (Nota1, Nota2, etc.)
-            for (let i = 1; i <= totalTarefas; i++) {
-                const chaveNota = `Nota${i}`;
-                let notaFinal = 0;
+            let mediaGeral = 0;
+            if (alunoData && alunoData.Media !== undefined) {
+                mediaGeral = parseFloat(alunoData.Media) || 0;
+            } else {
+                // Fallback: calcular a média manualmente (não deve acontecer)
+                const totalTarefas = tarefasLocal.length;
+                let somaNotasFinais = 0;
                 
-                if (alunoData && alunoData[chaveNota] !== undefined) {
-                    notaFinal = parseFloat(alunoData[chaveNota]) || 0;
-                } else {
-                    // Se não tiver a nota específica, tentar calcular das entregas
-                    const tarefaIndex = i - 1;
-                    if (tarefaIndex < tarefasLocal.length) {
-                        const tarefaId = tarefasLocal[tarefaIndex].ID;
-                        const entregasTarefa = entregas.filter(e => e.ID_Tarefa === tarefaId);
-                        let somaPartes = 0;
-                        entregasTarefa.forEach(entrega => {
-                            somaPartes += parseFloat(entrega.Nota) || 0;
-                        });
-                        notaFinal = Math.min(somaPartes, 10);
+                for (let i = 1; i <= totalTarefas; i++) {
+                    const chaveNota = `Nota${i}`;
+                    let notaFinal = 0;
+                    
+                    if (alunoData && alunoData[chaveNota] !== undefined) {
+                        notaFinal = parseFloat(alunoData[chaveNota]) || 0;
+                    } else {
+                        // Se não tiver a nota específica, tentar calcular das entregas
+                        const tarefaIndex = i - 1;
+                        if (tarefaIndex < tarefasLocal.length) {
+                            const tarefaId = tarefasLocal[tarefaIndex].ID;
+                            const entregasTarefa = entregas.filter(e => e.ID_Tarefa === tarefaId);
+                            let somaPartes = 0;
+                            entregasTarefa.forEach(entrega => {
+                                somaPartes += parseFloat(entrega.Nota) || 0;
+                            });
+                            notaFinal = Math.min(somaPartes, 10);
+                        }
                     }
+                    
+                    somaNotasFinais += notaFinal;
                 }
                 
-                somaNotasFinais += notaFinal;
+                mediaGeral = totalTarefas > 0 ? (somaNotasFinais / totalTarefas) : 0;
             }
-            
-            // A MÉDIA DEVE SER: soma das notas / total de tarefas (incluindo não entregues)
-            const mediaGeral = totalTarefas > 0 ? (somaNotasFinais / totalTarefas) : 0;
             
             mediaElement.textContent = mediaGeral.toFixed(1);
             mediaContainer.classList.remove('hidden');
             
-            console.log(`Média calculada: ${somaNotasFinais} / ${totalTarefas} = ${mediaGeral.toFixed(1)}`);
+            console.log(`Média exibida (já calculada na planilha): ${mediaGeral.toFixed(1)}`);
         }
         
         function renderParteAlunoComNotaCorreta(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
@@ -1886,7 +1890,7 @@
                     
                     const nota = response.data?.nota || 0;
                     const dataHora = response.data?.dataHora || new Date().toISOString();
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nNota: ${Utils.formatarNota(nota)}\nHorário: ${Utils.formatarDataHora(dataHora)}`);
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nNota: ${Utils.formatarNota(nota)}\nHorário: ${Utils.formatarDataHora(dataHora)}\n\nMédia atualizada automaticamente na planilha.`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -1925,7 +1929,7 @@
                 if (response.success) {
                     CacheManager.clear();
                     await carregarTarefasAluno();
-                    UIManager.showModal('Sucesso', `Entrega da parte ${parte} excluída com sucesso!`);
+                    UIManager.showModal('Sucesso', `Entrega da parte ${parte} excluída com sucesso!\n\nMédia atualizada automaticamente na planilha.`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao excluir link');
