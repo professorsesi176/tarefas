@@ -1552,16 +1552,15 @@
                 mediaGeral = parseFloat(alunoData.Media) || 0;
             } else {
                 // Fallback: calcular igual ao backend se não tiver
+                // Fallback: calcular igual ao backend se não tiver
                 let somaNotasFinais = 0;
-                let tarefasComNota = 0;
-                
+
                 for (let i = 1; i <= tarefasLocal.length; i++) {
                     const notaFinal = parseFloat(alunoData[`Nota${i}`]) || 0;
                     somaNotasFinais += notaFinal;
-                    tarefasComNota++;
-                }
-                
-                mediaGeral = tarefasComNota > 0 ? (somaNotasFinais / tarefasComNota) : 0;
+            }
+
+            mediaGeral = tarefasLocal.length > 0 ? (somaNotasFinais / tarefasLocal.length) : 0;
             }
             
             mediaElement.textContent = mediaGeral.toFixed(1);
