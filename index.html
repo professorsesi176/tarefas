@@ -1555,11 +1555,27 @@
             const mediaContainer = document.getElementById('media-aluno-container');
             const mediaElement = document.getElementById('media-geral-aluno');
             
-            if (contadorTarefasComNota > 0) {
-                const mediaGeral = somaTotalNotas / contadorTarefasComNota;
-                mediaElement.textContent = mediaGeral.toFixed(1);
-                mediaContainer.classList.remove('hidden');
+            // USAR A MÉDIA DO BACKEND (já vem calculada corretamente)
+            let mediaGeral = 0;
+            if (alunoData && alunoData.Media !== undefined && alunoData.Media !== null) {
+                mediaGeral = parseFloat(alunoData.Media) || 0;
+            } else {
+                // Fallback: calcular igual ao backend se não tiver
+                let somaNotasFinais = 0;
+                let tarefasComNota = 0;
+                
+                for (let i = 1; i <= tarefasLocal.length; i++) {
+                    const notaFinal = parseFloat(alunoData[`Nota${i}`]) || 0;
+                    somaNotasFinais += notaFinal;
+                    tarefasComNota++;
+                }
+                
+                mediaGeral = tarefasComNota > 0 ? (somaNotasFinais / tarefasComNota) : 0;
             }
+            
+            mediaElement.textContent = mediaGeral.toFixed(1);
+            mediaContainer.classList.remove('hidden');
+        }
             
             console.log('Tarefas renderizadas com sucesso com média calculada');
         }
