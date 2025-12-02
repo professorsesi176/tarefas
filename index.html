@@ -1480,7 +1480,7 @@
             }
         }
 
-        function renderTarefasAlunoComMedia(tarefasLocal, entregas, alunoData, container) {
+                function renderTarefasAlunoComMedia(tarefasLocal, entregas, alunoData, container) {
             console.log('Renderizando tarefas com média:', tarefasLocal.length);
             
             if (!tarefasLocal || tarefasLocal.length === 0) {
@@ -1566,11 +1566,10 @@
             
             mediaElement.textContent = mediaGeral.toFixed(1);
             mediaContainer.classList.remove('hidden');
-        }
             
             console.log('Tarefas renderizadas com sucesso com média calculada');
         }
-
+        
         function renderParteAlunoComNotaCorreta(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
