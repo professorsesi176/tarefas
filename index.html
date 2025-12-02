@@ -35,7 +35,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 35.6 - Correções Solicitadas
+            Desenvolvido por Geovane Modena | Versão 35.7 - Correção de Médias
         </footer>
     </div>
 
@@ -832,7 +832,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v35.6 - Correções Solicitadas...');
+                console.log('Inicializando sistema v35.7 - Correção de Médias...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1480,7 +1480,7 @@
             }
         }
 
-                function renderTarefasAlunoComMedia(tarefasLocal, entregas, alunoData, container) {
+        function renderTarefasAlunoComMedia(tarefasLocal, entregas, alunoData, container) {
             console.log('Renderizando tarefas com média:', tarefasLocal.length);
             
             if (!tarefasLocal || tarefasLocal.length === 0) {
@@ -1542,31 +1542,44 @@
 
             container.innerHTML = tarefasHTML;
             
-            // Calcular e exibir média
+            // CALCULAR MÉDIA CORRETAMENTE - BASEADO NO TOTAL DE TAREFAS
             const mediaContainer = document.getElementById('media-aluno-container');
             const mediaElement = document.getElementById('media-geral-aluno');
             
-            // USAR A MÉDIA DO BACKEND (já vem calculada corretamente)
-            let mediaGeral = 0;
-            if (alunoData && alunoData.Media !== undefined && alunoData.Media !== null) {
-                mediaGeral = parseFloat(alunoData.Media) || 0;
-            } else {
-                // Fallback: calcular igual ao backend se não tiver
-                // Fallback: calcular igual ao backend se não tiver
-                let somaNotasFinais = 0;
-
-                for (let i = 1; i <= tarefasLocal.length; i++) {
-                    const notaFinal = parseFloat(alunoData[`Nota${i}`]) || 0;
-                    somaNotasFinais += notaFinal;
+            let somaNotasFinais = 0;
+            const totalTarefas = tarefasLocal.length;
+            
+            // Usar as notas reais das tarefas (Nota1, Nota2, etc.)
+            for (let i = 1; i <= totalTarefas; i++) {
+                const chaveNota = `Nota${i}`;
+                let notaFinal = 0;
+                
+                if (alunoData && alunoData[chaveNota] !== undefined) {
+                    notaFinal = parseFloat(alunoData[chaveNota]) || 0;
+                } else {
+                    // Se não tiver a nota específica, tentar calcular das entregas
+                    const tarefaIndex = i - 1;
+                    if (tarefaIndex < tarefasLocal.length) {
+                        const tarefaId = tarefasLocal[tarefaIndex].ID;
+                        const entregasTarefa = entregas.filter(e => e.ID_Tarefa === tarefaId);
+                        let somaPartes = 0;
+                        entregasTarefa.forEach(entrega => {
+                            somaPartes += parseFloat(entrega.Nota) || 0;
+                        });
+                        notaFinal = Math.min(somaPartes, 10);
+                    }
+                }
+                
+                somaNotasFinais += notaFinal;
             }
-
-            mediaGeral = tarefasLocal.length > 0 ? (somaNotasFinais / tarefasLocal.length) : 0;
-            }
+            
+            // A MÉDIA DEVE SER: soma das notas / total de tarefas (incluindo não entregues)
+            const mediaGeral = totalTarefas > 0 ? (somaNotasFinais / totalTarefas) : 0;
             
             mediaElement.textContent = mediaGeral.toFixed(1);
             mediaContainer.classList.remove('hidden');
             
-            console.log('Tarefas renderizadas com sucesso com média calculada');
+            console.log(`Média calculada: ${somaNotasFinais} / ${totalTarefas} = ${mediaGeral.toFixed(1)}`);
         }
         
         function renderParteAlunoComNotaCorreta(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
