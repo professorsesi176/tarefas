@@ -10,253 +10,25 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://script.google.com">
     
+    <!-- CSS Externo -->
+    <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
+    
+    <!-- Bibliotecas JavaScript -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
-    
-    <style>
-        /* Estilos adicionais para o sistema de períodos */
-        .periodo-btn {
-            padding: 8px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            background: white;
-            color: #4b5563;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .periodo-btn.active {
-            background: #dc2626;
-            color: white;
-            border-color: #dc2626;
-        }
-
-        .periodo-btn:hover {
-            border-color: #dc2626;
-            color: #dc2626;
-        }
-
-        .periodo-todos {
-            background: #f3f4f6;
-            font-weight: 600;
-        }
-
-        .periodo-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .periodo-card:hover {
-            border-color: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .periodo-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .periodo-badge {
-            background: #dc2626;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .periodo-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .periodo-stat {
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #111827;
-        }
-
-        .dashboard-periodos {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        .periodo-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-        }
-
-        .grafico-container {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .boletim-aluno {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .periodo-desempenho {
-            border-bottom: 2px solid #f3f4f6;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-
-        .periodo-desempenho:last-child {
-            border-bottom: none;
-        }
-
-        .card-desempenho {
-            background: #f9fafb;
-            border-radius: 6px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .card-label {
-            display: block;
-            font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 8px;
-        }
-
-        .card-value {
-            display: block;
-            font-size: 24px;
-            font-weight: 700;
-            color: #111827;
-        }
-
-        .grafico-evolucao {
-            margin-top: 32px;
-            padding-top: 20px;
-            border-top: 2px solid #f3f4f6;
-        }
-
-        .periodo-selector {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .periodo-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .periodo-filter-container {
-            margin: 16px 0;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 6px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .periodo-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .periodo-tag {
-            background: #3b82f6;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-periodos {
-                grid-template-columns: 1fr;
-            }
-            
-            .periodo-cards {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Estilos para as tarefas por período */
-        .tarefa-periodo-badge {
-            background: #e5e7eb;
-            color: #4b5563;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-
-        .tarefa-periodo-trimestral {
-            background: #93c5fd;
-            color: #1e40af;
-        }
-
-        .tarefa-periodo-semestral {
-            background: #a7f3d0;
-            color: #065f46;
-        }
-
-        .filtro-periodo-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
-        .select-periodo {
-            padding: 8px 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            background: white;
-            color: #4b5563;
-            font-weight: 500;
-            min-width: 180px;
-        }
-    </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
-    <div id="app-container" class="w-full max-w-6xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
+    <div id="app-container" class="w-full max-w-7xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
         <header class="mb-8 border-b pb-4">
             <div class="header-content">
                 <h1 class="text-3xl font-extrabold text-red-700 text-center">Sistema de Gestão de Tarefas</h1>
                 <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
                 <div class="absolute top-0 right-0 flex space-x-2">
                     <button id="tarefasBtn" class="btn-tarefas hidden">Tarefas</button>
+                    <button id="graficosBtn" class="btn-primario hidden" style="background-color: #8b5cf6;">Gráficos</button>
                     <button id="diagnosticoBtn" class="btn-primario hidden">Diagnóstico</button>
                     <button id="relatorioBtn" class="btn-primario hidden" style="background-color: #10b981;">Relatório</button>
                     <button onclick="logout()" id="logoutBtn" class="btn-secundario hidden">Sair</button>
@@ -267,7 +39,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 36.0.0 - Sistema de Períodos
+            Desenvolvido por Geovane Modena | Versão 36.0.0 - Sistema de 4 Períodos com Gráficos
         </footer>
     </div>
 
@@ -284,27 +56,24 @@
         // ==================== CONFIGURAÇÃO E CONSTANTES ====================
         const CONFIG = {
             API_URL: "https://script.google.com/macros/s/AKfycbx3n_ZZobnfty_21WjCTJ5t4Yb0UblaNZ1TCGTi-NKbpPfQXlZAEm8Bb7oSLSyR5T_OUA/exec",
-            CACHE_TTL: 5 * 60 * 1000,
+            CACHE_TTL: 5 * 60 * 1000, // 5 minutos
             MAX_TEMA_LEN: 200,
             MAX_PARTE_LEN: 4000,
-            TURMAS: ["1A", "1B", "2A", "2B", "3A", "3B"]
-        };
-
-        // Configuração de períodos
-        const PERIODOS_CONFIG = {
-            '1A': { tipo: 'trimestral', periodos: 3, labels: ['1º Trimestre', '2º Trimestre', '3º Trimestre'] },
-            '1B': { tipo: 'trimestral', periodos: 3, labels: ['1º Trimestre', '2º Trimestre', '3º Trimestre'] },
-            '2A': { tipo: 'semestral', periodos: 2, labels: ['1º Semestre', '2º Semestre'] },
-            '2B': { tipo: 'semestral', periodos: 2, labels: ['1º Semestre', '2º Semestre'] },
-            '3A': { tipo: 'semestral', periodos: 2, labels: ['1º Semestre', '2º Semestre'] },
-            '3B': { tipo: 'semestral', periodos: 2, labels: ['1º Semestre', '2º Semestre'] }
+            TURMAS: ["1A", "1B", "2A", "2B", "3A", "3B"],
+            PERIODOS: {
+                1: "1º Bimestre",
+                2: "2º Bimestre",
+                3: "3º Bimestre",
+                4: "4º Bimestre"
+            }
         };
 
         // ==================== ESTRUTURA DA TAREFA ====================
         const ESTRUTURA_TAREFA = {
             COLUNAS_POR_TAREFA: 12,
             COLUNAS_POR_PARTE: 3,
-            NUMERO_PARTES: 4
+            NUMERO_PARTES: 4,
+            COLUNAS_MEDIAS: 4
         };
 
         // ==================== ESTADO GLOBAL ====================
@@ -315,13 +84,16 @@
             contadoresAtivos: [],
             rmVisible: false,
             relatorioAlunoVisivel: false,
-            periodosConfig: PERIODOS_CONFIG,
-            periodoSelecionado: 'todos',
             metricasPerformance: {
                 chamadasAPI: 0,
                 tempoTotal: 0,
                 memoriaUsada: 0,
                 memoriaTotal: 0
+            },
+            graficos: {
+                periodoComparativo: null,
+                evolucaoIndividual: null,
+                desempenhoTurma: null
             }
         };
 
@@ -453,7 +225,8 @@
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#039;');
+                    .replace(/'/g, '&#039;')
+                    .replace(/\n/g, '<br>');
             },
 
             formatarBytes: (bytes) => {
@@ -507,45 +280,6 @@
                 return `${colunaLetra}${linha}`;
             },
 
-            calcularPosicaoAluno: (numeroAluno, tarefaIndex, parte) => {
-                const colunaBase = 8;
-                const colunaLink = colunaBase + ((parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE) + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA);
-                const linhaAluno = parseInt(numeroAluno) + 1;
-                
-                return {
-                    aba: STATE.usuarioLogado?.Turma || 'Turma',
-                    linha: linhaAluno,
-                    coluna: colunaLink,
-                    celula: Utils.calcularPosicaoCelula(linhaAluno, colunaLink)
-                };
-            },
-
-            calcularPosicaoNotaFinal: (numeroAluno, tarefaIndex) => {
-                const colunaBase = 7;
-                const colunaTarefa = colunaBase + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA);
-                const linhaAluno = parseInt(numeroAluno) + 1;
-                
-                return {
-                    aba: STATE.usuarioLogado?.Turma || 'Turma',
-                    linha: linhaAluno,
-                    coluna: colunaTarefa,
-                    celula: Utils.calcularPosicaoCelula(linhaAluno, colunaTarefa)
-                };
-            },
-
-            calcularPosicaoNotaParte: (numeroAluno, tarefaIndex, parte) => {
-                const colunaBase = 10;
-                const colunaNota = colunaBase + ((parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE) + (tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA);
-                const linhaAluno = parseInt(numeroAluno) + 1;
-                
-                return {
-                    aba: STATE.usuarioLogado?.Turma || 'Turma',
-                    linha: linhaAluno,
-                    coluna: colunaNota,
-                    celula: Utils.calcularPosicaoCelula(linhaAluno, colunaNota)
-                };
-            },
-
             formatarDataHora: (dataISO) => {
                 if (!dataISO) return 'N/A';
                 try {
@@ -583,60 +317,6 @@
                 return num % 1 === 0 ? num.toString() : num.toFixed(1);
             },
 
-            obterInfoCelulaCompleta: (valor, linha, coluna, celula) => {
-                const info = {
-                    valor: valor,
-                    valorFormatado: Utils.formatarDadoBruto(valor),
-                    tipo: typeof valor,
-                    linha: linha,
-                    coluna: coluna,
-                    celula: celula,
-                    isDate: Utils.isDateString(valor),
-                    isNumber: !isNaN(parseFloat(valor)) && valor !== null && valor !== undefined && String(valor).trim() !== '',
-                    isEmpty: valor === null || valor === undefined || String(valor).trim() === ''
-                };
-                
-                return info;
-            },
-
-            buscarDadosAlunoPlanilha: async (email, turma) => {
-                try {
-                    const response = await apiGet('getRelatorioTurma', { turma: turma }, true);
-                    const relatorio = response.data || {};
-                    
-                    if (!relatorio.alunos || relatorio.alunos.length === 0) {
-                        return null;
-                    }
-                    
-                    const aluno = relatorio.alunos.find(a => 
-                        String(a.Email).toLowerCase().trim() === String(email).toLowerCase().trim()
-                    );
-                    
-                    return aluno;
-                } catch (error) {
-                    console.error('Erro ao buscar dados do aluno:', error);
-                    return null;
-                }
-            },
-
-            formatarTooltipReduzido: (aba, celula) => {
-                return `${aba} ${celula}`.replace('📍 Célula: ', '');
-            },
-
-            calcularColunaNotaParteReal: (tarefaIndex, parte) => {
-                const colunaBase = 7;
-                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA;
-                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE;
-                
-                return colunaBase + deslocamentoTarefa + 3 + deslocamentoParte;
-            },
-
-            calcularColunaNotaFinalReal: (tarefaIndex) => {
-                const colunaBase = 7;
-                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA;
-                return colunaBase + deslocamentoTarefa;
-            },
-
             validarNota: (valor) => {
                 const num = parseFloat(valor);
                 if (isNaN(num)) return 0;
@@ -648,39 +328,32 @@
                 return 0;
             },
 
-            calcularColunaLinkReal: (tarefaIndex, parte) => {
-                const colunaBase = 8;
-                const deslocamentoTarefa = tarefaIndex * ESTRUTURA_TAREFA.COLUNAS_POR_TAREFA;
-                const deslocamentoParte = (parte - 1) * ESTRUTURA_TAREFA.COLUNAS_POR_PARTE;
+            obterCorMedia: (media) => {
+                const num = parseFloat(media);
+                if (isNaN(num)) return 'text-gray-500';
                 
-                return colunaBase + deslocamentoTarefa + deslocamentoParte;
+                if (num >= 9) return 'text-green-700 font-bold';
+                if (num >= 7.5) return 'text-green-600 font-semibold';
+                if (num >= 6) return 'text-yellow-600 font-semibold';
+                if (num >= 4) return 'text-orange-600';
+                return 'text-red-600';
             },
 
-            getPeriodoLabel: (turma, periodo) => {
-                if (!turma || !periodo || periodo === 'todos' || periodo === 'all') {
-                    return 'Todos os Períodos';
-                }
+            obterCorFundoMedia: (media) => {
+                const num = parseFloat(media);
+                if (isNaN(num)) return 'bg-gray-100';
                 
-                const config = PERIODOS_CONFIG[turma];
-                if (config && config.labels && config.labels[periodo - 1]) {
-                    return config.labels[periodo - 1];
-                }
-                
-                return `Período ${periodo}`;
+                if (num >= 9) return 'bg-green-50';
+                if (num >= 7.5) return 'bg-green-100';
+                if (num >= 6) return 'bg-yellow-100';
+                if (num >= 4) return 'bg-orange-100';
+                return 'bg-red-100';
             },
 
-            getPeriodoTipo: (turma) => {
-                const config = PERIODOS_CONFIG[turma];
-                return config ? config.tipo : 'trimestral';
-            },
-
-            getPeriodoBadgeClass: (turma, periodo) => {
-                const tipo = Utils.getPeriodoTipo(turma);
-                if (tipo === 'trimestral') {
-                    return 'tarefa-periodo-badge tarefa-periodo-trimestral';
-                } else {
-                    return 'tarefa-periodo-badge tarefa-periodo-semestral';
-                }
+            calcularMediaGeral: (medias) => {
+                if (!medias || !Array.isArray(medias)) return 0;
+                const soma = medias.reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
+                return medias.length > 0 ? (soma / medias.length).toFixed(1) : 0;
             }
         };
 
@@ -840,6 +513,7 @@
                 relatorioBtn: document.getElementById('relatorioBtn'),
                 diagnosticoBtn: document.getElementById('diagnosticoBtn'),
                 tarefasBtn: document.getElementById('tarefasBtn'),
+                graficosBtn: document.getElementById('graficosBtn'),
                 modalOverlay: document.getElementById('modal-overlay'),
                 modalTitle: document.getElementById('modal-title'),
                 modalMessage: document.getElementById('modal-message')
@@ -900,11 +574,11 @@
                 STATE.usuarioLogado = null;
                 STATE.tarefaEditando = null;
                 STATE.relatorioAlunoVisivel = false;
-                STATE.periodoSelecionado = 'todos';
                 UIManager.elements.logoutBtn.classList.add('hidden');
                 UIManager.elements.relatorioBtn.classList.add('hidden');
                 UIManager.elements.diagnosticoBtn.classList.add('hidden');
                 UIManager.elements.tarefasBtn.classList.add('hidden');
+                UIManager.elements.graficosBtn.classList.add('hidden');
                 UIManager.elements.userInfo.innerHTML = '';
                 STATE.contadoresAtivos.forEach(interval => clearInterval(interval));
                 STATE.contadoresAtivos = [];
@@ -928,6 +602,8 @@
                     UIManager.elements.diagnosticoBtn.onclick = mostrarPainelDiagnostico;
                     UIManager.elements.tarefasBtn.classList.remove('hidden');
                     UIManager.elements.tarefasBtn.onclick = mostrarPainelProfessor;
+                    UIManager.elements.graficosBtn.classList.remove('hidden');
+                    UIManager.elements.graficosBtn.onclick = mostrarPainelGraficos;
                 } else {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
@@ -940,6 +616,8 @@
                     UIManager.elements.relatorioBtn.classList.add('hidden');
                     UIManager.elements.diagnosticoBtn.classList.add('hidden');
                     UIManager.elements.tarefasBtn.classList.add('hidden');
+                    UIManager.elements.graficosBtn.classList.remove('hidden');
+                    UIManager.elements.graficosBtn.onclick = mostrarGraficosAluno;
                 }
                 
                 UIManager.elements.logoutBtn.classList.remove('hidden');
@@ -1103,7 +781,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v36.0.0 - Sistema de Períodos...');
+                console.log('Inicializando sistema v36.0.0 - Sistema de 4 Períodos com Gráficos...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1218,19 +896,30 @@
                             <h3 class="text-2xl font-bold text-red-700" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Painel de Tarefas'}</h3>
                         </div>
                         
-                        <div class="form-group">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Turmas:</label>
-                            <div class="checkbox-group">
-                                ${CONFIG.TURMAS.map(t => `
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="turma-${t}" value="${t}" class="turma-checkbox">
-                                        <label for="turma-${t}">${t}</label>
-                                    </div>
-                                `).join('')}
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Turmas:</label>
+                                <div class="checkbox-group grid grid-cols-3">
+                                    ${CONFIG.TURMAS.map(t => `
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="turma-${t}" value="${t}" class="turma-checkbox">
+                                            <label for="turma-${t}">${t}</label>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="periodo" class="block text-sm font-medium text-gray-700 mb-2">Período</label>
+                                <select id="periodo" class="w-full p-3 border rounded-lg" required>
+                                    <option value="">Selecione o período</option>
+                                    <option value="1">1º Bimestre</option>
+                                    <option value="2">2º Bimestre</option>
+                                    <option value="3">3º Bimestre</option>
+                                    <option value="4">4º Bimestre</option>
+                                </select>
                             </div>
                         </div>
-                        
-                        <div id="periodo-container"></div>
                         
                         <div class="form-group">
                             <label for="tema" class="block text-sm font-medium text-gray-700">Tema da Tarefa</label>
@@ -1274,11 +963,10 @@
                     <div class="card p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-2xl font-bold text-red-700">Tarefas Criadas</h3>
-                            <div class="filtro-periodo-container">
-                                <span class="text-sm font-medium text-gray-700">Filtrar por período:</span>
-                                <select id="filtro-periodo-tarefas" class="select-periodo" onchange="filtrarTarefasPorPeriodo(this.value)">
-                                    <option value="todos">Todos os Períodos</option>
-                                </select>
+                            <div class="flex space-x-2">
+                                <button onclick="atualizarTodasMedias()" class="btn-primario text-sm">
+                                    Atualizar Todas as Médias
+                                </button>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
@@ -1286,7 +974,7 @@
                                 <thead>
                                     <tr>
                                         <th class="turma-column">Turma</th>
-                                        <th>Período</th>
+                                        <th class="periodo-column">Período</th>
                                         <th>Tema</th>
                                         <th class="data-column">Data</th>
                                         <th class="acoes-column">Ações</th>
@@ -1303,9 +991,6 @@
                 </div>
             `;
 
-            // Carregar opções de período
-            await carregarOpcoesPeriodo();
-
             if (STATE.tarefaEditando) {
                 preencherFormularioEdicao();
             }
@@ -1315,93 +1000,17 @@
             CacheManager.set(cacheKey, UIManager.elements.contentArea.innerHTML, 2 * 60 * 1000);
         }
 
-        async function carregarOpcoesPeriodo() {
-            const container = document.getElementById('periodo-container');
-            const selectTarefas = document.getElementById('filtro-periodo-tarefas');
-            
-            if (!container && !selectTarefas) return;
-            
-            try {
-                const response = await apiGet('getPeriodosConfig', {}, true);
-                if (response.success && response.data) {
-                    STATE.periodosConfig = response.data;
-                    
-                    // Atualizar container de período no formulário
-                    if (container) {
-                        container.innerHTML = `
-                            <div class="form-group">
-                                <label for="periodo" class="block text-sm font-medium text-gray-700">Período</label>
-                                <select id="periodo" class="mt-1 block w-full p-2 border rounded" required>
-                                    <option value="">Selecione o período...</option>
-                                </select>
-                            </div>
-                        `;
-                        
-                        const periodoSelect = document.getElementById('periodo');
-                        CONFIG.TURMAS.forEach(turma => {
-                            const config = STATE.periodosConfig[turma];
-                            if (config) {
-                                const optionGroup = document.createElement('optgroup');
-                                optionGroup.label = `Turma ${turma} (${config.tipo})`;
-                                
-                                config.labels.forEach((label, index) => {
-                                    const option = document.createElement('option');
-                                    option.value = index + 1;
-                                    option.textContent = label;
-                                    optionGroup.appendChild(option);
-                                });
-                                
-                                periodoSelect.appendChild(optionGroup);
-                            }
-                        });
-                    }
-                    
-                    // Atualizar filtro de tarefas
-                    if (selectTarefas) {
-                        // Limpar opções existentes (exceto a primeira)
-                        while (selectTarefas.options.length > 1) {
-                            selectTarefas.remove(1);
-                        }
-                        
-                        // Adicionar períodos
-                        const periodosUnicos = new Set();
-                        CONFIG.TURMAS.forEach(turma => {
-                            const config = STATE.periodosConfig[turma];
-                            if (config) {
-                                config.labels.forEach((label, index) => {
-                                    if (!periodosUnicos.has(label)) {
-                                        periodosUnicos.add(label);
-                                        const option = document.createElement('option');
-                                        option.value = index + 1;
-                                        option.textContent = label;
-                                        selectTarefas.appendChild(option);
-                                    }
-                                });
-                            }
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao carregar configurações de período:', error);
-            }
-        }
-
         function preencherFormularioEdicao() {
             if (!STATE.tarefaEditando) return;
             
             document.getElementById('titulo-formulario').textContent = 'Editar Tarefa';
             document.getElementById('tema').value = STATE.tarefaEditando.Tema;
+            document.getElementById('periodo').value = STATE.tarefaEditando.Periodo;
             document.getElementById('dataAula').value = String(STATE.tarefaEditando.DataAula).split('T')[0];
             document.getElementById('parte1').value = STATE.tarefaEditando.Parte1 || '';
             document.getElementById('parte2').value = STATE.tarefaEditando.Parte2 || '';
             document.getElementById('parte3').value = STATE.tarefaEditando.Parte3 || '';
             document.getElementById('parte4').value = STATE.tarefaEditando.Parte4 || '';
-            
-            // Definir período
-            const periodoSelect = document.getElementById('periodo');
-            if (periodoSelect) {
-                periodoSelect.value = STATE.tarefaEditando.Periodo || 1;
-            }
             
             const checkboxes = document.querySelectorAll('.turma-checkbox');
             checkboxes.forEach(checkbox => {
@@ -1429,42 +1038,30 @@
             try {
                 const response = await apiGet('getTarefas', {}, true);
                 STATE.tarefas = response.data || [];
-                filtrarTarefasPorPeriodo(STATE.periodoSelecionado);
+                renderizarTabelaTarefas();
             } catch (error) {
                 tbody.innerHTML = 
                     `<tr><td colspan="5" class="text-center py-4 text-red-500">Erro ao carregar tarefas: ${Utils.escapeHTML(error.message || String(error))}</td></tr>`;
             }
         }
 
-        function filtrarTarefasPorPeriodo(periodo) {
-            STATE.periodoSelecionado = periodo;
-            renderizarTabelaTarefas();
-        }
-
         function renderizarTabelaTarefas() {
             const tbody = document.getElementById('tabelaTarefasBody');
             
-            // Filtrar tarefas pelo período selecionado
-            let tarefasFiltradas = STATE.tarefas;
-            if (STATE.periodoSelecionado && STATE.periodoSelecionado !== 'todos') {
-                tarefasFiltradas = STATE.tarefas.filter(t => t.Periodo == STATE.periodoSelecionado);
-            }
-            
-            if (!tarefasFiltradas || tarefasFiltradas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Nenhuma tarefa ${STATE.periodoSelecionado !== 'todos' ? 'neste período' : 'criada'}</td></tr>`;
+            if (!STATE.tarefas || STATE.tarefas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Nenhuma tarefa criada</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = tarefasFiltradas.map(tarefa => {
+            tbody.innerHTML = STATE.tarefas.map(tarefa => {
                 const isDebugTarefa = tarefa.Tema && tarefa.Tema.includes('DEBUG');
-                const periodoLabel = Utils.getPeriodoLabel(tarefa.Turma, tarefa.Periodo);
-                const periodoBadgeClass = Utils.getPeriodoBadgeClass(tarefa.Turma, tarefa.Periodo);
+                const periodoNome = CONFIG.PERIODOS[tarefa.Periodo] || `Período ${tarefa.Periodo}`;
                 
                 return `
                 <tr class="tarefa-item" id="tarefa-row-${tarefa.ID}">
                     <td class="turma-column">${Utils.escapeHTML(tarefa.Turma)}</td>
-                    <td class="px-4 py-2">
-                        <span class="${periodoBadgeClass}">${Utils.escapeHTML(periodoLabel)}</span>
+                    <td class="periodo-column">
+                        <span class="badge-periodo periodo-${tarefa.Periodo}">${periodoNome}</span>
                     </td>
                     <td class="px-4 py-2">
                         <div class="font-semibold text-gray-800 mb-2 ${isDebugTarefa ? 'text-purple-600' : ''}">${Utils.escapeHTML(tarefa.Tema)}</div>
@@ -1519,13 +1116,12 @@
                     }
                 }
 
-                const periodoSelect = document.getElementById('periodo');
-                if (!periodoSelect || !periodoSelect.value) {
-                    UIManager.showModal('Atenção', 'Selecione um período.');
+                const periodo = document.getElementById('periodo').value;
+                if (!periodo) {
+                    UIManager.showModal('Atenção', 'Selecione o período da tarefa.');
                     return;
                 }
 
-                const periodo = periodoSelect.value;
                 const tema = document.getElementById('tema').value.trim();
                 const dataAula = document.getElementById('dataAula').value;
 
@@ -1601,14 +1197,14 @@
                     throw new Error(`Erro em ${erros.length} turma(s): ${erros.map(e => e.error || 'Erro desconhecido').join(', ')}`);
                 }
                 
-                const periodoLabel = Utils.getPeriodoLabel(turmasSelecionadas[0], periodo);
-                UIManager.showModal('Sucesso', `Tarefa ${STATE.tarefaEditando ? 'atualizada' : 'criada'} com sucesso para as turmas: ${turmasSelecionadas.join(', ')} (${periodoLabel})!`);
+                const periodoNome = CONFIG.PERIODOS[periodo] || `Período ${periodo}`;
+                UIManager.showModal('Sucesso', `Tarefa ${STATE.tarefaEditando ? 'atualizada' : 'criada'} com sucesso para as turmas: ${turmasSelecionadas.join(', ')} no ${periodoNome}!`);
                 
                 CacheManager.remove('painel_professor');
                 CacheManager.remove('tarefas_professor_lista');
                 turmasSelecionadas.forEach(turma => {
                     CacheManager.remove(`relatorio_${turma}`);
-                    CacheManager.remove(`dashboard_${turma}`);
+                    CacheManager.remove(`graficos_${turma}`);
                 });
                 
                 limparFormulario();
@@ -1638,14 +1234,14 @@
                     const response = await apiPost('excluirTarefa', { ID: idTarefa });
                     
                     if (response.success) {
-                        const periodoLabel = Utils.getPeriodoLabel(tarefa.Turma, tarefa.Periodo);
-                        UIManager.showModal('Sucesso', `Tarefa "${tarefa.Tema}" (${periodoLabel}) excluída com sucesso!`);
+                        const periodoNome = CONFIG.PERIODOS[tarefa.Periodo] || `Período ${tarefa.Periodo}`;
+                        UIManager.showModal('Sucesso', `Tarefa "${tarefa.Tema}" do ${periodoNome} excluída com sucesso!`);
                         
                         CacheManager.remove('painel_professor');
                         CacheManager.remove('tarefas_professor_lista');
                         CONFIG.TURMAS.forEach(turma => {
                             CacheManager.remove(`relatorio_${turma}`);
-                            CacheManager.remove(`dashboard_${turma}`);
+                            CacheManager.remove(`graficos_${turma}`);
                         });
                         
                         await carregarTarefasProfessor();
@@ -1689,18 +1285,42 @@
             await mostrarPainelProfessor();
         }
 
+        async function atualizarTodasMedias() {
+            try {
+                UIManager.showModal('Aviso', 'Atualizando todas as médias das turmas. Isso pode levar alguns segundos...');
+                
+                const promises = CONFIG.TURMAS.map(async (turma) => {
+                    const response = await apiPost('atualizarTodasMediasTurma', { turma: turma });
+                    return { turma, success: response.success };
+                });
+                
+                const resultados = await Promise.all(promises);
+                const sucessos = resultados.filter(r => r.success).length;
+                
+                UIManager.showModal('Sucesso', `Médias atualizadas com sucesso para ${sucessos} de ${CONFIG.TURMAS.length} turmas!`);
+                
+                // Limpar cache de gráficos
+                CONFIG.TURMAS.forEach(turma => {
+                    CacheManager.remove(`graficos_${turma}`);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao atualizar médias:', error);
+                UIManager.showModal('Erro', `Erro ao atualizar médias: ${error.message}`);
+            }
+        }
+
         function limparFormulario() {
             const temaEl = document.getElementById('tema');
-            const dataEl = document.getElementById('dataAula');
             const periodoEl = document.getElementById('periodo');
+            const dataEl = document.getElementById('dataAula');
             const p1 = document.getElementById('parte1');
             const p2 = document.getElementById('parte2');
             const p3 = document.getElementById('parte3');
             const p4 = document.getElementById('parte4');
-            
             if (temaEl) temaEl.value = '';
-            if (dataEl) dataEl.value = '';
             if (periodoEl) periodoEl.value = '';
+            if (dataEl) dataEl.value = '';
             if (p1) p1.value = '';
             if (p2) p2.value = '';
             if (p3) p3.value = '';
@@ -1734,11 +1354,36 @@
             UIManager.elements.contentArea.innerHTML = `
                 <div id="painelAluno" class="space-y-6">
                     <div class="card p-6">
-                        <div class="flex justify-between items-center mb-4">
+                        <div class="flex justify-between items-center mb-6">
                             <h3 class="text-2xl font-bold text-red-700">Minhas Tarefas</h3>
-                            <button onclick="mostrarBoletimAluno()" class="btn-primario">
-                                Ver Meu Boletim
-                            </button>
+                            <div class="medidas-container">
+                                <div class="flex space-x-4">
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">1º Bim</div>
+                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo1 || 0)}" id="media-1bim">
+                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo1 || 0)}
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">2º Bim</div>
+                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo2 || 0)}" id="media-2bim">
+                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo2 || 0)}
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">3º Bim</div>
+                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo3 || 0)}" id="media-3bim">
+                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo3 || 0)}
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">4º Bim</div>
+                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo4 || 0)}" id="media-4bim">
+                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo4 || 0)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="instrucoes-box">
@@ -1757,14 +1402,21 @@
                             </div>
                         </div>
                         
-                        <div id="media-aluno-container" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg hidden">
+                        <div id="media-aluno-container" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                             <div class="flex justify-between items-center">
-                                <span class="font-semibold text-gray-800">Média Geral (calculada na planilha):</span>
-                                <span class="text-lg font-bold text-red-700" id="media-geral-aluno">0.0</span>
+                                <span class="font-semibold text-gray-800">Média Geral (média dos 4 bimestres):</span>
+                                <span class="text-lg font-bold text-red-700" id="media-geral-aluno">
+                                    ${Utils.calcularMediaGeral([
+                                        STATE.usuarioLogado.Medias?.periodo1 || 0,
+                                        STATE.usuarioLogado.Medias?.periodo2 || 0,
+                                        STATE.usuarioLogado.Medias?.periodo3 || 0,
+                                        STATE.usuarioLogado.Medias?.periodo4 || 0
+                                    ])}
+                                </span>
                             </div>
                         </div>
                         
-                        <div class="fundamento-cientifico">
+                        <div class="fundamento-cientifico mt-6">
                             <div class="fundamento-title" onclick="toggleFundamentoCientifico()">
                                 <span>Fundamentos Científicos da Aprendizagem</span>
                                 <svg class="expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1810,148 +1462,6 @@
             CacheManager.set(cacheKey, UIManager.elements.contentArea.innerHTML, 2 * 60 * 1000);
         }
 
-        async function mostrarBoletimAluno() {
-            try {
-                UIManager.elements.contentArea.innerHTML = `
-                    <div class="card p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-2xl font-bold text-red-700">Meu Boletim</h3>
-                            <button onclick="mostrarPainelAluno()" class="btn-secundario">
-                                Voltar para Tarefas
-                            </button>
-                        </div>
-                        
-                        <div id="boletim-container">
-                            <div class="text-center py-8">
-                                <div class="spinner"></div>
-                                <p class="mt-4 text-gray-600">Carregando boletim...</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                const response = await apiGet('getBoletimAluno', {
-                    email: STATE.usuarioLogado.Email,
-                    turma: STATE.usuarioLogado.Turma
-                }, true);
-
-                if (response.success && response.data) {
-                    const boletim = response.data;
-                    renderizarBoletimAluno(boletim);
-                } else {
-                    document.getElementById('boletim-container').innerHTML = `
-                        <div class="text-center py-8 text-red-500">
-                            <p>Erro ao carregar boletim: ${response.error || 'Erro desconhecido'}</p>
-                            <button onclick="mostrarBoletimAluno()" class="btn-primario mt-4">Tentar Novamente</button>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Erro ao carregar boletim:', error);
-                document.getElementById('boletim-container').innerHTML = `
-                    <div class="text-center py-8 text-red-500">
-                        <p>Erro ao carregar boletim: ${Utils.escapeHTML(error.message)}</p>
-                        <button onclick="mostrarPainelAluno()" class="btn-primario mt-4">Voltar</button>
-                    </div>
-                `;
-            }
-        }
-
-        function renderizarBoletimAluno(boletim) {
-            const container = document.getElementById('boletim-container');
-            
-            let periodosHTML = '';
-            Object.keys(boletim.periodos).forEach(periodoKey => {
-                const periodo = boletim.periodos[periodoKey];
-                const situacaoClass = periodo.situacao === 'Aprovado' ? 'text-green-600' : 
-                                   periodo.situacao === 'Reprovado' ? 'text-red-600' : 'text-yellow-600';
-                
-                periodosHTML += `
-                    <div class="periodo-desempenho">
-                        <h4 class="font-semibold text-lg mb-2">${periodo.label}</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="card-desempenho">
-                                <span class="card-label">Média do Período</span>
-                                <span class="card-value">${parseFloat(periodo.media).toFixed(1)}</span>
-                            </div>
-                            <div class="card-desempenho">
-                                <span class="card-label">Tarefas Realizadas</span>
-                                <span class="card-value">${periodo.tarefasComNota}/${periodo.tarefas.length}</span>
-                            </div>
-                            <div class="card-desempenho">
-                                <span class="card-label">Situação</span>
-                                <span class="card-value ${situacaoClass}">${periodo.situacao}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <h5 class="font-medium text-gray-700 mb-2">Tarefas do período:</h5>
-                            <div class="space-y-2">
-                                ${periodo.tarefas.map(tarefa => `
-                                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                        <span class="text-sm">${Utils.escapeHTML(tarefa.tema)}</span>
-                                        <span class="font-semibold ${tarefa.nota > 0 ? 'text-green-600' : 'text-gray-500'}">
-                                            ${tarefa.nota > 0 ? Utils.formatarNota(tarefa.nota) : 'Não entregue'}
-                                        </span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = `
-                <div class="boletim-aluno">
-                    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4 class="font-semibold text-blue-800">${Utils.escapeHTML(boletim.aluno.NomeCompleto)}</h4>
-                                <p class="text-sm text-blue-600">Turma: ${Utils.escapeHTML(boletim.aluno.Turma)} | Nº: ${Utils.escapeHTML(boletim.aluno.Numero)}</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-lg font-bold text-red-700">Média Geral: ${parseFloat(boletim.estatisticas.mediaGeral).toFixed(2)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${periodosHTML}
-                    
-                    <div class="grafico-evolucao mt-8">
-                        <h4 class="font-semibold text-lg mb-4">Evolução das Médias</h4>
-                        <div class="text-center py-8 text-gray-500">
-                            <p>Gráfico de evolução das médias por período</p>
-                            <p class="text-sm mt-2">(Implementação do gráfico em desenvolvimento)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                        <h5 class="font-medium text-gray-700 mb-2">Estatísticas Gerais:</h5>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="text-center">
-                                <span class="block text-2xl font-bold text-red-700">${boletim.estatisticas.tarefasEntregues}</span>
-                                <span class="text-sm text-gray-600">Tarefas Entregues</span>
-                            </div>
-                            <div class="text-center">
-                                <span class="block text-2xl font-bold text-red-700">${boletim.estatisticas.totalTarefas}</span>
-                                <span class="text-sm text-gray-600">Total de Tarefas</span>
-                            </div>
-                            <div class="text-center">
-                                <span class="block text-2xl font-bold text-red-700">${parseFloat(boletim.estatisticas.mediaGeral).toFixed(2)}</span>
-                                <span class="text-sm text-gray-600">Média Geral</span>
-                            </div>
-                            <div class="text-center">
-                                <span class="block text-2xl font-bold ${parseFloat(boletim.estatisticas.mediaGeral) >= 6 ? 'text-green-600' : 'text-red-600'}">
-                                    ${parseFloat(boletim.estatisticas.mediaGeral) >= 6 ? 'APROVADO' : 'REPROVADO'}
-                                </span>
-                                <span class="text-sm text-gray-600">Situação Geral</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
         function toggleFundamentoCientifico() {
             const conteudo = document.getElementById('conteudo-fundamento');
             const icon = document.querySelector('.fundamento-cientifico .expand-icon');
@@ -1972,6 +1482,7 @@
             try {
                 console.log('Carregando tarefas para aluno:', STATE.usuarioLogado.Email, 'Turma:', STATE.usuarioLogado.Turma);
                 
+                // Buscar tarefas da turma do aluno
                 const response = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, true);
                 console.log('Resposta da API getTarefasPorTurma:', response);
                 
@@ -1980,22 +1491,28 @@
                     return;
                 }
 
+                // Agrupar tarefas por período
+                const tarefasPorPeriodo = {};
+                response.data.forEach(tarefa => {
+                    if (!tarefasPorPeriodo[tarefa.Periodo]) {
+                        tarefasPorPeriodo[tarefa.Periodo] = [];
+                    }
+                    tarefasPorPeriodo[tarefa.Periodo].push(tarefa);
+                });
+
+                // Buscar dados completos do aluno
                 let alunoData = null;
                 let entregas = [];
                 
                 try {
-                    const alunoResponse = await Utils.buscarDadosAlunoPlanilha(STATE.usuarioLogado.Email, STATE.usuarioLogado.Turma);
-                    console.log('Dados do aluno encontrados:', alunoResponse);
+                    const alunoResponse = await apiGet('getDadosAlunoCompleto', { 
+                        email: STATE.usuarioLogado.Email, 
+                        turma: STATE.usuarioLogado.Turma 
+                    }, true);
                     
-                    if (alunoResponse) {
-                        alunoData = alunoResponse;
-                        entregas = extrairEntregasDeAlunoData(alunoResponse, response.data);
-                    } else {
-                        const entregasResponse = await apiGet('getEntregasAluno', { 
-                            email: STATE.usuarioLogado.Email, 
-                            turma: STATE.usuarioLogado.Turma 
-                        }, true);
-                        entregas = entregasResponse.data || [];
+                    if (alunoResponse.success) {
+                        alunoData = alunoResponse.data;
+                        entregas = extrairEntregasDeAlunoData(alunoResponse.data, response.data);
                     }
                 } catch (error) {
                     console.warn('Erro ao buscar dados do aluno, usando dados básicos:', error);
@@ -2004,7 +1521,8 @@
                 console.log('Tarefas carregadas:', response.data.length);
                 console.log('Entregas encontradas:', entregas.length);
                 
-                renderTarefasAlunoComMedia(response.data, entregas, alunoData, container);
+                // Renderizar tarefas agrupadas por período
+                renderTarefasAlunoAgrupadasPorPeriodo(tarefasPorPeriodo, entregas, alunoData, container);
                 
             } catch (error) {
                 console.error('Erro detalhado ao carregar tarefas do aluno:', error);
@@ -2016,42 +1534,50 @@
             }
         }
 
-        function renderTarefasAlunoComMedia(tarefasLocal, entregas, alunoData, container) {
-            console.log('Renderizando tarefas com média já calculada na planilha:', tarefasLocal.length);
+        function renderTarefasAlunoAgrupadasPorPeriodo(tarefasPorPeriodo, entregas, alunoData, container) {
+            console.log('Renderizando tarefas agrupadas por período:', Object.keys(tarefasPorPeriodo).length);
             
-            if (!tarefasLocal || tarefasLocal.length === 0) {
+            if (Object.keys(tarefasPorPeriodo).length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-500 py-8">Nenhuma tarefa disponível para sua turma.</div>';
                 return;
             }
 
-            // Agrupar tarefas por período
-            const tarefasPorPeriodo = {};
-            tarefasLocal.forEach((tarefa, index) => {
-                const periodo = tarefa.Periodo || 1;
-                if (!tarefasPorPeriodo[periodo]) {
-                    tarefasPorPeriodo[periodo] = [];
-                }
-                tarefasPorPeriodo[periodo].push({ tarefa, index });
-            });
-
-            const tarefasHTML = Object.keys(tarefasPorPeriodo).map(periodo => {
-                const periodoLabel = Utils.getPeriodoLabel(STATE.usuarioLogado.Turma, periodo);
-                const periodoBadgeClass = Utils.getPeriodoBadgeClass(STATE.usuarioLogado.Turma, periodo);
+            let html = '';
+            
+            // Ordenar períodos
+            const periodosOrdenados = Object.keys(tarefasPorPeriodo).sort((a, b) => a - b);
+            
+            periodosOrdenados.forEach(periodoNum => {
+                const periodoNome = CONFIG.PERIODOS[periodoNum] || `Período ${periodoNum}`;
+                const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
                 
-                const tarefasPeriodoHTML = tarefasPorPeriodo[periodo].map(({ tarefa, index }) => {
+                html += `
+                <div class="mb-8">
+                    <div class="flex items-center mb-4">
+                        <h4 class="text-xl font-bold text-gray-800">${periodoNome}</h4>
+                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-medium ${Utils.obterCorFundoMedia(alunoData?.[`${periodoNum}º Bim`] || 0)} ${Utils.obterCorMedia(alunoData?.[`${periodoNum}º Bim`] || 0)}">
+                            Média: ${Utils.formatarNota(alunoData?.[`${periodoNum}º Bim`] || 0)}
+                        </span>
+                    </div>
+                `;
+                
+                tarefasPeriodo.forEach((tarefa, index) => {
                     const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
                     
+                    // Buscar nota total da tarefa
                     let notaTotal = 0;
                     if (alunoData) {
-                        const chaveNotaTarefa = `Nota${index + 1}`;
+                        const chaveNotaTarefa = `Nota${index + 1}_P${periodoNum}`;
                         if (alunoData[chaveNotaTarefa] !== undefined && alunoData[chaveNotaTarefa] !== null) {
                             notaTotal = parseFloat(alunoData[chaveNotaTarefa]) || 0;
                         } else {
+                            // Fallback: calcular soma das partes
                             entregaTarefa.forEach(entrega => {
                                 notaTotal += parseFloat(entrega.Nota) || 0;
                             });
                         }
                     } else {
+                        // Sem dados do aluno, calcular das entregas
                         entregaTarefa.forEach(entrega => {
                             notaTotal += parseFloat(entrega.Nota) || 0;
                         });
@@ -2059,89 +1585,38 @@
                     
                     notaTotal = Math.min(notaTotal, 10);
                     
-                    const colunaNotaFinal = Utils.calcularColunaNotaFinalReal(index);
-                    const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
-                    const celulaNotaFinal = Utils.calcularPosicaoCelula(linhaAluno, colunaNotaFinal);
-                    const tooltipNotaFinal = `${STATE.usuarioLogado.Turma} ${celulaNotaFinal}`;
-                    
-                    return `
+                    html += `
                     <div class="border border-gray-200 rounded-lg p-4 mb-4 tarefa-aluno-container">
                         <div class="flex justify-between items-center mb-2">
                             <div class="flex items-center">
-                                <h4 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(String(tarefa.Tema))}</h4>
+                                <h5 class="font-semibold text-lg text-gray-800">${Utils.escapeHTML(String(tarefa.Tema))}</h5>
                             </div>
                             <div class="flex items-center space-x-4">
                                 <span class="text-sm text-gray-600">${Utils.formatarData(tarefa.DataAula)}</span>
-                                <span class="nota-tarefa-aluno" title="${tooltipNotaFinal}">Nota: ${Utils.formatarNota(notaTotal)}</span>
+                                <span class="nota-tarefa-aluno">Nota: ${Utils.formatarNota(notaTotal)}</span>
                             </div>
                         </div>
                         
                         <div class="partes-tarefa-container">
-                            ${renderParteAlunoComNotaCorreta(tarefa, 1, entregaTarefa, index, alunoData)}
-                            ${renderParteAlunoComNotaCorreta(tarefa, 2, entregaTarefa, index, alunoData)}
-                            ${renderParteAlunoComNotaCorreta(tarefa, 3, entregaTarefa, index, alunoData)}
-                            ${renderParteAlunoComNotaCorreta(tarefa, 4, entregaTarefa, index, alunoData)}
+                            ${renderParteAlunoComNotaCorreta(tarefa, 1, entregaTarefa, index, alunoData, periodoNum)}
+                            ${renderParteAlunoComNotaCorreta(tarefa, 2, entregaTarefa, index, alunoData, periodoNum)}
+                            ${renderParteAlunoComNotaCorreta(tarefa, 3, entregaTarefa, index, alunoData, periodoNum)}
+                            ${renderParteAlunoComNotaCorreta(tarefa, 4, entregaTarefa, index, alunoData, periodoNum)}
                         </div>
                     </div>
                     `;
-                }).join('');
-
-                return `
-                <div class="periodo-filter-container">
-                    <div class="periodo-info">
-                        <h4 class="font-semibold text-gray-800">${periodoLabel}</h4>
-                        <span class="${periodoBadgeClass}">${Utils.getPeriodoTipo(STATE.usuarioLogado.Turma)}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">${tarefasPorPeriodo[periodo].length} tarefa(s) neste período</p>
-                </div>
-                ${tarefasPeriodoHTML}
-                `;
-            }).join('');
-
-            container.innerHTML = tarefasHTML;
-            
-            const mediaContainer = document.getElementById('media-aluno-container');
-            const mediaElement = document.getElementById('media-geral-aluno');
-            
-            let mediaGeral = 0;
-            if (alunoData && alunoData.Media !== undefined) {
-                mediaGeral = parseFloat(alunoData.Media) || 0;
-            } else {
-                const totalTarefas = tarefasLocal.length;
-                let somaNotasFinais = 0;
+                });
                 
-                for (let i = 1; i <= totalTarefas; i++) {
-                    const chaveNota = `Nota${i}`;
-                    let notaFinal = 0;
-                    
-                    if (alunoData && alunoData[chaveNota] !== undefined) {
-                        notaFinal = parseFloat(alunoData[chaveNota]) || 0;
-                    } else {
-                        const tarefaIndex = i - 1;
-                        if (tarefaIndex < tarefasLocal.length) {
-                            const tarefaId = tarefasLocal[tarefaIndex].ID;
-                            const entregasTarefa = entregas.filter(e => e.ID_Tarefa === tarefaId);
-                            let somaPartes = 0;
-                            entregasTarefa.forEach(entrega => {
-                                somaPartes += parseFloat(entrega.Nota) || 0;
-                            });
-                            notaFinal = Math.min(somaPartes, 10);
-                        }
-                    }
-                    
-                    somaNotasFinais += notaFinal;
-                }
-                
-                mediaGeral = totalTarefas > 0 ? (somaNotasFinais / totalTarefas) : 0;
-            }
+                html += `</div>`;
+            });
             
-            mediaElement.textContent = mediaGeral.toFixed(1);
-            mediaContainer.classList.remove('hidden');
+            container.innerHTML = html;
             
-            console.log(`Média exibida (já calculada na planilha): ${mediaGeral.toFixed(1)}`);
+            // Atualizar contadores
+            TimeManager.iniciarAtualizacaoContadores();
         }
-        
-        function renderParteAlunoComNotaCorreta(tarefa, numeroParte, entregas, tarefaIndex, alunoData) {
+
+        function renderParteAlunoComNotaCorreta(tarefa, numeroParte, entregas, tarefaIndex, alunoData, periodo) {
             const parteConteudo = tarefa[`Parte${numeroParte}`];
             const entrega = entregas.find(e => e.Parte === numeroParte);
             
@@ -2155,6 +1630,7 @@
                 notaParte = parseFloat(entrega.Nota) || 0;
             }
             
+            // Validar nota da parte
             notaParte = Utils.validarNota(notaParte);
             
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
@@ -2215,40 +1691,6 @@
                 `;
             }
             
-            let tooltipNota = '';
-            
-            if (alunoData) {
-                const parteGlobal = (tarefaIndex * 4) + numeroParte;
-                const chavesNota = [
-                    `Parte${parteGlobal}`,
-                    `NotaParte${parteGlobal}`,
-                    `P${numeroParte}_T${tarefaIndex + 1}`,
-                    `Parte${numeroParte}_T${tarefaIndex + 1}`
-                ];
-                
-                for (const chave of chavesNota) {
-                    if (alunoData[chave] !== undefined) {
-                        const colunaNotaParte = Utils.calcularColunaNotaParteReal(tarefaIndex, numeroParte);
-                        const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
-                        const celulaNotaParte = Utils.calcularPosicaoCelula(linhaAluno, colunaNotaParte);
-                        tooltipNota = `${STATE.usuarioLogado.Turma} ${celulaNotaParte}`;
-                        break;
-                    }
-                }
-            }
-            
-            if (!tooltipNota) {
-                const colunaNotaParte = Utils.calcularColunaNotaParteReal(tarefaIndex, numeroParte);
-                const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
-                const celulaNotaParte = Utils.calcularPosicaoCelula(linhaAluno, colunaNotaParte);
-                tooltipNota = `${STATE.usuarioLogado.Turma} ${celulaNotaParte}`;
-            }
-            
-            const colunaLink = Utils.calcularColunaLinkReal(tarefaIndex, numeroParte);
-            const linhaAluno = parseInt(STATE.usuarioLogado.Numero) + 1;
-            const celulaLink = Utils.calcularPosicaoCelula(linhaAluno, colunaLink);
-            const tooltipAluno = `${STATE.usuarioLogado.Turma} ${celulaLink}`;
-            
             let linkHTML = '';
             if (temDadosSalvos) {
                 const botaoExcluirHTML = status.liberada ? `
@@ -2264,13 +1706,13 @@
                 const linkFormatado = Utils.formatarDadoBruto(linkSalvo);
                 
                 const linkDisplay = Utils.validarLink(linkSalvo) ? 
-                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</a>` :
-                    `<span class="link-salvo-texto" title="${tooltipAluno}">${Utils.escapeHTML(linkFormatado)}</span>`;
+                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel">${Utils.escapeHTML(linkFormatado)}</a>` :
+                    `<span class="link-salvo-texto">${Utils.escapeHTML(linkFormatado)}</span>`;
                 
                 linkHTML = `
                     <div class="link-container mt-2">
                         ${linkDisplay}
-                        <span class="nota-parte" title="${tooltipNota}">Nota: ${notaFormatada}</span>
+                        <span class="nota-parte">Nota: ${notaFormatada}</span>
                         ${botaoExcluirHTML}
                     </div>
                     <p class="text-green-600 text-sm mt-1">
@@ -2320,21 +1762,21 @@
                 for (let parte = 1; parte <= 4; parte++) {
                     const parteGlobal = (tarefaIndex * 4) + parte;
                     const chavesLink = [
-                        `Link${parteGlobal}`,
-                        `P${parte}_T${tarefaIndex + 1}`,
-                        `Parte${parteGlobal}`
+                        `Link${parteGlobal}_P${tarefa.Periodo}`,
+                        `P${parte}_T${tarefaIndex + 1}_P${tarefa.Periodo}`,
+                        `Parte${parteGlobal}_P${tarefa.Periodo}`
                     ];
                     
                     const chavesData = [
-                        `DataHora${parteGlobal}`,
-                        `Data${parteGlobal}`
+                        `DataHora${parteGlobal}_P${tarefa.Periodo}`,
+                        `Data${parteGlobal}_P${tarefa.Periodo}`
                     ];
                     
                     const chavesNota = [
-                        `Parte${parteGlobal}`,
-                        `NotaParte${parteGlobal}`,
-                        `P${parte}_T${tarefaIndex + 1}`,
-                        `Parte${parte}_T${tarefaIndex + 1}`
+                        `Parte${parteGlobal}_P${tarefa.Periodo}`,
+                        `NotaParte${parteGlobal}_P${tarefa.Periodo}`,
+                        `P${parte}_T${tarefaIndex + 1}_P${tarefa.Periodo}`,
+                        `Parte${parte}_T${tarefaIndex + 1}_P${tarefa.Periodo}`
                     ];
                     
                     let link = '';
@@ -2362,11 +1804,13 @@
                         }
                     }
                     
+                    // Validar nota
                     nota = Utils.validarNota(nota);
                     
                     if (link && link.toString().trim() !== '') {
                         entregas.push({
                             ID_Tarefa: tarefa.ID,
+                            Periodo: tarefa.Periodo,
                             Parte: parte,
                             Link: link.toString().trim(),
                             DataSubmissao: dataHora,
@@ -2438,7 +1882,10 @@
                     
                     const nota = response.data?.nota || 0;
                     const dataHora = response.data?.dataHora || new Date().toISOString();
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nNota: ${Utils.formatarNota(nota)}\nHorário: ${Utils.formatarDataHora(dataHora)}\n\nMédia atualizada automaticamente na planilha.`);
+                    const periodo = response.data?.periodo || 1;
+                    const periodoNome = CONFIG.PERIODOS[periodo] || `Período ${periodo}`;
+                    
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nPeríodo: ${periodoNome}\nNota: ${Utils.formatarNota(nota)}\nHorário: ${Utils.formatarDataHora(dataHora)}\n\nMédia do período atualizada automaticamente na planilha.`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -2477,7 +1924,11 @@
                 if (response.success) {
                     CacheManager.clear();
                     await carregarTarefasAluno();
-                    UIManager.showModal('Sucesso', `Entrega da parte ${parte} excluída com sucesso!\n\nMédia atualizada automaticamente na planilha.`);
+                    
+                    const periodo = response.data?.periodo || 1;
+                    const periodoNome = CONFIG.PERIODOS[periodo] || `Período ${periodo}`;
+                    
+                    UIManager.showModal('Sucesso', `Entrega da parte ${parte} excluída com sucesso!\n\nPeríodo: ${periodoNome}\nMédia do período atualizada automaticamente na planilha.`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao excluir link');
@@ -2496,36 +1947,569 @@
             const containers = document.querySelectorAll('#tarefas-aluno-container > div');
             
             containers.forEach(container => {
-                const tema = container.querySelector('h4')?.textContent;
-                if (!tema) return;
+                const periodoHeaders = container.querySelectorAll('h4');
+                if (!periodoHeaders) return;
                 
-                const tarefa = STATE.tarefas.find(t => t.Tema === tema);
-                if (tarefa) {
-                    const contadores = TimeManager.calcularContadoresOtimizado(tarefa.DataAula);
+                // Atualizar contadores para cada tarefa dentro do período
+                const tarefaContainers = container.querySelectorAll('.tarefa-aluno-container');
+                tarefaContainers.forEach(tarefaContainer => {
+                    const tema = tarefaContainer.querySelector('h5')?.textContent;
+                    if (!tema) return;
                     
-                    [1, 2, 3, 4].forEach(parte => {
-                        const contadorElement = container.querySelector(`#parte-${tarefa.ID}-${parte} .contador`);
-                        if (contadorElement) {
-                            const contador = contadores[`parte${parte}`];
-                            if (contadorElement.textContent !== contador.texto) {
-                                contadorElement.textContent = contador.texto;
-                                contadorElement.className = `contador ${contador.classe}`;
+                    const tarefa = STATE.tarefas.find(t => t.Tema === tema);
+                    if (tarefa) {
+                        const contadores = TimeManager.calcularContadoresOtimizado(tarefa.DataAula);
+                        
+                        [1, 2, 3, 4].forEach(parte => {
+                            const contadorElement = tarefaContainer.querySelector(`#parte-${tarefa.ID}-${parte} .contador`);
+                            if (contadorElement) {
+                                const contador = contadores[`parte${parte}`];
+                                if (contadorElement.textContent !== contador.texto) {
+                                    contadorElement.textContent = contador.texto;
+                                    contadorElement.className = `contador ${contador.classe}`;
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        // ==================== PAINEL DE GRÁFICOS ====================
+        async function mostrarPainelGraficos() {
+            UIManager.elements.contentArea.innerHTML = `
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold text-red-700 mb-6">Análise de Desempenho - Gráficos</h3>
+                    
+                    <div class="turmas-container mb-6">
+                        <div class="turmas-buttons">
+                            ${CONFIG.TURMAS.map(turma => `
+                                <button onclick="carregarGraficosTurma('${turma}')" class="btn-turma-compact" id="btn-turma-grafico-${turma}">
+                                    ${turma}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div id="graficos-container" class="space-y-8">
+                        <p class="text-gray-500 text-center py-8">Selecione uma turma para visualizar os gráficos</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function mostrarGraficosAluno() {
+            UIManager.elements.contentArea.innerHTML = `
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold text-red-700 mb-6">Minha Evolução</h3>
+                    
+                    <div id="graficos-aluno-container" class="space-y-8">
+                        <div class="text-center py-8">
+                            <div class="spinner"></div>
+                            <p class="mt-4 text-gray-600">Carregando gráficos da sua evolução...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            await carregarGraficosAluno();
+        }
+
+        async function carregarGraficosTurma(turma) {
+            document.querySelectorAll('.btn-turma-compact').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn-turma-grafico-${turma}`).classList.add('active');
+            
+            const container = document.getElementById('graficos-container');
+            container.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="spinner"></div>
+                    <p class="mt-4 text-gray-600">Carregando gráficos da turma ${Utils.escapeHTML(turma)}...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await apiGet('getDadosGraficos', { turma: turma }, true);
+                
+                if (!response.success || !response.data) {
+                    throw new Error(response.error || 'Erro ao carregar dados para gráficos');
+                }
+                
+                const dados = response.data;
+                
+                container.innerHTML = `
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Turma ${Utils.escapeHTML(turma)} - Visão Geral</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-4 border rounded-lg">
+                                <h5 class="font-medium text-gray-700 mb-3">Comparativo de Períodos</h5>
+                                <div class="chart-container">
+                                    <canvas id="graficoComparativoPeriodos"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 border rounded-lg">
+                                <h5 class="font-medium text-gray-700 mb-3">Evolução da Turma</h5>
+                                <div class="chart-container">
+                                    <canvas id="graficoEvolucaoTurma"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Desempenho por Período</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-4 border rounded-lg">
+                                <h5 class="font-medium text-gray-700 mb-3">Distribuição de Notas</h5>
+                                <div class="chart-container">
+                                    <canvas id="graficoDistribuicaoNotas"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 border rounded-lg">
+                                <h5 class="font-medium text-gray-700 mb-3">Top 10 Alunos</h5>
+                                <div class="chart-container">
+                                    <canvas id="graficoTopAlunos"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Resumo Estatístico</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            ${dados.dadosPeriodos.map((periodo, index) => `
+                                <div class="bg-white p-4 border rounded-lg text-center">
+                                    <div class="text-sm text-gray-600 mb-1">${periodo.nomePeriodo}</div>
+                                    <div class="text-2xl font-bold ${Utils.obterCorMedia(periodo.mediaTurma)}">${parseFloat(periodo.mediaTurma).toFixed(1)}</div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        Melhor: ${Utils.formatarNota(periodo.melhorNota)} | 
+                                        Aprovação: ${periodo.aprovacaoPercentual}%
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                // Renderizar gráficos
+                renderGraficoComparativoPeriodos(dados.dadosPeriodos);
+                renderGraficoEvolucaoTurma(dados.dadosPeriodos);
+                renderGraficoDistribuicaoNotas(dados);
+                renderGraficoTopAlunos(dados.alunos);
+                
+            } catch (error) {
+                console.error('Erro ao carregar gráficos:', error);
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Erro ao carregar gráficos: ${Utils.escapeHTML(error.message || String(error))}</p>
+                        <button onclick="carregarGraficosTurma('${turma}')" class="btn-secundario mt-4">
+                            Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function carregarGraficosAluno() {
+            const container = document.getElementById('graficos-aluno-container');
+            
+            try {
+                // Buscar evolução do aluno
+                const response = await apiGet('getEvolucaoAluno', { 
+                    email: STATE.usuarioLogado.Email, 
+                    turma: STATE.usuarioLogado.Turma 
+                }, true);
+                
+                if (!response.success || !response.data) {
+                    throw new Error(response.error || 'Erro ao carregar dados da evolução');
+                }
+                
+                const evolucao = response.data;
+                
+                // Buscar dados da turma para comparação
+                const turmaResponse = await apiGet('getDadosGraficos', { turma: STATE.usuarioLogado.Turma }, true);
+                const dadosTurma = turmaResponse.success ? turmaResponse.data : null;
+                
+                container.innerHTML = `
+                    <div class="mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg font-semibold text-gray-800">Minha Evolução nos Períodos</h4>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${evolucao.tendencia === 'crescendo' ? 'bg-green-100 text-green-800' : evolucao.tendencia === 'decaindo' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">
+                                Tendência: ${evolucao.tendencia}
+                                ${evolucao.crescimento > 0 ? '↑' : evolucao.crescimento < 0 ? '↓' : '→'}
+                            </span>
+                        </div>
+                        <div class="bg-white p-4 border rounded-lg">
+                            <div class="chart-container">
+                                <canvas id="graficoEvolucaoIndividual"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-4 border rounded-lg">
+                            <h5 class="font-medium text-gray-700 mb-3">Comparação com a Turma</h5>
+                            <div class="chart-container">
+                                <canvas id="graficoComparacaoTurma"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-4 border rounded-lg">
+                            <h5 class="font-medium text-gray-700 mb-3">Resumo do Desempenho</h5>
+                            <div class="space-y-4">
+                                ${evolucao.periodos.map((periodo, index) => `
+                                    <div class="flex justify-between items-center p-3 ${Utils.obterCorFundoMedia(evolucao.medias[index])} rounded">
+                                        <span class="font-medium">${periodo}</span>
+                                        <span class="text-lg font-bold ${Utils.obterCorMedia(evolucao.medias[index])}">
+                                            ${Utils.formatarNota(evolucao.medias[index])}
+                                        </span>
+                                    </div>
+                                `).join('')}
+                                
+                                <div class="flex justify-between items-center p-3 bg-gray-50 border-t border-gray-200 rounded">
+                                    <span class="font-medium">Média Geral</span>
+                                    <span class="text-xl font-bold text-red-700">
+                                        ${Utils.calcularMediaGeral(evolucao.medias)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Renderizar gráficos
+                renderGraficoEvolucaoIndividual(evolucao);
+                if (dadosTurma) {
+                    renderGraficoComparacaoTurma(evolucao, dadosTurma.dadosPeriodos);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar gráficos do aluno:', error);
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Erro ao carregar gráficos: ${Utils.escapeHTML(error.message || String(error))}</p>
+                        <button onclick="carregarGraficosAluno()" class="btn-secundario mt-4">
+                            Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderGraficoComparativoPeriodos(dadosPeriodos) {
+            const ctx = document.getElementById('graficoComparativoPeriodos').getContext('2d');
+            
+            if (STATE.graficos.periodoComparativo) {
+                STATE.graficos.periodoComparativo.destroy();
+            }
+            
+            STATE.graficos.periodoComparativo = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dadosPeriodos.map(p => p.nomePeriodo),
+                    datasets: [{
+                        label: 'Média da Turma',
+                        data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)',
+                            'rgb(239, 68, 68)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Comparativo de Médias por Período'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Média'
                             }
                         }
-                    });
+                    }
                 }
             });
         }
 
-        // ==================== RELATÓRIOS ====================
+        function renderGraficoEvolucaoTurma(dadosPeriodos) {
+            const ctx = document.getElementById('graficoEvolucaoTurma').getContext('2d');
+            
+            if (STATE.graficos.evolucaoIndividual) {
+                STATE.graficos.evolucaoIndividual.destroy();
+            }
+            
+            STATE.graficos.evolucaoIndividual = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dadosPeriodos.map(p => p.nomePeriodo),
+                    datasets: [
+                        {
+                            label: 'Média da Turma',
+                            data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.1,
+                            fill: true
+                        },
+                        {
+                            label: 'Melhor Nota',
+                            data: dadosPeriodos.map(p => p.melhorNota),
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.1,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Evolução da Turma'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Nota'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGraficoDistribuicaoNotas(dados) {
+            const ctx = document.getElementById('graficoDistribuicaoNotas').getContext('2d');
+            
+            // Calcular distribuição para o último período
+            const ultimoPeriodo = dados.dadosPeriodos[dados.dadosPeriodos.length - 1];
+            const distribuicao = [0, 0, 0, 0]; // 0-4, 4-6, 6-8, 8-10
+            
+            ultimoPeriodo.medias.forEach(media => {
+                if (media >= 8) {
+                    distribuicao[3]++;
+                } else if (media >= 6) {
+                    distribuicao[2]++;
+                } else if (media >= 4) {
+                    distribuicao[1]++;
+                } else if (media > 0) {
+                    distribuicao[0]++;
+                }
+            });
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['0-4', '4-6', '6-8', '8-10'],
+                    datasets: [{
+                        data: distribuicao,
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)',
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: `Distribuição de Notas - ${ultimoPeriodo.nomePeriodo}`
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGraficoTopAlunos(alunos) {
+            const ctx = document.getElementById('graficoTopAlunos').getContext('2d');
+            
+            // Pegar top 10 alunos
+            const topAlunos = alunos.slice(0, 10);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topAlunos.map(a => a.nome.split(' ')[0]), // Primeiro nome apenas
+                    datasets: [{
+                        label: 'Média Geral',
+                        data: topAlunos.map(a => parseFloat(a.mediaGeral)),
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                        borderColor: 'rgb(139, 92, 246)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top 10 Alunos - Média Geral'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Média'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGraficoEvolucaoIndividual(evolucao) {
+            const ctx = document.getElementById('graficoEvolucaoIndividual').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: evolucao.periodos,
+                    datasets: [{
+                        label: 'Minha Evolução',
+                        data: evolucao.medias,
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Minha Evolução nos Períodos'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Média'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGraficoComparacaoTurma(evolucaoAluno, dadosPeriodos) {
+            const ctx = document.getElementById('graficoComparacaoTurma').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: evolucaoAluno.periodos,
+                    datasets: [
+                        {
+                            label: 'Minha Evolução',
+                            data: evolucaoAluno.medias,
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.1,
+                            fill: true
+                        },
+                        {
+                            label: 'Média da Turma',
+                            data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.1,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Comparação com a Média da Turma'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Média'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== RELATÓRIOS (mantido da versão anterior com ajustes) ====================
         async function mostrarRelatorioProfessor() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-2xl font-bold text-red-700">Relatório por Turma</h3>
-                        <button onclick="mostrarDashboardTurma()" class="btn-primario">
-                            Dashboard de Períodos
-                        </button>
                     </div>
                     <div class="turmas-container">
                         <div class="turmas-buttons">
@@ -2553,151 +2537,7 @@
             window.turmaSelecionada = null;
         }
 
-        async function mostrarDashboardTurma() {
-            UIManager.elements.contentArea.innerHTML = `
-                <div class="card p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-2xl font-bold text-red-700">Dashboard de Períodos</h3>
-                        <button onclick="mostrarRelatorioProfessor()" class="btn-secundario">
-                            Voltar para Relatórios
-                        </button>
-                    </div>
-                    <div class="turmas-container">
-                        <div class="turmas-buttons">
-                            ${CONFIG.TURMAS.map(turma => `
-                                <button onclick="carregarDashboardTurma('${turma}')" class="btn-turma-compact" id="btn-dashboard-${turma}">
-                                    ${turma}
-                                </button>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div id="dashboard-turma-container" class="mt-4">
-                        <p class="text-gray-500 text-center py-8">Selecione uma turma para visualizar o dashboard</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function carregarDashboardTurma(turma) {
-            document.querySelectorAll('.btn-turma-compact').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`btn-dashboard-${turma}`).classList.add('active');
-            
-            document.getElementById('dashboard-turma-container').innerHTML = `
-                <div class="text-center py-8">
-                    <div class="spinner"></div>
-                    <p class="mt-4 text-gray-600">Carregando dashboard da turma ${Utils.escapeHTML(turma)}...</p>
-                </div>
-            `;
-            
-            try {
-                const response = await apiGet('getDashboardPeriodos', { turma: turma }, true);
-                
-                if (response.success && response.data) {
-                    const dashboard = response.data;
-                    renderizarDashboardTurma(turma, dashboard);
-                } else {
-                    throw new Error(response.error || 'Erro ao carregar dashboard');
-                }
-            } catch (error) {
-                console.error('Erro ao carregar dashboard:', error);
-                document.getElementById('dashboard-turma-container').innerHTML = `
-                    <div class="text-center py-8">
-                        <p class="text-red-500">Erro ao carregar dashboard: ${Utils.escapeHTML(error.message || String(error))}</p>
-                        <button onclick="carregarDashboardTurma('${turma}')" class="btn-secundario mt-4">
-                            Tentar Novamente
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
-        function renderizarDashboardTurma(turma, dashboard) {
-            const config = PERIODOS_CONFIG[turma];
-            
-            let periodoCardsHTML = '';
-            Object.keys(dashboard.periodos).forEach(periodoKey => {
-                const periodo = dashboard.periodos[periodoKey];
-                const estatisticas = dashboard.estatisticas.alunosPorPeriodo[periodoKey];
-                
-                periodoCardsHTML += `
-                    <div class="periodo-card" onclick="carregarRelatorioTurmaPorPeriodo('${turma}', ${periodoKey})">
-                        <div class="periodo-header">
-                            <h5>${periodo.label}</h5>
-                            <span class="periodo-badge">${config.tipo === 'trimestral' ? 'Trim' : 'Sem'}</span>
-                        </div>
-                        <div class="periodo-stats">
-                            <div class="periodo-stat">
-                                <span class="stat-label">Tarefas</span>
-                                <span class="stat-value">${periodo.tarefas}</span>
-                            </div>
-                            <div class="periodo-stat">
-                                <span class="stat-label">Média</span>
-                                <span class="stat-value ${parseFloat(periodo.mediaGeral) >= 6 ? 'text-green-600' : 'text-red-600'}">
-                                    ${periodo.mediaGeral}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-500">
-                            <div class="flex justify-between">
-                                <span>Aprovados: ${estatisticas.aprovados}</span>
-                                <span>Reprovados: ${estatisticas.reprovados}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            const html = `
-                <div class="dashboard-periodos">
-                    <div>
-                        <h4 class="text-lg font-semibold text-red-700 mb-4">Dashboard da Turma ${Utils.escapeHTML(turma)}</h4>
-                        <div class="periodo-cards">
-                            ${periodoCardsHTML}
-                        </div>
-                        
-                        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <h5 class="font-semibold text-blue-800 mb-2">Estatísticas Gerais</h5>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="text-center">
-                                    <span class="block text-2xl font-bold text-blue-700">${dashboard.estatisticas.totalAlunos}</span>
-                                    <span class="text-sm text-blue-600">Total de Alunos</span>
-                                </div>
-                                <div class="text-center">
-                                    <span class="block text-2xl font-bold text-blue-700">${dashboard.estatisticas.totalTarefas}</span>
-                                    <span class="text-sm text-blue-600">Total de Tarefas</span>
-                                </div>
-                                <div class="text-center">
-                                    <span class="block text-2xl font-bold text-blue-700">${config.tipo}</span>
-                                    <span class="text-sm text-blue-600">Tipo de Período</span>
-                                </div>
-                                <div class="text-center">
-                                    <span class="block text-2xl font-bold text-blue-700">${config.periodos}</span>
-                                    <span class="text-sm text-blue-600">Períodos no Ano</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="grafico-container">
-                        <h5 class="font-semibold text-gray-800 mb-4">Médias por Período</h5>
-                        <div class="text-center py-8 text-gray-500">
-                            <p>Gráfico de médias por período</p>
-                            <p class="text-sm mt-2">(Implementação do gráfico em desenvolvimento)</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('dashboard-turma-container').innerHTML = html;
-        }
-
         async function carregarRelatorioTurma(turma) {
-            carregarRelatorioTurmaPorPeriodo(turma, 'todos');
-        }
-
-        async function carregarRelatorioTurmaPorPeriodo(turma, periodo) {
             document.querySelectorAll('.btn-turma-compact').forEach(btn => {
                 btn.classList.remove('active');
             });
@@ -2708,21 +2548,204 @@
             document.getElementById('relatorio-turma-container').innerHTML = `
                 <div class="text-center py-8">
                     <div class="spinner"></div>
-                    <p class="mt-4 text-gray-600">Carregando relatório da turma ${Utils.escapeHTML(turma)}${periodo !== 'todos' ? ` - ${Utils.getPeriodoLabel(turma, periodo)}` : ''}...</p>
+                    <p class="mt-4 text-gray-600">Carregando relatório da turma ${Utils.escapeHTML(turma)}...</p>
                 </div>
             `;
             
             try {
-                const response = await apiGet('getRelatorioTurmaPorPeriodo', { 
-                    turma: turma, 
-                    periodo: periodo 
-                }, true);
+                const response = await apiGet('getRelatorioTurma', { turma: turma }, true);
+                const relatorio = response.data || {};
                 
-                if (response.success && response.data) {
-                    renderizarRelatorioTurma(response.data);
+                let relatorioTurmaHTML = `
+                    <div class="relatorio-header">
+                        <h4 class="text-lg font-semibold text-red-700">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
+                    </div>
+                    <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
+                        Total de alunos: ${relatorio.alunos?.length || 0} | Total de tarefas: ${relatorio.tarefas?.length || 0} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
+                    </div>
+                `;
+                
+                if (!relatorio.alunos || relatorio.alunos.length === 0) {
+                    relatorioTurmaHTML += `
+                        <div class="text-center py-8">
+                            <p class="text-gray-500 mb-4">Nenhum aluno encontrado na turma ${Utils.escapeHTML(turma)}.</p>
+                        </div>
+                    `;
                 } else {
-                    throw new Error(response.error || 'Erro ao carregar relatório');
+                    // Agrupar tarefas por período
+                    const tarefasPorPeriodo = {};
+                    if (relatorio.tarefas) {
+                        relatorio.tarefas.forEach(tarefa => {
+                            if (!tarefasPorPeriodo[tarefa.Periodo]) {
+                                tarefasPorPeriodo[tarefa.Periodo] = [];
+                            }
+                            tarefasPorPeriodo[tarefa.Periodo].push(tarefa);
+                        });
+                    }
+                    
+                    const periodosComTarefas = Object.keys(tarefasPorPeriodo).sort((a, b) => a - b);
+                    
+                    if (periodosComTarefas.length === 0) {
+                        // Sem tarefas, mostrar apenas médias
+                        relatorioTurmaHTML += `
+                            <div class="overflow-x-auto border rounded-lg mt-4">
+                                <table class="min-w-full compact-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">1º Bim</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">2º Bim</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">3º Bim</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">4º Bim</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">Média Geral</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${relatorio.alunos.map(aluno => {
+                                            const medias = [
+                                                parseFloat(aluno['1º Bim']) || 0,
+                                                parseFloat(aluno['2º Bim']) || 0,
+                                                parseFloat(aluno['3º Bim']) || 0,
+                                                parseFloat(aluno['4º Bim']) || 0
+                                            ];
+                                            const mediaGeral = Utils.calcularMediaGeral(medias);
+                                            
+                                            return `
+                                                <tr>
+                                                    <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
+                                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                                    ${medias.map(media => `
+                                                        <td class="px-4 py-3 text-center border-b">
+                                                            <span class="${Utils.obterCorMedia(media)}">
+                                                                ${Utils.formatarNota(media)}
+                                                            </span>
+                                                        </td>
+                                                    `).join('')}
+                                                    <td class="px-4 py-3 text-center border-b">
+                                                        <span class="${Utils.obterCorMedia(mediaGeral)} font-bold">
+                                                            ${Utils.formatarNota(mediaGeral)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    } else {
+                        // Com tarefas, mostrar tabela completa
+                        relatorioTurmaHTML += `
+                            <div class="overflow-x-auto border rounded-lg mt-4">
+                                <table class="min-w-full compact-table" id="tabela-relatorio">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b" rowspan="2">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" colspan="4">Médias por Bimestre</th>
+                        `;
+                        
+                        // Adicionar cabeçalhos para cada período
+                        periodosComTarefas.forEach(periodoNum => {
+                            const periodoNome = CONFIG.PERIODOS[periodoNum] || `Período ${periodoNum}`;
+                            const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
+                            relatorioTurmaHTML += `
+                                <th class="px-2 py-3 text-center font-semibold border-b relatorio-tarefa-header" colspan="${tarefasPeriodo.length * 4}">
+                                    ${periodoNome}
+                                </th>
+                            `;
+                        });
+                        
+                        relatorioTurmaHTML += `</tr><tr>`;
+                        
+                        // Cabeçalhos das médias
+                        relatorioTurmaHTML += `
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">1º Bim</th>
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">2º Bim</th>
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">3º Bim</th>
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">4º Bim</th>
+                        `;
+                        
+                        // Cabeçalhos das partes por tarefa
+                        periodosComTarefas.forEach(periodoNum => {
+                            const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
+                            tarefasPeriodo.forEach((tarefa, tarefaIndex) => {
+                                for (let parte = 1; parte <= 4; parte++) {
+                                    relatorioTurmaHTML += `
+                                        <th class="px-1 py-2 text-center border-b relatorio-parte-header">P${parte}</th>
+                                    `;
+                                }
+                            });
+                        });
+                        
+                        relatorioTurmaHTML += `
+                                </tr>
+                            </thead>
+                            <tbody>
+                        `;
+                        
+                        // Dados dos alunos
+                        relatorio.alunos.forEach((aluno) => {
+                            const medias = [
+                                parseFloat(aluno['1º Bim']) || 0,
+                                parseFloat(aluno['2º Bim']) || 0,
+                                parseFloat(aluno['3º Bim']) || 0,
+                                parseFloat(aluno['4º Bim']) || 0
+                            ];
+                            const mediaGeral = Utils.calcularMediaGeral(medias);
+                            
+                            relatorioTurmaHTML += `
+                                <tr>
+                                    <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                            `;
+                            
+                            // Médias dos períodos
+                            medias.forEach(media => {
+                                relatorioTurmaHTML += `
+                                    <td class="px-1 py-3 text-center border-b">
+                                        <span class="${Utils.obterCorMedia(media)} font-semibold">
+                                            ${Utils.formatarNota(media)}
+                                        </span>
+                                    </td>
+                                `;
+                            });
+                            
+                            // Notas das tarefas por período
+                            periodosComTarefas.forEach(periodoNum => {
+                                const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
+                                
+                                tarefasPeriodo.forEach((tarefa, tarefaIndex) => {
+                                    for (let parte = 1; parte <= 4; parte++) {
+                                        const chaveNota = `P${parte}_T${tarefaIndex + 1}_P${periodoNum}`;
+                                        let notaParte = parseFloat(aluno[chaveNota]) || 0;
+                                        notaParte = Utils.validarNota(notaParte);
+                                        
+                                        relatorioTurmaHTML += `
+                                            <td class="px-1 py-3 text-center border-b">
+                                                <span class="text-gray-600">
+                                                    ${notaParte > 0 ? Utils.formatarNota(notaParte) : '-'}
+                                                </span>
+                                            </td>
+                                        `;
+                                    }
+                                });
+                            });
+                            
+                            relatorioTurmaHTML += `</tr>`;
+                        });
+                        
+                        relatorioTurmaHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    }
                 }
+                
+                document.getElementById('relatorio-turma-container').innerHTML = relatorioTurmaHTML;
+                
             } catch (error) {
                 console.error('Erro ao carregar relatório:', error);
                 document.getElementById('relatorio-turma-container').innerHTML = `
@@ -2734,161 +2757,6 @@
                     </div>
                 `;
             }
-        }
-
-        function renderizarRelatorioTurma(relatorio) {
-            const periodoLabel = relatorio.periodoLabel;
-            const tipoPeriodo = relatorio.tipoPeriodo;
-            
-            let relatorioTurmaHTML = `
-                <div class="relatorio-header">
-                    <div class="flex justify-between items-center">
-                        <h4 class="text-lg font-semibold text-red-700">Relatório da Turma ${Utils.escapeHTML(relatorio.turma)}</h4>
-                        <div class="periodo-selector">
-                            <span class="text-sm font-medium text-gray-700">Período:</span>
-                            <div class="periodo-buttons mt-2">
-                                <button onclick="carregarRelatorioTurmaPorPeriodo('${relatorio.turma}', 'todos')" 
-                                        class="periodo-btn ${relatorio.periodo === 'todos' ? 'active' : ''}">
-                                    Todos
-                                </button>
-            `;
-            
-            const config = PERIODOS_CONFIG[relatorio.turma];
-            if (config) {
-                config.labels.forEach((label, index) => {
-                    const periodoNum = index + 1;
-                    relatorioTurmaHTML += `
-                        <button onclick="carregarRelatorioTurmaPorPeriodo('${relatorio.turma}', ${periodoNum})" 
-                                class="periodo-btn ${relatorio.periodo == periodoNum ? 'active' : ''}">
-                            ${label}
-                        </button>
-                    `;
-                });
-            }
-            
-            relatorioTurmaHTML += `
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
-                    ${periodoLabel} | Total de alunos: ${relatorio.totalAlunos} | Total de tarefas: ${relatorio.totalTarefas} | Tipo: ${tipoPeriodo} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
-                </div>
-            `;
-            
-            if (!relatorio.alunos || relatorio.alunos.length === 0) {
-                relatorioTurmaHTML += `
-                    <div class="text-center py-8">
-                        <p class="text-gray-500 mb-4">Nenhum aluno encontrado na turma ${Utils.escapeHTML(relatorio.turma)}.</p>
-                    </div>
-                `;
-            } else {
-                relatorioTurmaHTML += `
-                    <div class="overflow-x-auto border rounded-lg mt-4">
-                        <table class="min-w-full compact-table" id="tabela-relatorio">
-                            <thead>
-                                <tr>
-                                    <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Nº</th>
-                                    <th class="px-4 py-3 text-left font-semibold border-b" rowspan="2">Aluno</th>
-                                    <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Média ${relatorio.periodo !== 'todos' ? 'Período' : 'Geral'}</th>
-                `;
-                
-                if (relatorio.tarefas && relatorio.tarefas.length > 0) {
-                    relatorio.tarefas.forEach((tarefa, index) => {
-                        const periodoBadgeClass = Utils.getPeriodoBadgeClass(relatorio.turma, tarefa.Periodo);
-                        const periodoLabelTarefa = Utils.getPeriodoLabel(relatorio.turma, tarefa.Periodo);
-                        
-                        relatorioTurmaHTML += `
-                            <th class="px-2 py-3 text-center font-semibold border-b relatorio-tarefa-header" colspan="4">
-                                ${Utils.escapeHTML(String(tarefa.Tema))}
-                                <span class="${periodoBadgeClass} ml-2">${periodoLabelTarefa}</span>
-                            </th>
-                        `;
-                    });
-                    
-                    relatorioTurmaHTML += `</tr><tr>`;
-                    
-                    relatorio.tarefas.forEach(() => {
-                        relatorioTurmaHTML += `
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">P1</th>
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">P2</th>
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">P3</th>
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">P4</th>
-                        `;
-                    });
-                }
-                
-                relatorioTurmaHTML += `
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                
-                relatorio.alunos.forEach((aluno) => {
-                    let media = relatorio.periodo !== 'todos' ? aluno.MediaPeriodo : aluno.MediaGeral;
-                    media = parseFloat(media) || 0;
-                    
-                    relatorioTurmaHTML += `
-                        <tr>
-                            <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
-                            <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
-                            <td class="px-4 py-3 text-center border-b">
-                                <span class="${media >= 6.0 ? 'text-green-600 font-bold' : 'text-red-600 font-semibold'}">
-                                    ${media.toFixed(1)}
-                                </span>
-                            </td>
-                    `;
-                    
-                    if (relatorio.tarefas && relatorio.tarefas.length > 0) {
-                        relatorio.tarefas.forEach((tarefa, tarefaIndex) => {
-                            for (let parte = 1; parte <= 4; parte++) {
-                                const parteGlobal = (tarefaIndex * 4) + parte;
-                                const chavesNota = [
-                                    `Parte${parteGlobal}`,
-                                    `NotaParte${parteGlobal}`,
-                                    `P${parte}_T${tarefaIndex + 1}`,
-                                    `Parte${parte}_T${tarefaIndex + 1}`,
-                                    `Nota${parteGlobal}`
-                                ];
-                                
-                                let notaParte = 0;
-                                
-                                for (const chave of chavesNota) {
-                                    if (aluno[chave] !== undefined && aluno[chave] !== null && aluno[chave] !== '') {
-                                        const valor = aluno[chave];
-                                        const valorNumerico = parseFloat(valor);
-                                        if (!isNaN(valorNumerico)) {
-                                            if ([0, 2, 2.5].includes(valorNumerico)) {
-                                                notaParte = valorNumerico;
-                                            } else {
-                                                notaParte = 0;
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-                                
-                                if (notaParte === 0 && aluno[`Nota${tarefaIndex + 1}`] > 0) {
-                                    notaParte = Math.min(parseFloat(aluno[`Nota${tarefaIndex + 1}`]) / 4, 2.5);
-                                    notaParte = Utils.validarNota(notaParte);
-                                }
-                                
-                                relatorioTurmaHTML += `<td class="px-1 py-3 text-center border-b"><span class="text-gray-600">${notaParte > 0 ? Utils.formatarNota(notaParte) : '-'}</span></td>`;
-                            }
-                        });
-                    }
-                    
-                    relatorioTurmaHTML += `</tr>`;
-                });
-                
-                relatorioTurmaHTML += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }
-            
-            document.getElementById('relatorio-turma-container').innerHTML = relatorioTurmaHTML;
         }
 
         function exportarParaExcel(turma) {
@@ -2933,7 +2801,7 @@
                 doc.autoTable({
                     html: table,
                     startY: 30,
-                    styles: { fontSize: 8 },
+                    styles: { fontSize: 7 },
                     headStyles: { fillColor: [204, 0, 0] }
                 });
 
@@ -2943,41 +2811,8 @@
             }
         }
 
-        // ==================== INICIALIZAÇÃO ====================
-        document.addEventListener('DOMContentLoaded', init);
-
-        // ==================== EXPORTAÇÃO DE FUNÇÕES GLOBAIS ====================
-        window.logout = function() {
-            AuthManager.logout();
-        };
-
-        window.closeModal = function() {
-            UIManager.closeModal();
-        };
-
-        window.toggleRmVisibility = toggleRmVisibility;
-        window.mostrarPainelProfessor = mostrarPainelProfessor;
-        window.mostrarPainelAluno = mostrarPainelAluno;
-        window.mostrarBoletimAluno = mostrarBoletimAluno;
-        window.mostrarRelatorioProfessor = mostrarRelatorioProfessor;
-        window.mostrarDashboardTurma = mostrarDashboardTurma;
-        window.exportarParaExcel = exportarParaExcel;
-        window.exportarParaPDF = exportarParaPDF;
-        window.carregarRelatorioTurma = carregarRelatorioTurma;
-        window.carregarRelatorioTurmaPorPeriodo = carregarRelatorioTurmaPorPeriodo;
-        window.carregarDashboardTurma = carregarDashboardTurma;
-        window.salvarTarefaUnificada = salvarTarefaUnificada;
-        window.excluirTarefaDireto = excluirTarefaDireto;
-        window.editarTarefa = editarTarefa;
-        window.limparFormulario = limparFormulario;
-        window.salvarLinkAluno = salvarLinkAluno;
-        window.excluirLinkAluno = excluirLinkAluno;
-        window.toggleFundamentoCientifico = toggleFundamentoCientifico;
-        window.togglePartesTarefa = togglePartesTarefa;
-        window.filtrarTarefasPorPeriodo = filtrarTarefasPorPeriodo;
-
-        // ==================== SEÇÃO DIAGNÓSTICO ====================
-        window.mostrarPainelDiagnostico = async function() {
+        // ==================== PAINEL DE DIAGNÓSTICO ====================
+        async function mostrarPainelDiagnostico() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
                     <h3 class="text-2xl font-bold text-red-700 mb-6">Painel de Diagnóstico do Sistema</h3>
@@ -3021,14 +2856,6 @@
                         </button>
                     </div>
 
-                    <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <h4 class="font-semibold text-green-800 mb-2">Migração para Sistema de Períodos</h4>
-                        <button onclick="migrarParaSistemaPeriodos()" class="btn-primario text-sm" style="background-color: #10b981;">
-                            Executar Migração
-                        </button>
-                        <p class="text-green-600 text-xs mt-2">Atribui automaticamente períodos às tarefas existentes</p>
-                    </div>
-
                     <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <h4 class="font-semibold text-red-800 mb-2">Limpeza de Cache</h4>
                         <button onclick="limparCacheCompleto()" class="btn-primario text-sm" style="background-color: #dc2626;">
@@ -3042,7 +2869,7 @@
             carregarStatusCache();
             carregarEstatisticasSistema();
             carregarMetricasPerformance();
-        };
+        }
 
         function carregarStatusCache() {
             const container = document.getElementById('status-cache');
@@ -3101,10 +2928,6 @@
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Tempo Total API:</span>
                             <span class="font-semibold">${metricasAPI.tempoTotalAPI.toFixed(0)} ms</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Sistema de Períodos:</span>
-                            <span class="font-semibold text-green-600">Ativo</span>
                         </div>
                     </div>
                 `;
@@ -3171,23 +2994,6 @@
             }
         }
 
-        async function migrarParaSistemaPeriodos() {
-            if (confirm('Esta ação atribuirá automaticamente períodos às tarefas existentes com base na data da aula. Deseja continuar?')) {
-                try {
-                    const response = await apiPost('migrarParaSistemaPeriodos', {});
-                    
-                    if (response.success) {
-                        UIManager.showModal('Sucesso', response.message);
-                        CacheManager.clear();
-                    } else {
-                        throw new Error(response.error || 'Erro na migração');
-                    }
-                } catch (error) {
-                    UIManager.showModal('Erro', `Falha na migração: ${error.message}`);
-                }
-            }
-        }
-
         window.testarValidacaoLink = function() {
             const linkTeste = prompt('Digite um link para testar a validação:');
             if (linkTeste) {
@@ -3219,6 +3025,41 @@
             }
         };
 
+        // ==================== INICIALIZAÇÃO ====================
+        document.addEventListener('DOMContentLoaded', init);
+
+        // ==================== EXPORTAÇÃO DE FUNÇÕES GLOBAIS ====================
+        window.logout = function() {
+            AuthManager.logout();
+        };
+
+        window.closeModal = function() {
+            UIManager.closeModal();
+        };
+
+        window.toggleRmVisibility = toggleRmVisibility;
+        window.mostrarPainelProfessor = mostrarPainelProfessor;
+        window.mostrarPainelAluno = mostrarPainelAluno;
+        window.mostrarRelatorioProfessor = mostrarRelatorioProfessor;
+        window.mostrarPainelGraficos = mostrarPainelGraficos;
+        window.mostrarGraficosAluno = mostrarGraficosAluno;
+        window.exportarParaExcel = exportarParaExcel;
+        window.exportarParaPDF = exportarParaPDF;
+        window.carregarRelatorioTurma = carregarRelatorioTurma;
+        window.carregarGraficosTurma = carregarGraficosTurma;
+        window.salvarTarefaUnificada = salvarTarefaUnificada;
+        window.excluirTarefaDireto = excluirTarefaDireto;
+        window.editarTarefa = editarTarefa;
+        window.limparFormulario = limparFormulario;
+        window.salvarLinkAluno = salvarLinkAluno;
+        window.excluirLinkAluno = excluirLinkAluno;
+        window.toggleFundamentoCientifico = toggleFundamentoCientifico;
+        window.togglePartesTarefa = togglePartesTarefa;
+        window.atualizarTodasMedias = atualizarTodasMedias;
+        window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
+        window.testarValidacaoLink = testarValidacaoLink;
+        window.limparCache = limparCache;
+        window.limparCacheCompleto = limparCacheCompleto;
         window.carregarMetricasPerformance = carregarMetricasPerformance;
     </script>
 </body>
