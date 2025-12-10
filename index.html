@@ -24,10 +24,10 @@
     <div id="app-container" class="w-full max-w-7xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
         <header class="mb-8 border-b pb-4">
             <div class="header-content">
-                <h1 class="text-3xl font-extrabold text-red-700 text-center">Sistema de Gestão de Tarefas</h1>
+                <h1 class="text-3xl font-extrabold text-red-800 text-center">Sistema de Gestão de Tarefas</h1>
                 <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
                 <div class="absolute top-0 right-0 flex space-x-2">
-                    <button id="tarefasBtn" class="btn-tarefas hidden">Tarefas</button>
+                    <button id="tarefasBtn" class="btn-tarefas hidden" style="background-color: #dc2626;">Tarefas</button>
                     <button id="graficosBtn" class="btn-primario hidden">Gráficos</button>
                     <button id="diagnosticoBtn" class="btn-primario hidden">Diagnóstico</button>
                     <button id="relatorioBtn" class="btn-primario hidden" style="background-color: #dc2626;">Relatório</button>
@@ -255,11 +255,11 @@
                 const num = parseFloat(media);
                 if (isNaN(num)) return 'text-gray-500';
                 
-                if (num >= 9) return 'text-red-700 font-bold';
-                if (num >= 7.5) return 'text-red-600 font-semibold';
-                if (num >= 6) return 'text-red-500 font-semibold';
-                if (num >= 4) return 'text-red-400';
-                return 'text-red-300';
+                if (num >= 9) return 'text-red-800 font-bold';
+                if (num >= 7.5) return 'text-red-700 font-semibold';
+                if (num >= 6) return 'text-red-600 font-semibold';
+                if (num >= 4) return 'text-red-500';
+                return 'text-red-400';
             },
 
             obterCorFundoMedia: (media) => {
@@ -495,7 +495,7 @@
                 if (user.Perfil === "Professor") {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
-                            Logado como: <span class="font-semibold text-red-700">${Utils.escapeHTML(user.NomeCompleto)} (${user.Perfil})</span>
+                            Logado como: <span class="font-semibold text-red-800">${Utils.escapeHTML(user.NomeCompleto)} (${user.Perfil})</span>
                         </div>
                     `;
                     UIManager.elements.relatorioBtn.onclick = mostrarRelatorioProfessor;
@@ -509,7 +509,7 @@
                 } else {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
-                            Logado como: <span class="font-semibold text-red-700">${Utils.escapeHTML(user.NomeCompleto)} (${user.Perfil})</span> | 
+                            Logado como: <span class="font-semibold text-red-800">${Utils.escapeHTML(user.NomeCompleto)} (${user.Perfil})</span> | 
                             Turma: ${Utils.escapeHTML(user.Turma || 'N/A')} | 
                             Nº: ${Utils.escapeHTML(user.Numero || 'N/A')} |
                             Email: ${Utils.escapeHTML(user.Email || 'N/A')}
@@ -792,21 +792,45 @@
             
             UIManager.elements.contentArea.innerHTML = `
                 <div id="painelProfessor" class="space-y-6">
-                    <div class="card p-6 border-t-4 border-red-600">
+                    <div class="card p-6 border-t-4 border-red-700">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-2xl font-bold text-red-700" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Painel de Tarefas'}</h3>
+                            <h3 class="text-2xl font-bold text-red-800" id="titulo-formulario">${STATE.tarefaEditando ? 'Editar Tarefa' : 'Painel de Tarefas'}</h3>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                             <div class="form-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Turmas:</label>
-                                <div class="checkbox-group grid grid-cols-3">
-                                    ${CONFIG.TURMAS.map(t => `
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="grid grid-cols-2 gap-2 mb-2">
                                         <div class="checkbox-item">
-                                            <input type="checkbox" id="turma-${t}" value="${t}" class="turma-checkbox">
-                                            <label for="turma-${t}">${t}</label>
+                                            <input type="checkbox" id="turma-1A" value="1A" class="turma-checkbox">
+                                            <label for="turma-1A">1A</label>
                                         </div>
-                                    `).join('')}
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="turma-1B" value="1B" class="turma-checkbox">
+                                            <label for="turma-1B">1B</label>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 mb-2">
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="turma-2A" value="2A" class="turma-checkbox">
+                                            <label for="turma-2A">2A</label>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="turma-2B" value="2B" class="turma-checkbox">
+                                            <label for="turma-2B">2B</label>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="turma-3A" value="3A" class="turma-checkbox">
+                                            <label for="turma-3A">3A</label>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="turma-3B" value="3B" class="turma-checkbox">
+                                            <label for="turma-3B">3B</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -863,7 +887,7 @@
 
                     <div class="card p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-2xl font-bold text-red-700">Tarefas Criadas</h3>
+                            <h3 class="text-2xl font-bold text-red-800">Tarefas Criadas</h3>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full compact-table">
@@ -955,8 +979,8 @@
                 
                 return `
                 <tr class="tarefa-item" id="tarefa-row-${tarefa.ID}">
-                    <td class="turma-column">${Utils.escapeHTML(tarefa.Turma)}</td>
-                    <td class="periodo-column">
+                    <td class="turma-column text-center">${Utils.escapeHTML(tarefa.Turma)}</td>
+                    <td class="periodo-column text-center">
                         <span class="badge-periodo periodo-${tarefa.Periodo}">${periodoNome}</span>
                     </td>
                     <td class="px-4 py-2">
@@ -971,7 +995,7 @@
                             ${tarefa.Parte4 ? `<div class="text-sm text-gray-600"><span class="font-medium">Parte 4:</span> <span class="conteudo-formatado">${Utils.formatarConteudoParaExibicao(String(tarefa.Parte4).substring(0, 100))}${String(tarefa.Parte4).length > 100 ? '...' : ''}</span></div>` : ''}
                         </div>
                     </td>
-                    <td class="data-column">${Utils.formatarData(tarefa.DataAula)}</td>
+                    <td class="data-column text-center">${Utils.formatarData(tarefa.DataAula)}</td>
                     <td class="acoes-column">
                         <div class="flex justify-center space-x-2">
                             <button onclick="editarTarefa('${tarefa.ID}')" class="btn-editar">
@@ -1156,7 +1180,7 @@
                 const textoOriginal = botao.textContent;
                 botao.setAttribute('data-confirmando', 'true');
                 botao.textContent = 'Clique novamente para excluir';
-                botao.style.backgroundColor = '#dc2626';
+                botao.style.backgroundColor = '#b91c1c';
                 
                 setTimeout(() => {
                     if (botao.getAttribute('data-confirmando') === 'true') {
@@ -1235,7 +1259,7 @@
                 <div id="painelAluno" class="space-y-6">
                     <div class="card p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-2xl font-bold text-red-700">Minhas Tarefas</h3>
+                            <h3 class="text-2xl font-bold text-red-800">Minhas Tarefas</h3>
                             <div class="medidas-container">
                                 <div class="flex space-x-4">
                                     ${periodosComNota.map(periodo => {
@@ -1843,7 +1867,7 @@
         async function mostrarPainelGraficos() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-6">Análise de Desempenho - Gráficos</h3>
+                    <h3 class="text-2xl font-bold text-red-800 mb-6">Análise de Desempenho - Gráficos</h3>
                     
                     <div class="turmas-container mb-6">
                         <div class="turmas-buttons">
@@ -1884,6 +1908,10 @@
                 }
                 
                 const dados = response.data;
+                
+                if (!dados.dadosPeriodos || !Array.isArray(dados.dadosPeriodos)) {
+                    throw new Error('Estrutura de dados inválida para gráficos');
+                }
                 
                 container.innerHTML = `
                     <div class="mb-8">
@@ -1927,11 +1955,11 @@
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                             ${dados.dadosPeriodos.map((periodo, index) => `
                                 <div class="bg-white p-4 border rounded-lg text-center">
-                                    <div class="text-sm text-gray-600 mb-1">${periodo.nomePeriodo}</div>
-                                    <div class="text-2xl font-bold ${Utils.obterCorMedia(periodo.mediaTurma)}">${parseFloat(periodo.mediaTurma).toFixed(1)}</div>
+                                    <div class="text-sm text-gray-600 mb-1">${periodo.nomePeriodo || `Período ${index + 1}`}</div>
+                                    <div class="text-2xl font-bold ${Utils.obterCorMedia(periodo.mediaTurma)}">${parseFloat(periodo.mediaTurma || 0).toFixed(1)}</div>
                                     <div class="text-xs text-gray-500 mt-1">
                                         Melhor: ${Utils.formatarNota(periodo.melhorNota)} | 
-                                        Aprovação: ${periodo.aprovacaoPercentual}%
+                                        Aprovação: ${periodo.aprovacaoPercentual || 0}%
                                     </div>
                                 </div>
                             `).join('')}
@@ -1943,7 +1971,16 @@
                 renderGraficoComparativoPeriodos(dados.dadosPeriodos);
                 renderGraficoEvolucaoTurma(dados.dadosPeriodos);
                 renderGraficoDistribuicaoNotas(dados);
-                renderGraficoTopAlunos(dados.alunos);
+                if (dados.alunos && Array.isArray(dados.alunos)) {
+                    renderGraficoTopAlunos(dados.alunos);
+                } else {
+                    document.querySelector('#graficoTopAlunos').closest('.bg-white').innerHTML = `
+                        <h5 class="font-medium text-gray-700 mb-3">Top 10 Alunos</h5>
+                        <div class="text-center py-8 text-gray-500">
+                            Dados de alunos não disponíveis
+                        </div>
+                    `;
+                }
                 
             } catch (error) {
                 console.error('Erro ao carregar gráficos:', error);
@@ -1968,21 +2005,21 @@
             STATE.graficos.periodoComparativo = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: dadosPeriodos.map(p => p.nomePeriodo),
+                    labels: dadosPeriodos.map(p => p.nomePeriodo || `Período ${p.periodo}`),
                     datasets: [{
                         label: 'Média da Turma',
-                        data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
+                        data: dadosPeriodos.map(p => parseFloat(p.mediaTurma || 0)),
                         backgroundColor: [
-                            'rgba(239, 68, 68, 0.7)',
                             'rgba(185, 28, 28, 0.7)',
                             'rgba(153, 27, 27, 0.7)',
-                            'rgba(127, 29, 29, 0.7)'
+                            'rgba(127, 29, 29, 0.7)',
+                            'rgba(99, 23, 23, 0.7)'
                         ],
                         borderColor: [
-                            'rgb(239, 68, 68)',
                             'rgb(185, 28, 28)',
                             'rgb(153, 27, 27)',
-                            'rgb(127, 29, 29)'
+                            'rgb(127, 29, 29)',
+                            'rgb(99, 23, 23)'
                         ],
                         borderWidth: 1
                     }]
@@ -2022,22 +2059,22 @@
             STATE.graficos.evolucaoIndividual = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dadosPeriodos.map(p => p.nomePeriodo),
+                    labels: dadosPeriodos.map(p => p.nomePeriodo || `Período ${p.periodo}`),
                     datasets: [
                         {
                             label: 'Média da Turma',
-                            data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
-                            borderColor: 'rgb(239, 68, 68)',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            data: dadosPeriodos.map(p => parseFloat(p.mediaTurma || 0)),
+                            borderColor: 'rgb(185, 28, 28)',
+                            backgroundColor: 'rgba(185, 28, 28, 0.1)',
                             borderWidth: 3,
                             tension: 0.1,
                             fill: true
                         },
                         {
                             label: 'Melhor Nota',
-                            data: dadosPeriodos.map(p => p.melhorNota),
-                            borderColor: 'rgb(185, 28, 28)',
-                            backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                            data: dadosPeriodos.map(p => p.melhorNota || 0),
+                            borderColor: 'rgb(153, 27, 27)',
+                            backgroundColor: 'rgba(153, 27, 27, 0.1)',
                             borderWidth: 2,
                             borderDash: [5, 5],
                             tension: 0.1,
@@ -2074,20 +2111,22 @@
             const ctx = document.getElementById('graficoDistribuicaoNotas').getContext('2d');
             
             // Calcular distribuição para o último período
-            const ultimoPeriodo = dados.dadosPeriodos[dados.dadosPeriodos.length - 1];
+            const ultimoPeriodo = dados.dadosPeriodos[dados.dadosPeriodos.length - 1] || { medias: [] };
             const distribuicao = [0, 0, 0, 0]; // 0-4, 4-6, 6-8, 8-10
             
-            ultimoPeriodo.medias.forEach(media => {
-                if (media >= 8) {
-                    distribuicao[3]++;
-                } else if (media >= 6) {
-                    distribuicao[2]++;
-                } else if (media >= 4) {
-                    distribuicao[1]++;
-                } else if (media > 0) {
-                    distribuicao[0]++;
-                }
-            });
+            if (ultimoPeriodo.medias && Array.isArray(ultimoPeriodo.medias)) {
+                ultimoPeriodo.medias.forEach(media => {
+                    if (media >= 8) {
+                        distribuicao[3]++;
+                    } else if (media >= 6) {
+                        distribuicao[2]++;
+                    } else if (media >= 4) {
+                        distribuicao[1]++;
+                    } else if (media > 0) {
+                        distribuicao[0]++;
+                    }
+                });
+            }
             
             new Chart(ctx, {
                 type: 'doughnut',
@@ -2096,16 +2135,16 @@
                     datasets: [{
                         data: distribuicao,
                         backgroundColor: [
-                            'rgba(239, 68, 68, 0.7)',
                             'rgba(185, 28, 28, 0.7)',
                             'rgba(153, 27, 27, 0.7)',
-                            'rgba(127, 29, 29, 0.7)'
+                            'rgba(127, 29, 29, 0.7)',
+                            'rgba(99, 23, 23, 0.7)'
                         ],
                         borderColor: [
-                            'rgb(239, 68, 68)',
                             'rgb(185, 28, 28)',
                             'rgb(153, 27, 27)',
-                            'rgb(127, 29, 29)'
+                            'rgb(127, 29, 29)',
+                            'rgb(99, 23, 23)'
                         ],
                         borderWidth: 1
                     }]
@@ -2118,7 +2157,7 @@
                         },
                         title: {
                             display: true,
-                            text: `Distribuição de Notas - ${ultimoPeriodo.nomePeriodo}`
+                            text: `Distribuição de Notas - ${ultimoPeriodo.nomePeriodo || 'Último Período'}`
                         }
                     }
                 }
@@ -2134,12 +2173,12 @@
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: topAlunos.map(a => a.nome.split(' ')[0]), // Primeiro nome apenas
+                    labels: topAlunos.map(a => a.nome ? a.nome.split(' ')[0] : `Aluno ${a.id}`), // Primeiro nome apenas
                     datasets: [{
                         label: 'Média Geral',
-                        data: topAlunos.map(a => parseFloat(a.mediaGeral)),
-                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                        borderColor: 'rgb(239, 68, 68)',
+                        data: topAlunos.map(a => parseFloat(a.mediaGeral || 0)),
+                        backgroundColor: 'rgba(185, 28, 28, 0.7)',
+                        borderColor: 'rgb(185, 28, 28)',
                         borderWidth: 1
                     }]
                 },
@@ -2174,16 +2213,7 @@
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-2xl font-bold text-red-700">Relatório por Turma</h3>
-                    </div>
-                    <div class="turmas-container">
-                        <div class="turmas-buttons">
-                            ${CONFIG.TURMAS.map(turma => `
-                                <button onclick="carregarRelatorioTurma('${turma}')" class="btn-turma-compact" id="btn-turma-${turma}">
-                                    ${turma}
-                                </button>
-                            `).join('')}
-                        </div>
+                        <h3 class="text-2xl font-bold text-red-800">Relatório por Turma</h3>
                         <div class="export-buttons-container">
                             <button onclick="exportarParaExcel(window.turmaSelecionada)" class="btn-primario" id="btn-excel">
                                 Exportar Excel
@@ -2191,6 +2221,15 @@
                             <button onclick="exportarParaPDF(window.turmaSelecionada)" class="btn-primario" id="btn-pdf">
                                 Exportar PDF
                             </button>
+                        </div>
+                    </div>
+                    <div class="turmas-container mb-6">
+                        <div class="turmas-buttons">
+                            ${CONFIG.TURMAS.map(turma => `
+                                <button onclick="carregarRelatorioTurma('${turma}')" class="btn-turma-compact" id="btn-turma-${turma}">
+                                    ${turma}
+                                </button>
+                            `).join('')}
                         </div>
                     </div>
                     <div id="relatorio-turma-container" class="mt-4">
@@ -2223,7 +2262,7 @@
                 
                 let relatorioTurmaHTML = `
                     <div class="relatorio-header">
-                        <h4 class="text-lg font-semibold text-red-700">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
+                        <h4 class="text-lg font-semibold text-red-800">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
                     </div>
                     <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
                         Total de alunos: ${relatorio.alunos?.length || 0} | Total de tarefas: ${relatorio.tarefas?.length || 0} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
@@ -2459,7 +2498,7 @@
                     html: table,
                     startY: 30,
                     styles: { fontSize: 7 },
-                    headStyles: { fillColor: [220, 38, 38] }
+                    headStyles: { fillColor: [185, 28, 28] }
                 });
 
                 doc.save(`relatorio_turma_${turma}.pdf`);
@@ -2472,7 +2511,7 @@
         async function mostrarPainelDiagnostico() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-6">Painel de Diagnóstico do Sistema</h3>
+                    <h3 class="text-2xl font-bold text-red-800 mb-6">Painel de Diagnóstico do Sistema</h3>
                     
                     <div class="diagnostico-grid">
                         <div class="diagnostico-card">
