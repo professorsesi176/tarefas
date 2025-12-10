@@ -39,7 +39,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 36.0.0 - Sistema de 4 Períodos com Gráficos
+            Desenvolvido por Geovane Modena | Versão 36.0.1 - Sistema de 4 Períodos
         </footer>
     </div>
 
@@ -61,10 +61,10 @@
             MAX_PARTE_LEN: 4000,
             TURMAS: ["1A", "1B", "2A", "2B", "3A", "3B"],
             PERIODOS: {
-                1: "1º Bimestre",
-                2: "2º Bimestre",
-                3: "3º Bimestre",
-                4: "4º Bimestre"
+                1: "1º Período",
+                2: "2º Período",
+                3: "3º Período",
+                4: "4º Período"
             }
         };
 
@@ -332,22 +332,22 @@
                 const num = parseFloat(media);
                 if (isNaN(num)) return 'text-gray-500';
                 
-                if (num >= 9) return 'text-green-700 font-bold';
-                if (num >= 7.5) return 'text-green-600 font-semibold';
-                if (num >= 6) return 'text-yellow-600 font-semibold';
-                if (num >= 4) return 'text-orange-600';
-                return 'text-red-600';
+                if (num >= 9) return 'text-red-700 font-bold';
+                if (num >= 7.5) return 'text-red-600 font-semibold';
+                if (num >= 6) return 'text-red-500 font-semibold';
+                if (num >= 4) return 'text-red-400';
+                return 'text-red-300';
             },
 
             obterCorFundoMedia: (media) => {
                 const num = parseFloat(media);
                 if (isNaN(num)) return 'bg-gray-100';
                 
-                if (num >= 9) return 'bg-green-50';
-                if (num >= 7.5) return 'bg-green-100';
-                if (num >= 6) return 'bg-yellow-100';
-                if (num >= 4) return 'bg-orange-100';
-                return 'bg-red-100';
+                if (num >= 9) return 'bg-red-50';
+                if (num >= 7.5) return 'bg-red-100';
+                if (num >= 6) return 'bg-red-200';
+                if (num >= 4) return 'bg-red-300';
+                return 'bg-red-400';
             },
 
             calcularMediaGeral: (medias) => {
@@ -616,8 +616,8 @@
                     UIManager.elements.relatorioBtn.classList.add('hidden');
                     UIManager.elements.diagnosticoBtn.classList.add('hidden');
                     UIManager.elements.tarefasBtn.classList.add('hidden');
-                    UIManager.elements.graficosBtn.classList.remove('hidden');
-                    UIManager.elements.graficosBtn.onclick = mostrarGraficosAluno;
+                    // Removido o botão de gráficos para aluno
+                    UIManager.elements.graficosBtn.classList.add('hidden');
                 }
                 
                 UIManager.elements.logoutBtn.classList.remove('hidden');
@@ -781,7 +781,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v36.0.0 - Sistema de 4 Períodos com Gráficos...');
+                console.log('Inicializando sistema v36.0.1 - Sistema de 4 Períodos...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -913,10 +913,10 @@
                                 <label for="periodo" class="block text-sm font-medium text-gray-700 mb-2">Período</label>
                                 <select id="periodo" class="w-full p-3 border rounded-lg" required>
                                     <option value="">Selecione o período</option>
-                                    <option value="1">1º Bimestre</option>
-                                    <option value="2">2º Bimestre</option>
-                                    <option value="3">3º Bimestre</option>
-                                    <option value="4">4º Bimestre</option>
+                                    <option value="1">1º Período</option>
+                                    <option value="2">2º Período</option>
+                                    <option value="3">3º Período</option>
+                                    <option value="4">4º Período</option>
                                 </select>
                             </div>
                         </div>
@@ -1351,6 +1351,15 @@
                 return;
             }
             
+            // Calcular quais períodos têm nota
+            const periodosComNota = [];
+            for (let i = 1; i <= 4; i++) {
+                const media = STATE.usuarioLogado.Medias?.[`periodo${i}`] || 0;
+                if (media > 0) {
+                    periodosComNota.push(i);
+                }
+            }
+
             UIManager.elements.contentArea.innerHTML = `
                 <div id="painelAluno" class="space-y-6">
                     <div class="card p-6">
@@ -1358,30 +1367,17 @@
                             <h3 class="text-2xl font-bold text-red-700">Minhas Tarefas</h3>
                             <div class="medidas-container">
                                 <div class="flex space-x-4">
-                                    <div class="text-center">
-                                        <div class="text-sm text-gray-600">1º Bim</div>
-                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo1 || 0)}" id="media-1bim">
-                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo1 || 0)}
-                                        </div>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="text-sm text-gray-600">2º Bim</div>
-                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo2 || 0)}" id="media-2bim">
-                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo2 || 0)}
-                                        </div>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="text-sm text-gray-600">3º Bim</div>
-                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo3 || 0)}" id="media-3bim">
-                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo3 || 0)}
-                                        </div>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="text-sm text-gray-600">4º Bim</div>
-                                        <div class="text-lg font-bold ${Utils.obterCorMedia(STATE.usuarioLogado.Medias?.periodo4 || 0)}" id="media-4bim">
-                                            ${Utils.formatarNota(STATE.usuarioLogado.Medias?.periodo4 || 0)}
-                                        </div>
-                                    </div>
+                                    ${periodosComNota.map(periodo => {
+                                        const media = STATE.usuarioLogado.Medias?.[`periodo${periodo}`] || 0;
+                                        return `
+                                            <div class="text-center">
+                                                <div class="text-sm text-gray-600">${periodo}º Período</div>
+                                                <div class="text-lg font-bold ${Utils.obterCorMedia(media)}" id="media-${periodo}periodo">
+                                                    ${Utils.formatarNota(media)}
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
                                 </div>
                             </div>
                         </div>
@@ -1404,7 +1400,7 @@
                         
                         <div id="media-aluno-container" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                             <div class="flex justify-between items-center">
-                                <span class="font-semibold text-gray-800">Média Geral (média dos 4 bimestres):</span>
+                                <span class="font-semibold text-gray-800">Média Geral (média dos 4 períodos):</span>
                                 <span class="text-lg font-bold text-red-700" id="media-geral-aluno">
                                     ${Utils.calcularMediaGeral([
                                         STATE.usuarioLogado.Medias?.periodo1 || 0,
@@ -1555,8 +1551,8 @@
                 <div class="mb-8">
                     <div class="flex items-center mb-4">
                         <h4 class="text-xl font-bold text-gray-800">${periodoNome}</h4>
-                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-medium ${Utils.obterCorFundoMedia(alunoData?.[`${periodoNum}º Bim`] || 0)} ${Utils.obterCorMedia(alunoData?.[`${periodoNum}º Bim`] || 0)}">
-                            Média: ${Utils.formatarNota(alunoData?.[`${periodoNum}º Bim`] || 0)}
+                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-medium ${Utils.obterCorFundoMedia(alunoData?.[`${periodoNum}º Período`] || alunoData?.[`${periodoNum}º Bim`] || 0)} ${Utils.obterCorMedia(alunoData?.[`${periodoNum}º Período`] || alunoData?.[`${periodoNum}º Bim`] || 0)}">
+                            Média: ${Utils.formatarNota(alunoData?.[`${periodoNum}º Período`] || alunoData?.[`${periodoNum}º Bim`] || 0)}
                         </span>
                     </div>
                 `;
@@ -1975,7 +1971,7 @@
             });
         }
 
-        // ==================== PAINEL DE GRÁFICOS ====================
+        // ==================== PAINEL DE GRÁFICOS (apenas para professor) ====================
         async function mostrarPainelGraficos() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
@@ -1996,23 +1992,6 @@
                     </div>
                 </div>
             `;
-        }
-
-        async function mostrarGraficosAluno() {
-            UIManager.elements.contentArea.innerHTML = `
-                <div class="card p-6">
-                    <h3 class="text-2xl font-bold text-red-700 mb-6">Minha Evolução</h3>
-                    
-                    <div id="graficos-aluno-container" class="space-y-8">
-                        <div class="text-center py-8">
-                            <div class="spinner"></div>
-                            <p class="mt-4 text-gray-600">Carregando gráficos da sua evolução...</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            await carregarGraficosAluno();
         }
 
         async function carregarGraficosTurma(turma) {
@@ -2111,92 +2090,6 @@
             }
         }
 
-        async function carregarGraficosAluno() {
-            const container = document.getElementById('graficos-aluno-container');
-            
-            try {
-                // Buscar evolução do aluno
-                const response = await apiGet('getEvolucaoAluno', { 
-                    email: STATE.usuarioLogado.Email, 
-                    turma: STATE.usuarioLogado.Turma 
-                }, true);
-                
-                if (!response.success || !response.data) {
-                    throw new Error(response.error || 'Erro ao carregar dados da evolução');
-                }
-                
-                const evolucao = response.data;
-                
-                // Buscar dados da turma para comparação
-                const turmaResponse = await apiGet('getDadosGraficos', { turma: STATE.usuarioLogado.Turma }, true);
-                const dadosTurma = turmaResponse.success ? turmaResponse.data : null;
-                
-                container.innerHTML = `
-                    <div class="mb-8">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-lg font-semibold text-gray-800">Minha Evolução nos Períodos</h4>
-                            <span class="px-3 py-1 rounded-full text-sm font-medium ${evolucao.tendencia === 'crescendo' ? 'bg-green-100 text-green-800' : evolucao.tendencia === 'decaindo' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">
-                                Tendência: ${evolucao.tendencia}
-                                ${evolucao.crescimento > 0 ? '↑' : evolucao.crescimento < 0 ? '↓' : '→'}
-                            </span>
-                        </div>
-                        <div class="bg-white p-4 border rounded-lg">
-                            <div class="chart-container">
-                                <canvas id="graficoEvolucaoIndividual"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-4 border rounded-lg">
-                            <h5 class="font-medium text-gray-700 mb-3">Comparação com a Turma</h5>
-                            <div class="chart-container">
-                                <canvas id="graficoComparacaoTurma"></canvas>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white p-4 border rounded-lg">
-                            <h5 class="font-medium text-gray-700 mb-3">Resumo do Desempenho</h5>
-                            <div class="space-y-4">
-                                ${evolucao.periodos.map((periodo, index) => `
-                                    <div class="flex justify-between items-center p-3 ${Utils.obterCorFundoMedia(evolucao.medias[index])} rounded">
-                                        <span class="font-medium">${periodo}</span>
-                                        <span class="text-lg font-bold ${Utils.obterCorMedia(evolucao.medias[index])}">
-                                            ${Utils.formatarNota(evolucao.medias[index])}
-                                        </span>
-                                    </div>
-                                `).join('')}
-                                
-                                <div class="flex justify-between items-center p-3 bg-gray-50 border-t border-gray-200 rounded">
-                                    <span class="font-medium">Média Geral</span>
-                                    <span class="text-xl font-bold text-red-700">
-                                        ${Utils.calcularMediaGeral(evolucao.medias)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Renderizar gráficos
-                renderGraficoEvolucaoIndividual(evolucao);
-                if (dadosTurma) {
-                    renderGraficoComparacaoTurma(evolucao, dadosTurma.dadosPeriodos);
-                }
-                
-            } catch (error) {
-                console.error('Erro ao carregar gráficos do aluno:', error);
-                container.innerHTML = `
-                    <div class="text-center py-8">
-                        <p class="text-red-500">Erro ao carregar gráficos: ${Utils.escapeHTML(error.message || String(error))}</p>
-                        <button onclick="carregarGraficosAluno()" class="btn-secundario mt-4">
-                            Tentar Novamente
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
         function renderGraficoComparativoPeriodos(dadosPeriodos) {
             const ctx = document.getElementById('graficoComparativoPeriodos').getContext('2d');
             
@@ -2212,16 +2105,16 @@
                         label: 'Média da Turma',
                         data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
                         backgroundColor: [
-                            'rgba(59, 130, 246, 0.7)',
-                            'rgba(16, 185, 129, 0.7)',
-                            'rgba(245, 158, 11, 0.7)',
-                            'rgba(239, 68, 68, 0.7)'
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(185, 28, 28, 0.7)',
+                            'rgba(153, 27, 27, 0.7)',
+                            'rgba(127, 29, 29, 0.7)'
                         ],
                         borderColor: [
-                            'rgb(59, 130, 246)',
-                            'rgb(16, 185, 129)',
-                            'rgb(245, 158, 11)',
-                            'rgb(239, 68, 68)'
+                            'rgb(239, 68, 68)',
+                            'rgb(185, 28, 28)',
+                            'rgb(153, 27, 27)',
+                            'rgb(127, 29, 29)'
                         ],
                         borderWidth: 1
                     }]
@@ -2266,8 +2159,8 @@
                         {
                             label: 'Média da Turma',
                             data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
-                            borderColor: 'rgb(59, 130, 246)',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
                             borderWidth: 3,
                             tension: 0.1,
                             fill: true
@@ -2275,8 +2168,8 @@
                         {
                             label: 'Melhor Nota',
                             data: dadosPeriodos.map(p => p.melhorNota),
-                            borderColor: 'rgb(16, 185, 129)',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderColor: 'rgb(185, 28, 28)',
+                            backgroundColor: 'rgba(185, 28, 28, 0.1)',
                             borderWidth: 2,
                             borderDash: [5, 5],
                             tension: 0.1,
@@ -2336,15 +2229,15 @@
                         data: distribuicao,
                         backgroundColor: [
                             'rgba(239, 68, 68, 0.7)',
-                            'rgba(245, 158, 11, 0.7)',
-                            'rgba(59, 130, 246, 0.7)',
-                            'rgba(16, 185, 129, 0.7)'
+                            'rgba(185, 28, 28, 0.7)',
+                            'rgba(153, 27, 27, 0.7)',
+                            'rgba(127, 29, 29, 0.7)'
                         ],
                         borderColor: [
                             'rgb(239, 68, 68)',
-                            'rgb(245, 158, 11)',
-                            'rgb(59, 130, 246)',
-                            'rgb(16, 185, 129)'
+                            'rgb(185, 28, 28)',
+                            'rgb(153, 27, 27)',
+                            'rgb(127, 29, 29)'
                         ],
                         borderWidth: 1
                     }]
@@ -2377,8 +2270,8 @@
                     datasets: [{
                         label: 'Média Geral',
                         data: topAlunos.map(a => parseFloat(a.mediaGeral)),
-                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
-                        borderColor: 'rgb(139, 92, 246)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgb(239, 68, 68)',
                         borderWidth: 1
                     }]
                 },
@@ -2408,103 +2301,7 @@
             });
         }
 
-        function renderGraficoEvolucaoIndividual(evolucao) {
-            const ctx = document.getElementById('graficoEvolucaoIndividual').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: evolucao.periodos,
-                    datasets: [{
-                        label: 'Minha Evolução',
-                        data: evolucao.medias,
-                        borderColor: 'rgb(239, 68, 68)',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Minha Evolução nos Períodos'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 10,
-                            title: {
-                                display: true,
-                                text: 'Média'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderGraficoComparacaoTurma(evolucaoAluno, dadosPeriodos) {
-            const ctx = document.getElementById('graficoComparacaoTurma').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: evolucaoAluno.periodos,
-                    datasets: [
-                        {
-                            label: 'Minha Evolução',
-                            data: evolucaoAluno.medias,
-                            borderColor: 'rgb(239, 68, 68)',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.1,
-                            fill: true
-                        },
-                        {
-                            label: 'Média da Turma',
-                            data: dadosPeriodos.map(p => parseFloat(p.mediaTurma)),
-                            borderColor: 'rgb(59, 130, 246)',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            tension: 0.1,
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Comparação com a Média da Turma'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 10,
-                            title: {
-                                display: true,
-                                text: 'Média'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== RELATÓRIOS (mantido da versão anterior com ajustes) ====================
+        // ==================== RELATÓRIOS ====================
         async function mostrarRelatorioProfessor() {
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6">
@@ -2594,20 +2391,20 @@
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b">Nº</th>
                                             <th class="px-4 py-3 text-left font-semibold border-b">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b">1º Bim</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b">2º Bim</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b">3º Bim</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b">4º Bim</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">1º Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">2º Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">3º Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b">4º Período</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b">Média Geral</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         ${relatorio.alunos.map(aluno => {
                                             const medias = [
-                                                parseFloat(aluno['1º Bim']) || 0,
-                                                parseFloat(aluno['2º Bim']) || 0,
-                                                parseFloat(aluno['3º Bim']) || 0,
-                                                parseFloat(aluno['4º Bim']) || 0
+                                                parseFloat(aluno['1º Período'] || aluno['1º Bim']) || 0,
+                                                parseFloat(aluno['2º Período'] || aluno['2º Bim']) || 0,
+                                                parseFloat(aluno['3º Período'] || aluno['3º Bim']) || 0,
+                                                parseFloat(aluno['4º Período'] || aluno['4º Bim']) || 0
                                             ];
                                             const mediaGeral = Utils.calcularMediaGeral(medias);
                                             
@@ -2643,7 +2440,7 @@
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b" rowspan="2">Nº</th>
                                             <th class="px-4 py-3 text-left font-semibold border-b" rowspan="2">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b" colspan="4">Médias por Bimestre</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b" colspan="4">Médias por Período</th>
                         `;
                         
                         // Adicionar cabeçalhos para cada período
@@ -2661,10 +2458,10 @@
                         
                         // Cabeçalhos das médias
                         relatorioTurmaHTML += `
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">1º Bim</th>
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">2º Bim</th>
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">3º Bim</th>
-                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">4º Bim</th>
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">1º Período</th>
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">2º Período</th>
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">3º Período</th>
+                            <th class="px-1 py-2 text-center border-b relatorio-parte-header">4º Período</th>
                         `;
                         
                         // Cabeçalhos das partes por tarefa
@@ -2688,10 +2485,10 @@
                         // Dados dos alunos
                         relatorio.alunos.forEach((aluno) => {
                             const medias = [
-                                parseFloat(aluno['1º Bim']) || 0,
-                                parseFloat(aluno['2º Bim']) || 0,
-                                parseFloat(aluno['3º Bim']) || 0,
-                                parseFloat(aluno['4º Bim']) || 0
+                                parseFloat(aluno['1º Período'] || aluno['1º Bim']) || 0,
+                                parseFloat(aluno['2º Período'] || aluno['2º Bim']) || 0,
+                                parseFloat(aluno['3º Período'] || aluno['3º Bim']) || 0,
+                                parseFloat(aluno['4º Período'] || aluno['4º Bim']) || 0
                             ];
                             const mediaGeral = Utils.calcularMediaGeral(medias);
                             
@@ -3042,7 +2839,6 @@
         window.mostrarPainelAluno = mostrarPainelAluno;
         window.mostrarRelatorioProfessor = mostrarRelatorioProfessor;
         window.mostrarPainelGraficos = mostrarPainelGraficos;
-        window.mostrarGraficosAluno = mostrarGraficosAluno;
         window.exportarParaExcel = exportarParaExcel;
         window.exportarParaPDF = exportarParaPDF;
         window.carregarRelatorioTurma = carregarRelatorioTurma;
