@@ -11,7 +11,7 @@
     <link rel="dns-prefetch" href="https://script.google.com">
     
     <!-- CSS Externo -->
-    <link rel="stylesheet" href="https://professorsesi176.github.io/tarefas/style.css">
+    <link rel="stylesheet" href="style.css">
     
     <!-- Bibliotecas JavaScript -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,9 +28,9 @@
                 <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
                 <div class="absolute top-0 right-0 flex space-x-2">
                     <button id="tarefasBtn" class="btn-tarefas hidden">Tarefas</button>
-                    <button id="graficosBtn" class="btn-primario hidden" style="background-color: #8b5cf6;">Gráficos</button>
+                    <button id="graficosBtn" class="btn-primario hidden">Gráficos</button>
                     <button id="diagnosticoBtn" class="btn-primario hidden">Diagnóstico</button>
-                    <button id="relatorioBtn" class="btn-primario hidden" style="background-color: #10b981;">Relatório</button>
+                    <button id="relatorioBtn" class="btn-primario hidden" style="background-color: #dc2626;">Relatório</button>
                     <button onclick="logout()" id="logoutBtn" class="btn-secundario hidden">Sair</button>
                 </div>
             </div>
@@ -39,7 +39,7 @@
         <div id="content-area"></div>
 
         <footer class="mt-8 pt-4 border-t text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 36.0.1 - Sistema de 4 Períodos
+            Desenvolvido por Geovane Modena | Versão 36.0.2 - Sistema de 4 Períodos
         </footer>
     </div>
 
@@ -145,32 +145,6 @@
                 } catch (e) {
                     console.warn('Erro ao limpar cache:', e);
                 }
-            },
-
-            getCacheStats: () => {
-                try {
-                    const keys = Object.keys(localStorage).filter(k => k.startsWith('task_'));
-                    const totalItens = keys.length;
-                    let tamanhoTotal = 0;
-                    
-                    keys.forEach(key => {
-                        const item = localStorage.getItem(key);
-                        if (item) {
-                            tamanhoTotal += new Blob([item]).size;
-                        }
-                    });
-                    
-                    const eficiencia = totalItens > 0 ? Math.min(100, (totalItens / 100) * 100) : 0;
-                    
-                    return {
-                        itens: totalItens,
-                        tamanho: tamanhoTotal,
-                        eficiencia: eficiencia
-                    };
-                } catch (e) {
-                    console.warn('Erro ao calcular estatísticas do cache:', e);
-                    return { itens: 0, tamanho: 0, eficiencia: 0 };
-                }
             }
         };
 
@@ -229,14 +203,6 @@
                     .replace(/\n/g, '<br>');
             },
 
-            formatarBytes: (bytes) => {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            },
-
             validarLink: (link) => {
                 if (!link || typeof link !== 'string') return false;
                 
@@ -265,49 +231,6 @@
                 if (value === null || value === undefined) return false;
                 const num = parseFloat(value);
                 return !isNaN(num) && (num === 0 || num === 2 || num === 2.5);
-            },
-
-            calcularPosicaoCelula: (linha, coluna) => {
-                let colunaLetra = '';
-                let tempColuna = coluna;
-                
-                while (tempColuna > 0) {
-                    const resto = (tempColuna - 1) % 26;
-                    colunaLetra = String.fromCharCode(65 + resto) + colunaLetra;
-                    tempColuna = Math.floor((tempColuna - 1) / 26);
-                }
-                
-                return `${colunaLetra}${linha}`;
-            },
-
-            formatarDataHora: (dataISO) => {
-                if (!dataISO) return 'N/A';
-                try {
-                    const data = new Date(dataISO);
-                    return isNaN(data.getTime()) ? 'N/A' : data.toLocaleString('pt-BR');
-                } catch {
-                    return 'N/A';
-                }
-            },
-
-            formatarDadoBruto: (valor) => {
-                if (valor === null || valor === undefined || valor === '') {
-                    return 'N/A';
-                }
-                
-                const tipo = typeof valor;
-                const valorStr = String(valor);
-                
-                if (Utils.isDateString(valorStr)) {
-                    return Utils.formatarDataHora(valorStr);
-                }
-                
-                if (!isNaN(parseFloat(valorStr)) && valorStr.trim() !== '') {
-                    const num = parseFloat(valorStr);
-                    return num % 1 === 0 ? num.toString() : num.toFixed(1);
-                }
-                
-                return valorStr;
             },
 
             formatarNota: (nota) => {
@@ -348,12 +271,6 @@
                 if (num >= 6) return 'bg-red-200';
                 if (num >= 4) return 'bg-red-300';
                 return 'bg-red-400';
-            },
-
-            calcularMediaGeral: (medias) => {
-                if (!medias || !Array.isArray(medias)) return 0;
-                const soma = medias.reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
-                return medias.length > 0 ? (soma / medias.length).toFixed(1) : 0;
             }
         };
 
@@ -483,21 +400,6 @@
                         }
                     });
                 });
-            },
-
-            getMetricas: () => {
-                return {
-                    chamadasAPI: ApiManager.chamadasAPI,
-                    tempoTotalAPI: ApiManager.tempoTotalAPI,
-                    tempoMedioAPI: ApiManager.chamadasAPI > 0 ? ApiManager.tempoTotalAPI / ApiManager.chamadasAPI : 0
-                };
-            },
-
-            resetMetricas: () => {
-                ApiManager.chamadasAPI = 0;
-                ApiManager.tempoTotalAPI = 0;
-                STATE.metricasPerformance.chamadasAPI = 0;
-                STATE.metricasPerformance.tempoTotal = 0;
             }
         };
 
@@ -616,7 +518,6 @@
                     UIManager.elements.relatorioBtn.classList.add('hidden');
                     UIManager.elements.diagnosticoBtn.classList.add('hidden');
                     UIManager.elements.tarefasBtn.classList.add('hidden');
-                    // Removido o botão de gráficos para aluno
                     UIManager.elements.graficosBtn.classList.add('hidden');
                 }
                 
@@ -781,7 +682,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v36.0.1 - Sistema de 4 Períodos...');
+                console.log('Inicializando sistema v36.0.2 - Sistema de 4 Períodos...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -963,11 +864,6 @@
                     <div class="card p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-2xl font-bold text-red-700">Tarefas Criadas</h3>
-                            <div class="flex space-x-2">
-                                <button onclick="atualizarTodasMedias()" class="btn-primario text-sm">
-                                    Atualizar Todas as Médias
-                                </button>
-                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full compact-table">
@@ -1285,31 +1181,6 @@
             await mostrarPainelProfessor();
         }
 
-        async function atualizarTodasMedias() {
-            try {
-                UIManager.showModal('Aviso', 'Atualizando todas as médias das turmas. Isso pode levar alguns segundos...');
-                
-                const promises = CONFIG.TURMAS.map(async (turma) => {
-                    const response = await apiPost('atualizarTodasMediasTurma', { turma: turma });
-                    return { turma, success: response.success };
-                });
-                
-                const resultados = await Promise.all(promises);
-                const sucessos = resultados.filter(r => r.success).length;
-                
-                UIManager.showModal('Sucesso', `Médias atualizadas com sucesso para ${sucessos} de ${CONFIG.TURMAS.length} turmas!`);
-                
-                // Limpar cache de gráficos
-                CONFIG.TURMAS.forEach(turma => {
-                    CacheManager.remove(`graficos_${turma}`);
-                });
-                
-            } catch (error) {
-                console.error('Erro ao atualizar médias:', error);
-                UIManager.showModal('Erro', `Erro ao atualizar médias: ${error.message}`);
-            }
-        }
-
         function limparFormulario() {
             const temaEl = document.getElementById('tema');
             const periodoEl = document.getElementById('periodo');
@@ -1395,20 +1266,6 @@
                             <div class="text-center py-8">
                                 <div class="spinner"></div>
                                 <p class="mt-4 text-gray-600">Carregando tarefas...</p>
-                            </div>
-                        </div>
-                        
-                        <div id="media-aluno-container" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                            <div class="flex justify-between items-center">
-                                <span class="font-semibold text-gray-800">Média Geral (média dos 4 períodos):</span>
-                                <span class="text-lg font-bold text-red-700" id="media-geral-aluno">
-                                    ${Utils.calcularMediaGeral([
-                                        STATE.usuarioLogado.Medias?.periodo1 || 0,
-                                        STATE.usuarioLogado.Medias?.periodo2 || 0,
-                                        STATE.usuarioLogado.Medias?.periodo3 || 0,
-                                        STATE.usuarioLogado.Medias?.periodo4 || 0
-                                    ])}
-                                </span>
                             </div>
                         </div>
                         
@@ -1697,13 +1554,13 @@
                     </button>
                 ` : '';
                 
-                const dataFormatada = Utils.formatarDadoBruto(dataHoraSalva);
+                const dataFormatada = dataHoraSalva ? new Date(dataHoraSalva).toLocaleString('pt-BR') : '';
                 const notaFormatada = Utils.formatarNota(notaParte);
-                const linkFormatado = Utils.formatarDadoBruto(linkSalvo);
+                const linkFormatado = Utils.escapeHTML(linkSalvo.substring(0, 50)) + (linkSalvo.length > 50 ? '...' : '');
                 
                 const linkDisplay = Utils.validarLink(linkSalvo) ? 
-                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel">${Utils.escapeHTML(linkFormatado)}</a>` :
-                    `<span class="link-salvo-texto">${Utils.escapeHTML(linkFormatado)}</span>`;
+                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel">${linkFormatado}</a>` :
+                    `<span class="link-salvo-texto">${linkFormatado}</span>`;
                 
                 linkHTML = `
                     <div class="link-container mt-2">
@@ -1712,8 +1569,19 @@
                         ${botaoExcluirHTML}
                     </div>
                     <p class="text-green-600 text-sm mt-1">
-                        ✓ Dados salvos com sucesso em ${dataFormatada}
+                        ✓ Dados salvos com sucesso ${dataFormatada ? 'em ' + dataFormatada : ''}
                     </p>
+                `;
+                
+                // Campo de entrada bloqueado
+                linkHTML += `
+                    <div class="mt-2">
+                        <input type="text" 
+                               class="link-input" 
+                               value="${Utils.escapeHTML(linkSalvo)}"
+                               disabled
+                               style="background-color: #f3f4f6; color: #6b7280;">
+                    </div>
                 `;
             } else {
                 const botaoSalvarHTML = status.liberada ? `
@@ -1881,7 +1749,7 @@
                     const periodo = response.data?.periodo || 1;
                     const periodoNome = CONFIG.PERIODOS[periodo] || `Período ${periodo}`;
                     
-                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nPeríodo: ${periodoNome}\nNota: ${Utils.formatarNota(nota)}\nHorário: ${Utils.formatarDataHora(dataHora)}\n\nMédia do período atualizada automaticamente na planilha.`);
+                    UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nPeríodo: ${periodoNome}\nNota: ${Utils.formatarNota(nota)}\nHorário: ${new Date(dataHora).toLocaleString('pt-BR')}\n\nMédia do período atualizada automaticamente na planilha.`);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -2317,10 +2185,10 @@
                             `).join('')}
                         </div>
                         <div class="export-buttons-container">
-                            <button onclick="exportarParaExcel(window.turmaSelecionada)" class="btn-exportar" id="btn-excel">
+                            <button onclick="exportarParaExcel(window.turmaSelecionada)" class="btn-primario" id="btn-excel">
                                 Exportar Excel
                             </button>
-                            <button onclick="exportarParaPDF(window.turmaSelecionada)" class="btn-exportar" id="btn-pdf">
+                            <button onclick="exportarParaPDF(window.turmaSelecionada)" class="btn-primario" id="btn-pdf">
                                 Exportar PDF
                             </button>
                         </div>
@@ -2395,7 +2263,6 @@
                                             <th class="px-4 py-3 text-center font-semibold border-b">2º Período</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b">3º Período</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b">4º Período</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b">Média Geral</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2406,7 +2273,6 @@
                                                 parseFloat(aluno['3º Período'] || aluno['3º Bim']) || 0,
                                                 parseFloat(aluno['4º Período'] || aluno['4º Bim']) || 0
                                             ];
-                                            const mediaGeral = Utils.calcularMediaGeral(medias);
                                             
                                             return `
                                                 <tr>
@@ -2419,11 +2285,6 @@
                                                             </span>
                                                         </td>
                                                     `).join('')}
-                                                    <td class="px-4 py-3 text-center border-b">
-                                                        <span class="${Utils.obterCorMedia(mediaGeral)} font-bold">
-                                                            ${Utils.formatarNota(mediaGeral)}
-                                                        </span>
-                                                    </td>
                                                 </tr>
                                             `;
                                         }).join('')}
@@ -2490,7 +2351,6 @@
                                 parseFloat(aluno['3º Período'] || aluno['3º Bim']) || 0,
                                 parseFloat(aluno['4º Período'] || aluno['4º Bim']) || 0
                             ];
-                            const mediaGeral = Utils.calcularMediaGeral(medias);
                             
                             relatorioTurmaHTML += `
                                 <tr>
@@ -2599,7 +2459,7 @@
                     html: table,
                     startY: 30,
                     styles: { fontSize: 7 },
-                    headStyles: { fillColor: [204, 0, 0] }
+                    headStyles: { fillColor: [220, 38, 38] }
                 });
 
                 doc.save(`relatorio_turma_${turma}.pdf`);
@@ -2645,21 +2505,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h4 class="font-semibold text-blue-800 mb-2">Teste de Validação de Link</h4>
-                        <button onclick="testarValidacaoLink()" class="btn-primario text-sm">
-                            Testar Validação de Link
-                        </button>
-                    </div>
-
-                    <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <h4 class="font-semibold text-red-800 mb-2">Limpeza de Cache</h4>
-                        <button onclick="limparCacheCompleto()" class="btn-primario text-sm" style="background-color: #dc2626;">
-                            Limpar Todo o Cache
-                        </button>
-                        <p class="text-red-600 text-xs mt-2">Isso forçará o recarregamento de todos os dados do servidor</p>
-                    </div>
                 </div>
             `;
 
@@ -2672,26 +2517,34 @@
             const container = document.getElementById('status-cache');
             
             try {
-                const cacheStats = CacheManager.getCacheStats();
+                const totalItens = Object.keys(localStorage).filter(k => k.startsWith('task_')).length;
+                let tamanhoTotal = 0;
+                
+                Object.keys(localStorage).forEach(key => {
+                    const item = localStorage.getItem(key);
+                    if (item) {
+                        tamanhoTotal += new Blob([item]).size;
+                    }
+                });
+                
+                const tamanhoFormatado = tamanhoTotal < 1024 ? 
+                    tamanhoTotal + ' Bytes' : 
+                    tamanhoTotal < 1048576 ? 
+                    (tamanhoTotal / 1024).toFixed(2) + ' KB' : 
+                    (tamanhoTotal / 1048576).toFixed(2) + ' MB';
                 
                 container.innerHTML = `
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Itens em Cache:</span>
-                            <span class="font-semibold">${cacheStats.itens}</span>
+                            <span class="font-semibold">${totalItens}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Tamanho do Cache:</span>
-                            <span class="font-semibold">${Utils.formatarBytes(cacheStats.tamanho)}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Eficiência:</span>
-                            <span class="font-semibold ${cacheStats.eficiencia > 80 ? 'text-green-600' : cacheStats.eficiencia > 50 ? 'text-yellow-600' : 'text-red-600'}">
-                                ${cacheStats.eficiencia.toFixed(1)}%
-                            </span>
+                            <span class="font-semibold">${tamanhoFormatado}</span>
                         </div>
                     </div>
-                    <button onclick="limparCache()" class="btn-primario w-full mt-4" style="background-color: #ef4444;">
+                    <button onclick="limparCache()" class="btn-primario w-full mt-4">
                         Limpar Cache
                     </button>
                 `;
@@ -2706,7 +2559,7 @@
             try {
                 const usuariosCarregados = STATE.usuarioLogado ? 1 : 0;
                 const tarefasCarregadas = STATE.tarefas.length;
-                const metricasAPI = ApiManager.getMetricas();
+                const chamadasAPI = ApiManager.chamadasAPI;
                 
                 container.innerHTML = `
                     <div class="space-y-3">
@@ -2720,11 +2573,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Chamadas API:</span>
-                            <span class="font-semibold">${metricasAPI.chamadasAPI}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Tempo Total API:</span>
-                            <span class="font-semibold">${metricasAPI.tempoTotalAPI.toFixed(0)} ms</span>
+                            <span class="font-semibold">${chamadasAPI}</span>
                         </div>
                     </div>
                 `;
@@ -2737,8 +2586,11 @@
             const container = document.getElementById('metricas-performance');
             
             try {
-                const metricasAPI = ApiManager.getMetricas();
-                const memory = performance.memory;
+                const metricasAPI = ApiManager.getMetricas ? ApiManager.getMetricas() : {
+                    chamadasAPI: ApiManager.chamadasAPI,
+                    tempoTotalAPI: ApiManager.tempoTotalAPI,
+                    tempoMedioAPI: ApiManager.chamadasAPI > 0 ? ApiManager.tempoTotalAPI / ApiManager.chamadasAPI : 0
+                };
                 
                 let metricsHTML = `
                     <div class="space-y-3">
@@ -2755,7 +2607,8 @@
                         </div>
                 `;
                 
-                if (memory) {
+                if (performance.memory) {
+                    const memory = performance.memory;
                     const memoriaUsadaMB = (memory.usedJSHeapSize / 1048576).toFixed(2);
                     const memoriaTotalMB = (memory.totalJSHeapSize / 1048576).toFixed(2);
                     const percentualMemoria = ((memory.usedJSHeapSize / memory.totalJSHeapSize) * 100).toFixed(1);
@@ -2791,17 +2644,6 @@
             }
         }
 
-        window.testarValidacaoLink = function() {
-            const linkTeste = prompt('Digite um link para testar a validação:');
-            if (linkTeste) {
-                const valido = Utils.validarLink(linkTeste);
-                UIManager.showModal(
-                    'Teste de Validação', 
-                    `Link: ${linkTeste}\n\nResultado: ${valido ? 'VÁLIDO ✓' : 'INVÁLIDO ✗'}\n\n${valido ? 'Este link será aceito pelo sistema.' : 'Verifique se o link tem protocolo (http:// ou https://) e é um link válido.'}`
-                );
-            }
-        };
-
         window.limparCache = function() {
             CacheManager.clear();
             UIManager.showModal('Sucesso', 'Cache limpo com sucesso!');
@@ -2809,17 +2651,6 @@
                 carregarStatusCache();
                 carregarMetricasPerformance();
             }, 1000);
-        };
-
-        window.limparCacheCompleto = function() {
-            if (confirm('Isso limpará TODO o cache do navegador para este site. Todas as informações salvas localmente serão perdidas. Continuar?')) {
-                localStorage.clear();
-                sessionStorage.clear();
-                UIManager.showModal('Sucesso', 'Cache completamente limpo! A página será recarregada.');
-                setTimeout(() => {
-                    location.reload(true);
-                }, 2000);
-            }
         };
 
         // ==================== INICIALIZAÇÃO ====================
@@ -2851,12 +2682,8 @@
         window.excluirLinkAluno = excluirLinkAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
-        window.atualizarTodasMedias = atualizarTodasMedias;
         window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
-        window.testarValidacaoLink = testarValidacaoLink;
         window.limparCache = limparCache;
-        window.limparCacheCompleto = limparCacheCompleto;
-        window.carregarMetricasPerformance = carregarMetricasPerformance;
     </script>
 </body>
 </html>
