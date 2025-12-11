@@ -2416,9 +2416,12 @@
                                                         
                                                         return `
                                                             <td class="px-4 py-3 text-center border-b group relative">
-                                                                <span class="${Utils.obterCorMedia(media)} cursor-help" title="${origem}">
-                                                                    ${Utils.formatarNota(media)}
-                                                                </span>
+                                                                <span class="${Utils.obterCorMedia(media)} cursor-help group relative" title="${origem}">
+    ${Utils.formatarNota(media)}
+    <div class="tooltip-origem">
+        ${origem}
+    </div>
+</span>
                                                                 <div class="tooltip-origem">
                                                                     ${origem}
                                                                 </div>
@@ -2512,9 +2515,12 @@
                                 
                                 relatorioTurmaHTML += `
                                     <td class="px-1 py-3 text-center border-b group relative">
-                                        <span class="${Utils.obterCorMedia(media)} font-semibold cursor-help" title="${origem}">
-                                            ${Utils.formatarNota(media)}
-                                        </span>
+                                        <span class="${Utils.obterCorMedia(media)} cursor-help group relative" title="${origem}">
+    ${Utils.formatarNota(media)}
+    <div class="tooltip-origem">
+        ${origem}
+    </div>
+</span>
                                         <div class="tooltip-origem">
                                             ${origem}
                                         </div>
