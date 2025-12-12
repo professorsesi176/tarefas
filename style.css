@@ -1425,4 +1425,32 @@ textarea {
     content: '';
     @apply absolute top-full left-1/2 transform -translate-x-1/2 border-8 border-transparent border-t-gray-800;
 }
+  /* Estilos para o menu acordeão */
+.menu-group-header {
+    @apply w-full text-left px-4 py-3 rounded-lg transition-all duration-200 text-white hover:bg-red-700 flex items-center justify-between;
+}
+
+.menu-group-arrow {
+    @apply transition-transform duration-200;
+}
+
+.menu-group.expanded .menu-group-arrow {
+    transform: rotate(180deg);
+}
+
+.menu-group-content {
+    @apply pl-4 mt-1 space-y-1 overflow-hidden transition-all duration-300;
+}
+
+.menu-group-content.expanded {
+    @apply block;
+}
+
+.menu-subitem {
+    @apply w-full text-left px-4 py-2 text-sm rounded transition-all duration-200 text-white hover:bg-red-700 block;
+}
+
+.menu-subitem.active {
+    @apply bg-red-900 font-semibold;
+}
 }
