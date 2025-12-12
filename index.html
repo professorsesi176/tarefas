@@ -27,26 +27,45 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
-    <div id="app-container" class="w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
-        <header class="mb-8 border-b border-gray-200 pb-4">
-            <div class="relative">
-                <h1 class="text-3xl font-extrabold text-red-800 text-center tracking-tight">Sistema de Gestão de Tarefas</h1>
-                <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
-                <div class="absolute top-0 right-0 flex space-x-2">
-                    <button id="tarefasBtn" class="btn-primario hidden">Tarefas</button>
-                    <button id="graficosBtn" class="btn-primario hidden">Gráficos</button>
-                    <button id="diagnosticoBtn" class="btn-primario hidden">Diagnóstico</button>
-                    <button id="relatorioBtn" class="btn-primario hidden">Relatório</button>
-                    <button onclick="logout()" id="logoutBtn" class="btn-secundario hidden">Sair</button>
-                </div>
+    <div id="app-container" class="w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-6 sm:p-8 transition-all duration-300 flex">
+        <!-- Menu Suspenso Lateral -->
+        <div id="sidebar" class="w-64 mr-8 hidden">
+            <div class="bg-red-800 text-white rounded-xl p-4 mb-6 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Menu do Professor</h2>
+                <nav class="space-y-2">
+                    <button onclick="mostrarPainelProfessor()" class="sidebar-menu-item active" id="menu-tarefas">
+                        📋 Tarefas
+                    </button>
+                    <button onclick="mostrarPainelGraficos()" class="sidebar-menu-item" id="menu-graficos">
+                        📊 Gráficos
+                    </button>
+                    <button onclick="mostrarPainelDiagnostico()" class="sidebar-menu-item" id="menu-diagnostico">
+                        🔍 Diagnóstico
+                    </button>
+                    <button onclick="mostrarRelatorioProfessor()" class="sidebar-menu-item" id="menu-relatorio">
+                        📄 Relatório
+                    </button>
+                </nav>
             </div>
-        </header>
+        </div>
 
-        <div id="content-area"></div>
+        <div class="flex-1">
+            <header class="mb-8 border-b border-gray-200 pb-4">
+                <div class="relative">
+                    <h1 class="text-3xl font-extrabold text-red-800 text-center tracking-tight">Sistema de Gestão de Tarefas</h1>
+                    <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
+                    <div class="absolute top-0 right-0 flex space-x-2">
+                        <button onclick="logout()" id="logoutBtn" class="btn-secundario hidden">Sair</button>
+                    </div>
+                </div>
+            </header>
 
-        <footer class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-            Desenvolvido por Geovane Modena | Versão 36
-        </footer>
+            <div id="content-area"></div>
+
+            <footer class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
+                Desenvolvido por Geovane Modena | Versão 36
+            </footer>
+        </div>
     </div>
 
     <!-- Modal Principal -->
@@ -305,9 +324,11 @@
                     // Chave de parte específica
                     const partes = chave.split('_');
                     if (partes.length >= 2) {
-                        const parteNum = partes[0].replace('P', '');
+                        const parteNum = partes[0]?.replace('P', '') || '';
                         const tarefaNum = partes[1]?.replace('T', '') || '1';
-                        coluna = `Coluna ${this.calcularColunaParte(tarefaNum, parteNum, periodoNum)}`;
+                        if (parteNum && tarefaNum) {
+                            coluna = `Coluna ${this.calcularColunaParte(tarefaNum, parteNum, periodoNum)}`;
+                        }
                     }
                 }
                 
@@ -476,13 +497,28 @@
                 contentArea: document.getElementById('content-area'),
                 userInfo: document.getElementById('user-info'),
                 logoutBtn: document.getElementById('logoutBtn'),
-                relatorioBtn: document.getElementById('relatorioBtn'),
-                diagnosticoBtn: document.getElementById('diagnosticoBtn'),
-                tarefasBtn: document.getElementById('tarefasBtn'),
-                graficosBtn: document.getElementById('graficosBtn'),
+                sidebar: document.getElementById('sidebar'),
                 modalOverlay: document.getElementById('modal-overlay'),
                 modalTitle: document.getElementById('modal-title'),
                 modalMessage: document.getElementById('modal-message')
+            },
+
+            showSidebar: () => {
+                UIManager.elements.sidebar.classList.remove('hidden');
+            },
+
+            hideSidebar: () => {
+                UIManager.elements.sidebar.classList.add('hidden');
+            },
+
+            setActiveMenuItem: (itemId) => {
+                document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                const menuItem = document.getElementById(itemId);
+                if (menuItem) {
+                    menuItem.classList.add('active');
+                }
             },
 
             showModal: (title, message) => {
@@ -541,10 +577,7 @@
                 STATE.tarefaEditando = null;
                 STATE.relatorioAlunoVisivel = false;
                 UIManager.elements.logoutBtn.classList.add('hidden');
-                UIManager.elements.relatorioBtn.classList.add('hidden');
-                UIManager.elements.diagnosticoBtn.classList.add('hidden');
-                UIManager.elements.tarefasBtn.classList.add('hidden');
-                UIManager.elements.graficosBtn.classList.add('hidden');
+                UIManager.elements.sidebar.classList.add('hidden');
                 UIManager.elements.userInfo.innerHTML = '';
                 STATE.contadoresAtivos.forEach(interval => clearInterval(interval));
                 STATE.contadoresAtivos = [];
@@ -562,14 +595,8 @@
                             Logado como: <span class="font-semibold text-red-800">${Utils.escapeHTML(user.NomeCompleto)} (${user.Perfil})</span>
                         </div>
                     `;
-                    UIManager.elements.relatorioBtn.onclick = mostrarRelatorioProfessor;
-                    UIManager.elements.relatorioBtn.classList.remove('hidden');
-                    UIManager.elements.diagnosticoBtn.classList.remove('hidden');
-                    UIManager.elements.diagnosticoBtn.onclick = mostrarPainelDiagnostico;
-                    UIManager.elements.tarefasBtn.classList.remove('hidden');
-                    UIManager.elements.tarefasBtn.onclick = mostrarPainelProfessor;
-                    UIManager.elements.graficosBtn.classList.remove('hidden');
-                    UIManager.elements.graficosBtn.onclick = mostrarPainelGraficos;
+                    UIManager.showSidebar();
+                    UIManager.setActiveMenuItem('menu-tarefas');
                 } else {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
@@ -579,10 +606,7 @@
                             Email: ${Utils.escapeHTML(user.Email || 'N/A')}
                         </div>
                     `;
-                    UIManager.elements.relatorioBtn.classList.add('hidden');
-                    UIManager.elements.diagnosticoBtn.classList.add('hidden');
-                    UIManager.elements.tarefasBtn.classList.add('hidden');
-                    UIManager.elements.graficosBtn.classList.add('hidden');
+                    UIManager.hideSidebar();
                 }
                 
                 UIManager.elements.logoutBtn.classList.remove('hidden');
@@ -706,7 +730,6 @@
             loginForm: () => {
                 return `
                     <div id="login" class="max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Acesso ao Sistema</h2>
                         <div id="loginErro" class="text-red-500 mb-4 hidden text-center font-semibold bg-red-50 p-3 rounded-lg"></div>
 
                         <form id="login-form" class="space-y-5">
@@ -844,6 +867,7 @@
 
         // ==================== PAINEL DO PROFESSOR ====================
         async function mostrarPainelProfessor() {
+            UIManager.setActiveMenuItem('menu-tarefas');
             const cacheKey = 'painel_professor';
             const cached = CacheManager.get(cacheKey);
             
@@ -1638,13 +1662,14 @@
             
             let linkHTML = '';
             if (temDadosSalvos) {
-                const botaoExcluirHTML = status.liberada ? `
+                // CORREÇÃO DO PROBLEMA 3: Botão de excluir sempre visível e habilitado quando há link
+                const botaoExcluirHTML = `
                     <button class="btn-secundario btn-link" 
                             onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
                             id="btn-excluir-${tarefa.ID}-${numeroParte}">
                         Excluir
                     </button>
-                ` : '';
+                `;
                 
                 const dataFormatada = dataHoraSalva ? new Date(dataHoraSalva).toLocaleString('pt-BR') : '';
                 const notaFormatada = Utils.formatarNota(notaParte);
@@ -1927,6 +1952,7 @@
 
         // ==================== PAINEL DE GRÁFICOS (apenas para professor) ====================
         async function mostrarPainelGraficos() {
+            UIManager.setActiveMenuItem('menu-graficos');
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6 bg-white rounded-xl shadow">
                     <h3 class="text-2xl font-bold text-red-800 mb-6">Análise de Desempenho - Gráficos</h3>
@@ -2301,6 +2327,7 @@
 
         // ==================== RELATÓRIOS ====================
         async function mostrarRelatorioProfessor() {
+            UIManager.setActiveMenuItem('menu-relatorio');
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6 bg-white rounded-xl shadow">
                     <div class="flex justify-between items-center mb-4">
@@ -2410,7 +2437,7 @@
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                                                     ${medias.map((media, idx) => {
                                                         const periodo = idx + 1;
-                                                        // CORREÇÃO DO PROBLEMA 5: Corrigida a chamada para Utils.calcularColunaParte
+                                                        // CORREÇÃO DO PROBLEMA 2: Usando Utils.calcularColunaParte corretamente
                                                         const origem = Utils.formatarOrigemDado(
                                                             aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                                             aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2507,7 +2534,7 @@
                             // Médias dos períodos
                             medias.forEach((media, idx) => {
                                 const periodo = idx + 1;
-                                // CORREÇÃO DO PROBLEMA 5: Corrigida a chamada para Utils.calcularColunaParte
+                                // CORREÇÃO DO PROBLEMA 2: Usando Utils.calcularColunaParte corretamente
                                 const origem = Utils.formatarOrigemDado(
                                     aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                     aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2539,7 +2566,7 @@
                                         let notaParte = parseFloat(aluno[chaveNota]) || 0;
                                         notaParte = Utils.validarNota(notaParte);
                                         
-                                        // CORREÇÃO DO PROBLEMA 5: Corrigida a chamada para Utils.calcularColunaParte
+                                        // CORREÇÃO DO PROBLEMA 2: Usando Utils.calcularColunaParte corretamente
                                         const origem = Utils.formatarOrigemDado(
                                             chaveNota,
                                             aluno,
@@ -2642,6 +2669,7 @@
 
         // ==================== PAINEL DE DIAGNÓSTICO ====================
         async function mostrarPainelDiagnostico() {
+            UIManager.setActiveMenuItem('menu-diagnostico');
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6 bg-white rounded-xl shadow">
                     <h3 class="text-2xl font-bold text-red-800 mb-6">Painel de Diagnóstico do Sistema</h3>
