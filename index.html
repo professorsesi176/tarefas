@@ -29,25 +29,79 @@
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
     <div id="app-container" class="w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-6 sm:p-8 transition-all duration-300 flex">
         <!-- Menu Suspenso Lateral -->
-        <div id="sidebar" class="w-64 mr-8 hidden">
-            <div class="bg-red-800 text-white rounded-xl p-4 mb-6 shadow-lg">
-                <h2 class="text-xl font-bold mb-4">Menu do Professor</h2>
-                <nav class="space-y-2">
-                    <button onclick="mostrarPainelProfessor()" class="sidebar-menu-item active" id="menu-tarefas">
-                        📋 Tarefas
-                    </button>
-                    <button onclick="mostrarPainelGraficos()" class="sidebar-menu-item" id="menu-graficos">
-                        📊 Gráficos
-                    </button>
-                    <button onclick="mostrarPainelDiagnostico()" class="sidebar-menu-item" id="menu-diagnostico">
-                        🔍 Diagnóstico
-                    </button>
-                    <button onclick="mostrarRelatorioProfessor()" class="sidebar-menu-item" id="menu-relatorio">
-                        📄 Relatório
-                    </button>
-                </nav>
+<div id="sidebar" class="w-64 mr-8 hidden">
+    <div class="bg-red-800 text-white rounded-xl p-4 mb-6 shadow-lg">
+        <h2 class="text-xl font-bold mb-4">Menu do Professor</h2>
+        
+        <!-- Item Tarefas -->
+        <div class="menu-group mb-2">
+            <button class="menu-group-header" onclick="toggleMenuGroup('tarefas')">
+                <span class="flex items-center">
+                    📋 Tarefas
+                </span>
+                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </button>
+            <div id="menu-group-tarefas" class="menu-group-content hidden">
+                <button onclick="mostrarPainelProfessor()" class="menu-subitem active">
+                    Criar/Editar Tarefas
+                </button>
             </div>
         </div>
+
+        <!-- Item Gráficos -->
+        <div class="menu-group mb-2">
+            <button class="menu-group-header" onclick="toggleMenuGroup('graficos')">
+                <span class="flex items-center">
+                    📊 Gráficos
+                </span>
+                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </button>
+            <div id="menu-group-graficos" class="menu-group-content hidden">
+                <button onclick="mostrarPainelGraficos()" class="menu-subitem">
+                    Visualizar Gráficos
+                </button>
+            </div>
+        </div>
+
+        <!-- Item Diagnóstico -->
+        <div class="menu-group mb-2">
+            <button class="menu-group-header" onclick="toggleMenuGroup('diagnostico')">
+                <span class="flex items-center">
+                    🔍 Diagnóstico
+                </span>
+                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </button>
+            <div id="menu-group-diagnostico" class="menu-group-content hidden">
+                <button onclick="mostrarPainelDiagnostico()" class="menu-subitem">
+                    Painel de Diagnóstico
+                </button>
+            </div>
+        </div>
+
+        <!-- Item Relatório -->
+        <div class="menu-group mb-2">
+            <button class="menu-group-header" onclick="toggleMenuGroup('relatorio')">
+                <span class="flex items-center">
+                    📄 Relatório
+                </span>
+                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </button>
+            <div id="menu-group-relatorio" class="menu-group-content hidden">
+                <button onclick="mostrarRelatorioProfessor()" class="menu-subitem">
+                    Relatório por Turma
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
         <div class="flex-1">
             <header class="mb-8 border-b border-gray-200 pb-4">
