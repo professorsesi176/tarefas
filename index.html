@@ -27,81 +27,41 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
-    <div id="app-container" class="w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-6 sm:p-8 transition-all duration-300 flex">
+    <div id="app-container" class="w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
+        <!-- Botão Menu para Professor -->
+        <div id="menu-button-container" class="hidden mb-4">
+            <button onclick="toggleMenu()" class="btn-primario flex items-center space-x-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                <span>Menu</span>
+            </button>
+        </div>
+
         <!-- Menu Suspenso Lateral -->
-<div id="sidebar" class="w-64 mr-8 hidden">
-    <div class="bg-red-800 text-white rounded-xl p-4 mb-6 shadow-lg">
-        <h2 class="text-xl font-bold mb-4">Menu do Professor</h2>
-
-                <!-- Item Tarefas -->
-        <div class="menu-group mb-2">
-            <button class="menu-group-header" onclick="toggleMenuGroup('tarefas')">
-                <span class="flex items-center">
-                    📋 Tarefas
-                </span>
-                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m6 9 6 6 6-6"/>
-                </svg>
-            </button>
-            <div id="menu-group-tarefas" class="menu-group-content hidden">
-                <button onclick="mostrarPainelProfessor()" class="menu-subitem active">
-                    Criar/Editar Tarefas
-                </button>
+        <div id="sidebar" class="sidebar hidden">
+            <div class="bg-red-800 text-white rounded-xl p-4 mb-6 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Menu do Professor</h2>
+                
+                <div class="space-y-2">
+                    <button onclick="mostrarPainelProfessor()" class="menu-item">
+                        📋 Tarefas
+                    </button>
+                    
+                    <button onclick="mostrarPainelGraficos()" class="menu-item">
+                        📊 Gráficos
+                    </button>
+                    
+                    <button onclick="mostrarPainelDiagnostico()" class="menu-item">
+                        🔍 Diagnóstico
+                    </button>
+                    
+                    <button onclick="mostrarRelatorioProfessor()" class="menu-item">
+                        📄 Relatório
+                    </button>
+                </div>
             </div>
         </div>
-
-        <!-- Item Gráficos -->
-        <div class="menu-group mb-2">
-            <button class="menu-group-header" onclick="toggleMenuGroup('graficos')">
-                <span class="flex items-center">
-                    📊 Gráficos
-                </span>
-                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m6 9 6 6 6-6"/>
-                </svg>
-            </button>
-            <div id="menu-group-graficos" class="menu-group-content hidden">
-                <button onclick="mostrarPainelGraficos()" class="menu-subitem">
-                    Visualizar Gráficos
-                </button>
-            </div>
-        </div>
-
-        <!-- Item Diagnóstico -->
-        <div class="menu-group mb-2">
-            <button class="menu-group-header" onclick="toggleMenuGroup('diagnostico')">
-                <span class="flex items-center">
-                    🔍 Diagnóstico
-                </span>
-                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m6 9 6 6 6-6"/>
-                </svg>
-            </button>
-            <div id="menu-group-diagnostico" class="menu-group-content hidden">
-                <button onclick="mostrarPainelDiagnostico()" class="menu-subitem">
-                    Painel de Diagnóstico
-                </button>
-            </div>
-        </div>
-
-        <!-- Item Relatório -->
-        <div class="menu-group mb-2">
-            <button class="menu-group-header" onclick="toggleMenuGroup('relatorio')">
-                <span class="flex items-center">
-                    📄 Relatório
-                </span>
-                <svg class="menu-group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m6 9 6 6 6-6"/>
-                </svg>
-            </button>
-            <div id="menu-group-relatorio" class="menu-group-content hidden">
-                <button onclick="mostrarRelatorioProfessor()" class="menu-subitem">
-                    Relatório por Turma
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
         <div class="flex-1">
             <header class="mb-8 border-b border-gray-200 pb-4">
@@ -163,6 +123,7 @@
             contadoresAtivos: [],
             rmVisible: false,
             relatorioAlunoVisivel: false,
+            menuAberto: false,
             metricasPerformance: {
                 chamadasAPI: 0,
                 tempoTotal: 0,
@@ -398,7 +359,7 @@
                 
                 // Converter para letra de coluna Excel
                 const colunaNum = colunaBase + offsetTarefa + offsetParte;
-                return this.numeroParaLetraExcel(colunaNum);
+                return Utils.numeroParaLetraExcel(colunaNum);
             },
 
             numeroParaLetraExcel: (num) => {
@@ -409,22 +370,6 @@
                     num = Math.floor((num - 1) / 26);
                 }
                 return letra || 'A';
-            },
-
-            toggleMenuGroup: (groupId) => {
-                const content = document.getElementById(`menu-group-${groupId}`);
-                const arrow = content.previousElementSibling.querySelector('.menu-group-arrow');
-                
-                content.classList.toggle('hidden');
-                content.classList.toggle('expanded');
-                
-                if (content.classList.contains('expanded')) {
-                    content.style.maxHeight = content.scrollHeight + 'px';
-                    if (arrow) arrow.style.transform = 'rotate(180deg)';
-                } else {
-                    content.style.maxHeight = '0px';
-                    if (arrow) arrow.style.transform = 'rotate(0deg)';
-                }
             }
         };
 
@@ -568,6 +513,7 @@
                 userInfo: document.getElementById('user-info'),
                 logoutBtn: document.getElementById('logoutBtn'),
                 sidebar: document.getElementById('sidebar'),
+                menuButtonContainer: document.getElementById('menu-button-container'),
                 modalOverlay: document.getElementById('modal-overlay'),
                 modalTitle: document.getElementById('modal-title'),
                 modalMessage: document.getElementById('modal-message')
@@ -575,19 +521,19 @@
 
             showSidebar: () => {
                 UIManager.elements.sidebar.classList.remove('hidden');
+                STATE.menuAberto = true;
             },
 
             hideSidebar: () => {
                 UIManager.elements.sidebar.classList.add('hidden');
+                STATE.menuAberto = false;
             },
 
-            setActiveMenuItem: (itemId) => {
-                document.querySelectorAll('.sidebar-menu-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                const menuItem = document.getElementById(itemId);
-                if (menuItem) {
-                    menuItem.classList.add('active');
+            toggleSidebar: () => {
+                if (STATE.menuAberto) {
+                    UIManager.hideSidebar();
+                } else {
+                    UIManager.showSidebar();
                 }
             },
 
@@ -647,7 +593,8 @@
                 STATE.tarefaEditando = null;
                 STATE.relatorioAlunoVisivel = false;
                 UIManager.elements.logoutBtn.classList.add('hidden');
-                UIManager.elements.sidebar.classList.add('hidden');
+                UIManager.elements.menuButtonContainer.classList.add('hidden');
+                UIManager.hideSidebar();
                 UIManager.elements.userInfo.innerHTML = '';
                 STATE.contadoresAtivos.forEach(interval => clearInterval(interval));
                 STATE.contadoresAtivos = [];
@@ -665,12 +612,7 @@
                             Logado como: <span class="font-semibold text-red-800">${Utils.escapeHTML(user.NomeCompleto)} (${user.Perfil})</span>
                         </div>
                     `;
-                    UIManager.showSidebar();
-                    UIManager.setActiveMenuItem('menu-tarefas');
-                    // Expandir o primeiro grupo por padrão
-                    setTimeout(() => {
-                        Utils.toggleMenuGroup('tarefas');
-                    }, 100);
+                    UIManager.elements.menuButtonContainer.classList.remove('hidden');
                 } else {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
@@ -680,6 +622,7 @@
                             Email: ${Utils.escapeHTML(user.Email || 'N/A')}
                         </div>
                     `;
+                    UIManager.elements.menuButtonContainer.classList.add('hidden');
                     UIManager.hideSidebar();
                 }
                 
@@ -941,7 +884,7 @@
 
         // ==================== PAINEL DO PROFESSOR ====================
         async function mostrarPainelProfessor() {
-            UIManager.setActiveMenuItem('menu-tarefas');
+            UIManager.hideSidebar();
             const cacheKey = 'painel_professor';
             const cached = CacheManager.get(cacheKey);
             
@@ -1400,6 +1343,7 @@
 
         // ==================== PAINEL DO ALUNO ====================
         async function mostrarPainelAluno() {
+            UIManager.hideSidebar();
             const cacheKey = `painel_aluno_${STATE.usuarioLogado.Email}`;
             const cached = CacheManager.get(cacheKey);
             
@@ -1552,7 +1496,8 @@
                     
                     if (alunoResponse.success) {
                         alunoData = alunoResponse.data;
-                        entregas = extrairEntregasDeAlunoData(alunoResponse.data, response.data);
+                        // CORREÇÃO DO PROBLEMA 2: Buscar entregas atualizadas da planilha
+                        entregas = await buscarEntregasAlunoAtualizadas(alunoData, response.data);
                     }
                 } catch (error) {
                     console.warn('Erro ao buscar dados do aluno, usando dados básicos:', error);
@@ -1572,6 +1517,95 @@
                         <button onclick="carregarTarefasAluno()" class="btn-primario mt-4">Tentar Novamente</button>
                     </div>`;
             }
+        }
+
+        // CORREÇÃO DO PROBLEMA 2: Função para buscar entregas atualizadas da planilha
+        async function buscarEntregasAlunoAtualizadas(alunoData, tarefas) {
+            const entregas = [];
+            
+            if (!alunoData || !tarefas) return entregas;
+            
+            try {
+                // Buscar dados atualizados da planilha
+                const dadosAtualizados = await apiGet('getDadosAlunoCompleto', { 
+                    email: STATE.usuarioLogado.Email, 
+                    turma: STATE.usuarioLogado.Turma 
+                }, true);
+                
+                if (!dadosAtualizados.success) {
+                    return extrairEntregasDeAlunoData(alunoData, tarefas);
+                }
+                
+                const dados = dadosAtualizados.data;
+                
+                tarefas.forEach((tarefa, tarefaIndex) => {
+                    for (let parte = 1; parte <= 4; parte++) {
+                        const parteGlobal = (tarefaIndex * 4) + parte;
+                        const chavesLink = [
+                            `Link${parteGlobal}_P${tarefa.Periodo}`,
+                            `P${parte}_T${tarefaIndex + 1}_P${tarefa.Periodo}`,
+                            `Parte${parteGlobal}_P${tarefa.Periodo}`
+                        ];
+                        
+                        const chavesData = [
+                            `DataHora${parteGlobal}_P${tarefa.Periodo}`,
+                            `Data${parteGlobal}_P${tarefa.Periodo}`
+                        ];
+                        
+                        const chavesNota = [
+                            `Parte${parteGlobal}_P${tarefa.Periodo}`,
+                            `NotaParte${parteGlobal}_P${tarefa.Periodo}`,
+                            `P${parte}_T${tarefaIndex + 1}_P${tarefa.Periodo}`,
+                            `Parte${parte}_T${tarefaIndex + 1}_P${tarefa.Periodo}`
+                        ];
+                        
+                        let link = '';
+                        let dataHora = '';
+                        let nota = 0;
+                        
+                        for (const chave of chavesLink) {
+                            if (dados[chave] !== undefined && dados[chave] !== null && dados[chave] !== '') {
+                                link = dados[chave];
+                                break;
+                            }
+                        }
+                        
+                        for (const chave of chavesData) {
+                            if (dados[chave] !== undefined && dados[chave] !== null && dados[chave] !== '') {
+                                dataHora = dados[chave];
+                                break;
+                            }
+                        }
+                        
+                        for (const chave of chavesNota) {
+                            if (dados[chave] !== undefined && dados[chave] !== null && dados[chave] !== '') {
+                                nota = parseFloat(dados[chave]) || 0;
+                                break;
+                            }
+                        }
+                        
+                        // Validar nota
+                        nota = Utils.validarNota(nota);
+                        
+                        if (link && link.toString().trim() !== '') {
+                            entregas.push({
+                                ID_Tarefa: tarefa.ID,
+                                Periodo: tarefa.Periodo,
+                                Parte: parte,
+                                Link: link.toString().trim(),
+                                DataSubmissao: dataHora,
+                                Nota: nota
+                            });
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.warn('Erro ao buscar dados atualizados, usando cache:', error);
+                return extrairEntregasDeAlunoData(alunoData, tarefas);
+            }
+            
+            return entregas;
         }
 
         function renderTarefasAlunoAgrupadasPorPeriodo(tarefasPorPeriodo, entregas, alunoData, container) {
@@ -1678,7 +1712,7 @@
             
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             
-            // CORREÇÃO DO PROBLEMA 3: Verificação mais robusta para links salvos
+            // CORREÇÃO DO PROBLEMA 2: Verificação robusta para links salvos
             const temDadosSalvos = linkSalvo && linkSalvo.toString().trim() !== '' && linkSalvo !== 'null' && linkSalvo !== 'undefined';
             
             const agora = new Date();
@@ -1748,7 +1782,7 @@
                 
                 const dataFormatada = dataHoraSalva ? new Date(dataHoraSalva).toLocaleString('pt-BR') : '';
                 const notaFormatada = Utils.formatarNota(notaParte);
-
+                
                 // CORREÇÃO: Verificar se o link é válido antes de formatar
                 let linkDisplay = '';
                 if (linkSalvo && Utils.validarLink(linkSalvo)) {
@@ -2054,7 +2088,7 @@
 
         // ==================== PAINEL DE GRÁFICOS (apenas para professor) ====================
         async function mostrarPainelGraficos() {
-            UIManager.setActiveMenuItem('menu-graficos');
+            UIManager.hideSidebar();
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6 bg-white rounded-xl shadow">
                     <h3 class="text-2xl font-bold text-red-800 mb-6">Análise de Desempenho - Gráficos</h3>
@@ -2429,7 +2463,7 @@
 
         // ==================== RELATÓRIOS ====================
         async function mostrarRelatorioProfessor() {
-            UIManager.setActiveMenuItem('menu-relatorio');
+            UIManager.hideSidebar();
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6 bg-white rounded-xl shadow">
                     <div class="flex justify-between items-center mb-4">
@@ -2539,7 +2573,7 @@
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                                                     ${medias.map((media, idx) => {
                                                         const periodo = idx + 1;
-                                                        // CORREÇÃO DO PROBLEMA 2: Usando Utils.calcularColunaParte corretamente
+                                                        // CORREÇÃO DO PROBLEMA 3: Usando Utils.calcularColunaParte corretamente
                                                         const origem = Utils.formatarOrigemDado(
                                                             aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                                             aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2636,7 +2670,7 @@
                             // Médias dos períodos
                             medias.forEach((media, idx) => {
                                 const periodo = idx + 1;
-                                // CORREÇÃO DO PROBLEMA 2: Usando Utils.calcularColunaParte corretamente
+                                // CORREÇÃO DO PROBLEMA 3: Usando Utils.calcularColunaParte corretamente
                                 const origem = Utils.formatarOrigemDado(
                                     aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                     aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2668,7 +2702,7 @@
                                         let notaParte = parseFloat(aluno[chaveNota]) || 0;
                                         notaParte = Utils.validarNota(notaParte);
                                         
-                                        // CORREÇÃO DO PROBLEMA 2: Usando Utils.calcularColunaParte corretamente
+                                        // CORREÇÃO DO PROBLEMA 3: Usando Utils.calcularColunaParte corretamente
                                         const origem = Utils.formatarOrigemDado(
                                             chaveNota,
                                             aluno,
@@ -2771,7 +2805,7 @@
 
         // ==================== PAINEL DE DIAGNÓSTICO ====================
         async function mostrarPainelDiagnostico() {
-            UIManager.setActiveMenuItem('menu-diagnostico');
+            UIManager.hideSidebar();
             UIManager.elements.contentArea.innerHTML = `
                 <div class="card p-6 bg-white rounded-xl shadow">
                     <h3 class="text-2xl font-bold text-red-800 mb-6">Painel de Diagnóstico do Sistema</h3>
@@ -2955,6 +2989,23 @@
             }, 1000);
         };
 
+        // ==================== FUNÇÕES DO MENU ====================
+        function toggleMenu() {
+            UIManager.toggleSidebar();
+        }
+
+        // Fechar menu ao clicar fora dele
+        document.addEventListener('click', (event) => {
+            const sidebar = document.getElementById('sidebar');
+            const menuButton = document.getElementById('menu-button-container');
+            
+            if (STATE.menuAberto && sidebar && menuButton && 
+                !sidebar.contains(event.target) && 
+                !menuButton.contains(event.target)) {
+                UIManager.hideSidebar();
+            }
+        });
+
         // ==================== INICIALIZAÇÃO ====================
         document.addEventListener('DOMContentLoaded', init);
 
@@ -2986,8 +3037,168 @@
         window.togglePartesTarefa = togglePartesTarefa;
         window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
         window.limparCache = limparCache;
-        window.toggleMenuGroup = Utils.toggleMenuGroup;
+        window.toggleMenu = toggleMenu;
     </script>   
+    
+    <style>
+        /* Estilos para o menu lateral */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 20px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar:not(.hidden) {
+            transform: translateX(0);
+        }
+        
+        .menu-item {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 8px;
+        }
+        
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Overlay para o menu */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+        
+        /* Ajustes para o conteúdo principal quando o menu está aberto */
+        .sidebar-open .app-container {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        /* Estilos para o botão menu */
+        #menu-button-container {
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Contador estilos */
+        .contador {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        
+        .contador.disponivel {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .contador.aguardando {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .contador.expirado {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Estilos para as partes da tarefa */
+        .retencao-aviso {
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+        
+        .retencao-50 {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .retencao-25 {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .retencao-15 {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .retencao-10 {
+            background-color: #f3e8ff;
+            color: #7c3aed;
+        }
+        
+        /* Estilos para os links */
+        .link-salvo-clicavel {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        
+        .link-salvo-clicavel:hover {
+            color: #1e40af;
+        }
+        
+        .link-salvo-texto {
+            color: #374151;
+        }
+        
+        .nota-parte {
+            font-size: 14px;
+        }
+        
+        /* Estilos para os tooltips */
+        .tooltip-origem {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .group:hover .tooltip-origem {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
     
 </body>
 </html>
