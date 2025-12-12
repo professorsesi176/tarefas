@@ -29,12 +29,10 @@
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
     <div id="app-container" class="w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
         <header class="mb-8 border-b border-gray-200 pb-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-extrabold text-red-800 tracking-tight">Sistema de Gestão de Tarefas</h1>
-                    <div id="user-info" class="user-info-container text-gray-600 mt-2"></div>
-                </div>
-                <div class="flex space-x-2">
+            <div class="relative">
+                <h1 class="text-3xl font-extrabold text-red-800 text-center tracking-tight">Sistema de Gestão de Tarefas</h1>
+                <div id="user-info" class="user-info-container text-center mt-2 text-gray-600"></div>
+                <div class="absolute top-0 right-0 flex space-x-2">
                     <button id="tarefasBtn" class="btn-primario hidden">Tarefas</button>
                     <button id="graficosBtn" class="btn-primario hidden">Gráficos</button>
                     <button id="diagnosticoBtn" class="btn-primario hidden">Diagnóstico</button>
@@ -261,7 +259,7 @@
 
             obterCorMedia: (media) => {
                 const num = parseFloat(media);
-                if (isNaN(num)) return 'text-gray-500';
+                if (isNaN(num)) return 'text-gray-800 font-semibold';
                 
                 if (num >= 9) return 'text-red-800 font-bold';
                 if (num >= 7.5) return 'text-red-700 font-semibold';
@@ -307,7 +305,7 @@
                     // Chave de parte específica
                     const partes = chave.split('_');
                     if (partes.length >= 2) {
-                        const parteNum = partes[0]?.replace('P', '') || '';
+                        const parteNum = partes[0].replace('P', '');
                         const tarefaNum = partes[1]?.replace('T', '') || '1';
                         coluna = `Coluna ${this.calcularColunaParte(tarefaNum, parteNum, periodoNum)}`;
                     }
@@ -319,9 +317,9 @@
             calcularColunaParte: (tarefaNum, parteNum, periodoNum) => {
                 // Cálculo baseado na estrutura da planilha
                 // Cada tarefa tem 4 partes, cada parte ocupa 3 colunas (Link, Data, Nota)
-                const colunaBase = 19 + ((parseInt(periodoNum) - 1) * 48); // Começa na coluna S (19)
-                const offsetTarefa = (parseInt(tarefaNum) - 1) * 12; // 12 colunas por tarefa
-                const offsetParte = (parseInt(parteNum) - 1) * 3; // 3 colunas por parte
+                const colunaBase = 19 + ((periodoNum - 1) * 48); // Começa na coluna S (19)
+                const offsetTarefa = (tarefaNum - 1) * 12; // 12 colunas por tarefa
+                const offsetParte = (parteNum - 1) * 3; // 3 colunas por parte
                 
                 // Converter para letra de coluna Excel
                 const colunaNum = colunaBase + offsetTarefa + offsetParte;
@@ -330,11 +328,10 @@
 
             numeroParaLetraExcel: (num) => {
                 let letra = '';
-                let n = parseInt(num);
-                while (n > 0) {
-                    const remainder = (n - 1) % 26;
+                while (num > 0) {
+                    const remainder = (num - 1) % 26;
                     letra = String.fromCharCode(65 + remainder) + letra;
-                    n = Math.floor((n - 1) / 26);
+                    num = Math.floor((num - 1) / 26);
                 }
                 return letra || 'A';
             }
@@ -1026,28 +1023,8 @@
                 STATE.tarefas = response.data || [];
                 renderizarTabelaTarefas();
             } catch (error) {
-                console.error('Erro ao carregar tarefas:', error);
-                // Corrigido: Convertendo tarefa.Tema para string antes de usar .includes
-                if (error.message && error.message.includes("tarefa.Tema.includes is not a function")) {
-                    // Se for o erro específico, recarregar as tarefas de forma mais segura
-                    try {
-                        // Tentar novamente com uma abordagem diferente
-                        const response = await apiGet('getTarefas', {}, false);
-                        STATE.tarefas = response.data || response || [];
-                        // Garantir que todos os Temas sejam strings
-                        STATE.tarefas = STATE.tarefas.map(tarefa => ({
-                            ...tarefa,
-                            Tema: String(tarefa.Tema || '')
-                        }));
-                        renderizarTabelaTarefas();
-                    } catch (error2) {
-                        tbody.innerHTML = 
-                            `<tr><td colspan="5" class="text-center py-4 text-red-500">Erro ao carregar tarefas: ${Utils.escapeHTML(error2.message || String(error2))}</td></tr>`;
-                    }
-                } else {
-                    tbody.innerHTML = 
-                        `<tr><td colspan="5" class="text-center py-4 text-red-500">Erro ao carregar tarefas: ${Utils.escapeHTML(error.message || String(error))}</td></tr>`;
-                }
+                tbody.innerHTML = 
+                    `<tr><td colspan="5" class="text-center py-4 text-red-500">Erro ao carregar tarefas: ${Utils.escapeHTML(error.message || String(error))}</td></tr>`;
             }
         }
 
@@ -1060,9 +1037,9 @@
             }
 
             tbody.innerHTML = STATE.tarefas.map(tarefa => {
-                // CORREÇÃO: Converter tarefa.Tema para string antes de usar .includes
-                const temaString = String(tarefa.Tema || '');
-                const isDebugTarefa = temaString.includes('DEBUG');
+                // CORREÇÃO DO PROBLEMA 4: Converter tema para string antes de usar includes
+                const temaStr = String(tarefa.Tema || '');
+                const isDebugTarefa = temaStr.includes('DEBUG');
                 const periodoNome = CONFIG.PERIODOS[tarefa.Periodo] || `Período ${tarefa.Periodo}`;
                 
                 return `
@@ -1072,7 +1049,7 @@
                         <span class="badge-periodo periodo-${tarefa.Periodo}">${periodoNome}</span>
                     </td>
                     <td class="px-4 py-2">
-                        <div class="font-semibold text-gray-800 mb-2 ${isDebugTarefa ? 'text-purple-600' : ''}">${Utils.escapeHTML(temaString)}</div>
+                        <div class="font-semibold text-gray-800 mb-2 ${isDebugTarefa ? 'text-purple-600' : ''}">${Utils.escapeHTML(temaStr)}</div>
                         <button class="tarefa-expand-button" onclick="togglePartesTarefa('${tarefa.ID}')">
                             Ver Partes
                         </button>
@@ -1352,11 +1329,10 @@
                                 <div class="flex space-x-4">
                                     ${periodosComNota.map(periodo => {
                                         const media = STATE.usuarioLogado.Medias?.[`periodo${periodo}`] || 0;
-                                        // CORREÇÃO: Adicionado classe text-gray-800 para contraste
                                         return `
                                             <div class="text-center">
                                                 <div class="text-sm text-gray-600">${periodo}º Período</div>
-                                                <div class="text-lg font-bold text-gray-800 ${Utils.obterCorMedia(media)}" id="media-${periodo}periodo">
+                                                <div class="text-lg font-bold ${Utils.obterCorMedia(media)}" id="media-${periodo}periodo">
                                                     ${Utils.formatarNota(media)}
                                                 </div>
                                             </div>
@@ -1517,13 +1493,15 @@
                 const periodoNome = CONFIG.PERIODOS[periodoNum] || `Período ${periodoNum}`;
                 const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
                 
+                // CORREÇÃO DO PROBLEMA 6: Média visível com cor escura
+                const mediaAluno = alunoData?.[`${periodoNum}º Período`] || alunoData?.[`${periodoNum}º Bim`] || 0;
+                
                 html += `
                 <div class="mb-8">
                     <div class="flex items-center mb-4">
                         <h4 class="text-xl font-bold text-gray-800">${periodoNome}</h4>
-                        <!-- CORREÇÃO: Removida cor de fundo e adicionada classe text-gray-800 para contraste -->
-                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 border border-gray-300 text-gray-800">
-                            Média: ${Utils.formatarNota(alunoData?.[`${periodoNum}º Período`] || alunoData?.[`${periodoNum}º Bim`] || 0)}
+                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-medium ${Utils.obterCorFundoMedia(mediaAluno)} ${Utils.obterCorMedia(mediaAluno)}">
+                            Média: ${Utils.formatarNota(mediaAluno)}
                         </span>
                     </div>
                 `;
@@ -1697,6 +1675,7 @@
                     </button>
                 ` : '';
                 
+                // CORREÇÃO DO PROBLEMA 7: Removida a frase "Certifique-se de que o link está público"
                 linkHTML = `
                     <div class="link-container mt-3">
                         <div class="flex space-x-2">
@@ -1708,7 +1687,6 @@
                                    ${status.expirado || !status.liberada ? 'disabled' : ''}>
                             ${botaoSalvarHTML}
                         </div>
-                        <!-- CORREÇÃO: Removida a frase "Certifique-se de que o link está público" -->
                     </div>
                 `;
             }
@@ -1856,19 +1834,6 @@
                     const dataHora = response.data?.dataHora || new Date().toISOString();
                     const periodo = response.data?.periodo || 1;
                     const periodoNome = CONFIG.PERIODOS[periodo] || `Período ${periodo}`;
-                    
-                    // CORREÇÃO: Adicionar link exposto para o aluno
-                    const linkExposto = `<div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <a href="${Utils.escapeHTML(link)}" target="_blank" class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline">
-                                ${Utils.escapeHTML(link.length > 50 ? link.substring(0, 50) + '...' : link)}
-                            </a>
-                            <span class="nota-parte font-semibold ${nota === 2.5 ? 'text-green-700' : 'text-green-600'}">Nota: ${Utils.formatarNota(nota)}</span>
-                        </div>
-                        <p class="text-green-700 text-sm mt-2">
-                            ✓ Dados salvos com sucesso em ${new Date(dataHora).toLocaleString('pt-BR')}
-                        </p>
-                    </div>`;
                     
                     UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nPeríodo: ${periodoNome}\nNota: ${Utils.formatarNota(nota)}\nHorário: ${new Date(dataHora).toLocaleString('pt-BR')}\n\nMédia do período atualizada automaticamente na planilha.`);
                     
@@ -2445,6 +2410,7 @@
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                                                     ${medias.map((media, idx) => {
                                                         const periodo = idx + 1;
+                                                        // CORREÇÃO DO PROBLEMA 5: Corrigida a chamada para Utils.calcularColunaParte
                                                         const origem = Utils.formatarOrigemDado(
                                                             aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                                             aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2457,14 +2423,11 @@
                                                         return `
                                                             <td class="px-4 py-3 text-center border-b group relative">
                                                                 <span class="${Utils.obterCorMedia(media)} cursor-help group relative" title="${origem}">
-    ${Utils.formatarNota(media)}
-    <div class="tooltip-origem">
-        ${origem}
-    </div>
-</span>
-                                                                <div class="tooltip-origem">
-                                                                    ${origem}
-                                                                </div>
+                                                                    ${Utils.formatarNota(media)}
+                                                                    <div class="tooltip-origem">
+                                                                        ${origem}
+                                                                    </div>
+                                                                </span>
                                                             </td>
                                                         `;
                                                     }).join('')}
@@ -2544,6 +2507,7 @@
                             // Médias dos períodos
                             medias.forEach((media, idx) => {
                                 const periodo = idx + 1;
+                                // CORREÇÃO DO PROBLEMA 5: Corrigida a chamada para Utils.calcularColunaParte
                                 const origem = Utils.formatarOrigemDado(
                                     aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                     aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2556,14 +2520,11 @@
                                 relatorioTurmaHTML += `
                                     <td class="px-1 py-3 text-center border-b group relative">
                                         <span class="${Utils.obterCorMedia(media)} cursor-help group relative" title="${origem}">
-    ${Utils.formatarNota(media)}
-    <div class="tooltip-origem">
-        ${origem}
-    </div>
-</span>
-                                        <div class="tooltip-origem">
-                                            ${origem}
-                                        </div>
+                                            ${Utils.formatarNota(media)}
+                                            <div class="tooltip-origem">
+                                                ${origem}
+                                            </div>
+                                        </span>
                                     </td>
                                 `;
                             });
@@ -2578,8 +2539,14 @@
                                         let notaParte = parseFloat(aluno[chaveNota]) || 0;
                                         notaParte = Utils.validarNota(notaParte);
                                         
-                                        // CORREÇÃO: Usar Utils.calcularColunaParte corretamente
-                                        const origem = `Turma: ${turma} | Linha: ${parseInt(aluno.Numero) + 1} | Coluna: ${Utils.calcularColunaParte(tarefaIndex + 1, parte, periodoNum)}`;
+                                        // CORREÇÃO DO PROBLEMA 5: Corrigida a chamada para Utils.calcularColunaParte
+                                        const origem = Utils.formatarOrigemDado(
+                                            chaveNota,
+                                            aluno,
+                                            tarefaIndex + 1,
+                                            periodoNum,
+                                            parte
+                                        );
                                         
                                         relatorioTurmaHTML += `
                                             <td class="px-1 py-3 text-center border-b group relative">
@@ -2610,26 +2577,14 @@
                 
             } catch (error) {
                 console.error('Erro ao carregar relatório:', error);
-                // CORREÇÃO: Removida referência a this.calcularColunaParte
-                if (error.message && error.message.includes("this.calcularColunaParte is not a function")) {
-                    document.getElementById('relatorio-turma-container').innerHTML = `
-                        <div class="text-center py-8">
-                            <p class="text-red-500">Erro ao carregar relatório: Problema na geração de dados. Tente novamente.</p>
-                            <button onclick="carregarRelatorioTurma('${turma}')" class="btn-secundario mt-4">
-                                Tentar Novamente
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    document.getElementById('relatorio-turma-container').innerHTML = `
-                        <div class="text-center py-8">
-                            <p class="text-red-500">Erro ao carregar relatório: ${Utils.escapeHTML(error.message || String(error))}</p>
-                            <button onclick="carregarRelatorioTurma('${turma}')" class="btn-secundario mt-4">
-                                Tentar Novamente
-                            </button>
-                        </div>
-                    `;
-                }
+                document.getElementById('relatorio-turma-container').innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Erro ao carregar relatório: ${Utils.escapeHTML(error.message || String(error))}</p>
+                        <button onclick="carregarRelatorioTurma('${turma}')" class="btn-secundario mt-4">
+                            Tentar Novamente
+                        </button>
+                    </div>
+                `;
             }
         }
 
@@ -2901,6 +2856,7 @@
         window.togglePartesTarefa = togglePartesTarefa;
         window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
         window.limparCache = limparCache;
-    </script>
+    </script>   
+    
 </body>
 </html>
