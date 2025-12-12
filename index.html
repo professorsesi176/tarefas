@@ -32,8 +32,8 @@
 <div id="sidebar" class="w-64 mr-8 hidden">
     <div class="bg-red-800 text-white rounded-xl p-4 mb-6 shadow-lg">
         <h2 class="text-xl font-bold mb-4">Menu do Professor</h2>
-        
-        <!-- Item Tarefas -->
+
+                <!-- Item Tarefas -->
         <div class="menu-group mb-2">
             <button class="menu-group-header" onclick="toggleMenuGroup('tarefas')">
                 <span class="flex items-center">
@@ -367,13 +367,13 @@
                 // Determinar coluna baseada na chave
                 let coluna = '';
                 if (chave.includes('1º Período') || chave.includes('1º Bim')) {
-                    coluna = 'Coluna M (Período 1)';
+                    coluna = 'Coluna F (1º Período)';
                 } else if (chave.includes('2º Período') || chave.includes('2º Bim')) {
-                    coluna = 'Coluna N (Período 2)';
+                    coluna = 'Coluna G (2º Período)';
                 } else if (chave.includes('3º Período') || chave.includes('3º Bim')) {
-                    coluna = 'Coluna O (Período 3)';
+                    coluna = 'Coluna H (3º Período)';
                 } else if (chave.includes('4º Período') || chave.includes('4º Bim')) {
-                    coluna = 'Coluna P (Período 4)';
+                    coluna = 'Coluna I (4º Período)';
                 } else if (chave.includes('_P')) {
                     // Chave de parte específica
                     const partes = chave.split('_');
@@ -381,7 +381,7 @@
                         const parteNum = partes[0]?.replace('P', '') || '';
                         const tarefaNum = partes[1]?.replace('T', '') || '1';
                         if (parteNum && tarefaNum) {
-                            coluna = `Coluna ${this.calcularColunaParte(tarefaNum, parteNum, periodoNum)}`;
+                            coluna = `Coluna ${Utils.calcularColunaParte(tarefaNum, parteNum, periodoNum)}`;
                         }
                     }
                 }
@@ -409,6 +409,22 @@
                     num = Math.floor((num - 1) / 26);
                 }
                 return letra || 'A';
+            },
+
+            toggleMenuGroup: (groupId) => {
+                const content = document.getElementById(`menu-group-${groupId}`);
+                const arrow = content.previousElementSibling.querySelector('.menu-group-arrow');
+                
+                content.classList.toggle('hidden');
+                content.classList.toggle('expanded');
+                
+                if (content.classList.contains('expanded')) {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                } else {
+                    content.style.maxHeight = '0px';
+                    if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
             }
         };
 
@@ -651,6 +667,10 @@
                     `;
                     UIManager.showSidebar();
                     UIManager.setActiveMenuItem('menu-tarefas');
+                    // Expandir o primeiro grupo por padrão
+                    setTimeout(() => {
+                        Utils.toggleMenuGroup('tarefas');
+                    }, 100);
                 } else {
                     UIManager.elements.userInfo.innerHTML = `
                         <div class="user-info-text">
@@ -1658,7 +1678,8 @@
             
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             
-            const temDadosSalvos = linkSalvo !== '' && linkSalvo !== null && linkSalvo !== undefined;
+            // CORREÇÃO DO PROBLEMA 3: Verificação mais robusta para links salvos
+            const temDadosSalvos = linkSalvo && linkSalvo.toString().trim() !== '' && linkSalvo !== 'null' && linkSalvo !== 'undefined';
             
             const agora = new Date();
             const dataAula = new Date(tarefa.DataAula);
@@ -1727,17 +1748,27 @@
                 
                 const dataFormatada = dataHoraSalva ? new Date(dataHoraSalva).toLocaleString('pt-BR') : '';
                 const notaFormatada = Utils.formatarNota(notaParte);
-                const linkFormatado = Utils.escapeHTML(linkSalvo.substring(0, 50)) + (linkSalvo.length > 50 ? '...' : '');
-                
-                const linkDisplay = Utils.validarLink(linkSalvo) ? 
-                    `<a href="${Utils.escapeHTML(linkSalvo)}" target="_blank" class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline">${linkFormatado}</a>` :
-                    `<span class="link-salvo-texto">${linkFormatado}</span>`;
+
+                // CORREÇÃO: Verificar se o link é válido antes de formatar
+                let linkDisplay = '';
+                if (linkSalvo && Utils.validarLink(linkSalvo)) {
+                    const linkTratado = linkSalvo.toString().trim();
+                    const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 50)) + (linkTratado.length > 50 ? '...' : '');
+                    linkDisplay = `<a href="${Utils.escapeHTML(linkTratado)}" target="_blank" class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline">${linkFormatado}</a>`;
+                } else if (linkSalvo) {
+                    const linkFormatado = Utils.escapeHTML(linkSalvo.toString().substring(0, 50)) + (linkSalvo.length > 50 ? '...' : '');
+                    linkDisplay = `<span class="link-salvo-texto">${linkFormatado}</span>`;
+                }
                 
                 linkHTML = `
                     <div class="link-container mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <div class="flex justify-between items-center">
-                            ${linkDisplay}
-                            <span class="nota-parte font-semibold ${notaParte === 2.5 ? 'text-green-700' : 'text-green-600'}">Nota: ${notaFormatada}</span>
+                            <div class="flex-1 mr-4">
+                                ${linkDisplay}
+                            </div>
+                            <span class="nota-parte font-semibold ${notaParte === 2.5 ? 'text-green-700' : 'text-green-600'}">
+                                Nota: ${notaFormatada}
+                            </span>
                         </div>
                         ${botaoExcluirHTML}
                         <p class="text-green-700 text-sm mt-2">
@@ -1865,8 +1896,11 @@
         }
 
         async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
+            console.log('=== SALVAR LINK ALUNO - INÍCIO ===');
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             let link = input ? input.value.trim() : '';
+            
+            console.log('Link capturado do input:', link);
             
             if (!link) {
                 UIManager.showModal('Atenção', 'Por favor, cole um link válido.');
@@ -1880,13 +1914,14 @@
 
             if (!/^https?:\/\//i.test(link)) {
                 link = 'https://' + link;
+                console.log('Link com protocolo adicionado:', link);
             }
 
             try {
                 Utils.setButtonLoading(botaoSalvar, true);
                 botaoSalvar.textContent = "Salvando...";
                 
-                console.log('Enviando link para salvar:', {
+                console.log('Enviando para API:', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     Turma: STATE.usuarioLogado.Turma,
@@ -1903,10 +1938,14 @@
                     Link: link
                 });
                 
-                console.log('Resposta do salvamento:', response);
+                console.log('Resposta da API:', response);
                 
                 if (response.success) {
+                    console.log('Cache limpo, recarregando tarefas...');
                     CacheManager.clear();
+                    
+                    // Forçar recarregamento completo
+                    STATE.tarefas = [];
                     await carregarTarefasAluno();
                     
                     const nota = response.data?.nota || 0;
@@ -1915,6 +1954,14 @@
                     const periodoNome = CONFIG.PERIODOS[periodo] || `Período ${periodo}`;
                     
                     UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nPeríodo: ${periodoNome}\nNota: ${Utils.formatarNota(nota)}\nHorário: ${new Date(dataHora).toLocaleString('pt-BR')}\n\nMédia do período atualizada automaticamente na planilha.`);
+                    
+                    // Scroll para a parte atualizada
+                    setTimeout(() => {
+                        const elementoParte = document.getElementById(`parte-${idTarefa}-${parte}`);
+                        if (elementoParte) {
+                            elementoParte.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 500);
                     
                 } else {
                     throw new Error(response.error || 'Erro desconhecido ao salvar link');
@@ -1926,6 +1973,7 @@
             } finally {
                 Utils.setButtonLoading(botaoSalvar, false);
                 botaoSalvar.textContent = "Salvar Link";
+                console.log('=== SALVAR LINK ALUNO - FIM ===');
             }
         }
 
@@ -2938,6 +2986,7 @@
         window.togglePartesTarefa = togglePartesTarefa;
         window.mostrarPainelDiagnostico = mostrarPainelDiagnostico;
         window.limparCache = limparCache;
+        window.toggleMenuGroup = Utils.toggleMenuGroup;
     </script>   
     
 </body>
