@@ -1377,4 +1377,52 @@ textarea {
         padding: 10px 16px;
         font-size: 0.875rem;
     }
+  #sidebar {
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu-item {
+    @apply w-full text-left px-4 py-3 rounded-lg transition-all duration-200 text-white hover:bg-red-700 flex items-center space-x-3;
+}
+
+.sidebar-menu-item.active {
+    @apply bg-red-900 font-semibold;
+}
+
+/* Ajuste para o layout com sidebar */
+#app-container.flex {
+    min-height: 600px;
+}
+
+/* Ajustes de responsividade */
+@media (max-width: 768px) {
+    #app-container {
+        flex-direction: column;
+    }
+    
+    #sidebar {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Estilos para o botão de excluir sempre visível */
+.btn-link {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+}
+
+.btn-secundario.btn-link {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+}
+
+/* Tooltip para origem dos dados */
+.tooltip-origem {
+    @apply absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 invisible transition-all duration-200 group-hover:opacity-100 group-hover:visible z-50;
+}
+
+.tooltip-origem::after {
+    content: '';
+    @apply absolute top-full left-1/2 transform -translate-x-1/2 border-8 border-transparent border-t-gray-800;
+}
 }
