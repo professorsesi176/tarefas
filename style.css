@@ -1384,4 +1384,89 @@ textarea {
         margin-right: 0;
         margin-bottom: 1.5rem;
     }
+  /* Adicionar estas regras ao CSS existente */
+
+/* CORREÇÃO DO PROBLEMA 1: Garantir que o nome fique em uma linha */
+.relatorio-tabela-container table tbody td:nth-child(2) {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 250px !important;
+    min-width: 200px !important;
+}
+
+/* Ajustar cabeçalhos das partes no relatório */
+.relatorio-parte-header {
+    font-size: 10px !important;
+    padding: 4px 2px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    min-width: 30px !important;
+}
+
+.relatorio-tarefa-header {
+    font-size: 11px !important;
+    padding: 8px 4px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+/* Garantir que a tabela tenha scroll horizontal */
+.relatorio-tabela-container {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+}
+
+.relatorio-tabela-container table {
+    min-width: 1200px !important;
+}
+
+/* Ajustar a coluna do nome do aluno */
+.relatorio-tabela-container table tbody td:nth-child(2) {
+    position: sticky !important;
+    left: 0 !important;
+    background-color: white !important;
+    z-index: 1 !important;
+    box-shadow: 2px 0 2px -1px rgba(0,0,0,0.1) !important;
+}
+
+/* Ajustar a coluna do número do aluno */
+.relatorio-tabela-container table tbody td:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    background-color: #f8fafc !important;
+    z-index: 2 !important;
+    box-shadow: 2px 0 2px -1px rgba(0,0,0,0.1) !important;
+}
+
+/* Ajustar a primeira linha do cabeçalho */
+.relatorio-tabela-container table thead th:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 3 !important;
+    background-color: var(--cor-primaria) !important;
+}
+
+.relatorio-tabela-container table thead th:nth-child(2) {
+    position: sticky !important;
+    left: 50px !important;
+    z-index: 3 !important;
+    background-color: var(--cor-primaria) !important;
+}
+
+/* Garantir que os links salvos sejam visíveis */
+.link-salvo-clicavel {
+    display: block !important;
+    word-break: break-all !important;
+    padding: 4px 8px !important;
+    background-color: #f0f9ff !important;
+    border-radius: 4px !important;
+    border: 1px solid #bae6fd !important;
+    margin: 4px 0 !important;
+}
+
+.link-salvo-clicavel:hover {
+    background-color: #e0f2fe !important;
+    text-decoration: underline !important;
+}
 }
