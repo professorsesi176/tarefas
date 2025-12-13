@@ -40,24 +40,41 @@
 
         <!-- Menu Suspenso Lateral -->
         <div id="sidebar" class="sidebar hidden">
-            <div class="bg-red-800 text-white rounded-xl p-4 mb-6 shadow-lg">
-                <h2 class="text-xl font-bold mb-4">Menu do Professor</h2>
+            <div class="bg-gradient-to-br from-red-800 to-red-900 text-white rounded-xl p-4 mb-6 shadow-lg">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    Menu do Professor
+                </h2>
                 
-                <div class="space-y-2">
-                    <button onclick="mostrarPainelProfessor()" class="menu-item">
-                        📋 Tarefas
+                <div class="space-y-1">
+                    <button onclick="mostrarPainelGraficos()" class="menu-item flex items-center p-3 hover:bg-red-700 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Gráficos
                     </button>
                     
-                    <button onclick="mostrarPainelGraficos()" class="menu-item">
-                        📊 Gráficos
+                    <button onclick="mostrarPainelProfessor()" class="menu-item flex items-center p-3 hover:bg-red-700 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Tarefas
                     </button>
                     
-                    <button onclick="mostrarPainelDiagnostico()" class="menu-item">
-                        🔍 Diagnóstico
+                    <button onclick="mostrarRelatorioProfessor()" class="menu-item flex items-center p-3 hover:bg-red-700 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Relatório
                     </button>
                     
-                    <button onclick="mostrarRelatorioProfessor()" class="menu-item">
-                        📄 Relatório
+                    <button onclick="mostrarPainelDiagnostico()" class="menu-item flex items-center p-3 hover:bg-red-700 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                        Diagnóstico
                     </button>
                 </div>
             </div>
@@ -1078,7 +1095,6 @@
             }
 
             tbody.innerHTML = STATE.tarefas.map(tarefa => {
-                // CORREÇÃO DO PROBLEMA 4: Converter tema para string antes de usar includes
                 const temaStr = String(tarefa.Tema || '');
                 const isDebugTarefa = temaStr.includes('DEBUG');
                 const periodoNome = CONFIG.PERIODOS[tarefa.Periodo] || `Período ${tarefa.Periodo}`;
@@ -1496,7 +1512,6 @@
                     
                     if (alunoResponse.success) {
                         alunoData = alunoResponse.data;
-                        // CORREÇÃO DO PROBLEMA 2: Buscar entregas atualizadas da planilha
                         entregas = await buscarEntregasAlunoAtualizadas(alunoData, response.data);
                     }
                 } catch (error) {
@@ -1519,7 +1534,6 @@
             }
         }
 
-        // CORREÇÃO DO PROBLEMA 2: Função para buscar entregas atualizadas da planilha
         async function buscarEntregasAlunoAtualizadas(alunoData, tarefas) {
             const entregas = [];
             
@@ -1625,7 +1639,6 @@
                 const periodoNome = CONFIG.PERIODOS[periodoNum] || `Período ${periodoNum}`;
                 const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
                 
-                // CORREÇÃO DO PROBLEMA 6: Média visível com cor escura
                 const mediaAluno = alunoData?.[`${periodoNum}º Período`] || alunoData?.[`${periodoNum}º Bim`] || 0;
                 
                 html += `
@@ -1712,7 +1725,6 @@
             
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
             
-            // CORREÇÃO DO PROBLEMA 2: Verificação robusta para links salvos
             const temDadosSalvos = linkSalvo && linkSalvo.toString().trim() !== '' && linkSalvo !== 'null' && linkSalvo !== 'undefined';
             
             const agora = new Date();
@@ -1771,7 +1783,7 @@
             
             let linkHTML = '';
             if (temDadosSalvos) {
-                // CORREÇÃO DO PROBLEMA 3: Botão de excluir sempre visível e habilitado quando há link
+                // Botão de excluir sempre visível quando há link
                 const botaoExcluirHTML = `
                     <button class="btn-secundario btn-link" 
                             onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
@@ -1783,31 +1795,47 @@
                 const dataFormatada = dataHoraSalva ? new Date(dataHoraSalva).toLocaleString('pt-BR') : '';
                 const notaFormatada = Utils.formatarNota(notaParte);
                 
-                // CORREÇÃO: Verificar se o link é válido antes de formatar
                 let linkDisplay = '';
                 if (linkSalvo && Utils.validarLink(linkSalvo)) {
                     const linkTratado = linkSalvo.toString().trim();
-                    const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 50)) + (linkTratado.length > 50 ? '...' : '');
-                    linkDisplay = `<a href="${Utils.escapeHTML(linkTratado)}" target="_blank" class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline">${linkFormatado}</a>`;
+                    const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
+                    linkDisplay = `
+                        <div class="mb-2">
+                            <a href="${Utils.escapeHTML(linkTratado)}" 
+                               target="_blank" 
+                               class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
+                                🔗 ${linkFormatado}
+                            </a>
+                        </div>
+                    `;
                 } else if (linkSalvo) {
-                    const linkFormatado = Utils.escapeHTML(linkSalvo.toString().substring(0, 50)) + (linkSalvo.length > 50 ? '...' : '');
-                    linkDisplay = `<span class="link-salvo-texto">${linkFormatado}</span>`;
+                    const linkFormatado = Utils.escapeHTML(linkSalvo.toString().substring(0, 60)) + (linkSalvo.length > 60 ? '...' : '');
+                    linkDisplay = `
+                        <div class="mb-2">
+                            <span class="link-salvo-texto font-medium break-all">
+                                📎 ${linkFormatado}
+                            </span>
+                        </div>
+                    `;
                 }
                 
                 linkHTML = `
                     <div class="link-container mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-start mb-2">
                             <div class="flex-1 mr-4">
+                                <div class="text-sm font-semibold text-green-800 mb-1">Link enviado:</div>
                                 ${linkDisplay}
                             </div>
-                            <span class="nota-parte font-semibold ${notaParte === 2.5 ? 'text-green-700' : 'text-green-600'}">
+                            <span class="nota-parte font-bold ${notaParte === 2.5 ? 'text-green-700' : 'text-green-600'}">
                                 Nota: ${notaFormatada}
                             </span>
                         </div>
-                        ${botaoExcluirHTML}
-                        <p class="text-green-700 text-sm mt-2">
-                            ✓ Dados salvos com sucesso ${dataFormatada ? 'em ' + dataFormatada : ''}
-                        </p>
+                        <div class="flex justify-between items-center">
+                            <p class="text-green-700 text-sm">
+                                ✓ Dados salvos ${dataFormatada ? 'em ' + dataFormatada : ''}
+                            </p>
+                            ${botaoExcluirHTML}
+                        </div>
                     </div>
                 `;
             } else {
@@ -1819,9 +1847,9 @@
                     </button>
                 ` : '';
                 
-                // CORREÇÃO DO PROBLEMA 7: Removida a frase "Certifique-se de que o link está público"
                 linkHTML = `
                     <div class="link-container mt-3">
+                        <div class="mb-2 text-sm font-medium text-gray-700">Insira seu link:</div>
                         <div class="flex space-x-2">
                             <input type="text" 
                                    class="link-input flex-1" 
@@ -1831,6 +1859,9 @@
                                    ${status.expirado || !status.liberada ? 'disabled' : ''}>
                             ${botaoSalvarHTML}
                         </div>
+                        ${status.expirado ? 
+                            '<p class="text-red-500 text-sm mt-1">⚠️ Prazo expirado - não é mais possível enviar</p>' : 
+                            ''}
                     </div>
                 `;
             }
@@ -2573,7 +2604,6 @@
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                                                     ${medias.map((media, idx) => {
                                                         const periodo = idx + 1;
-                                                        // CORREÇÃO DO PROBLEMA 3: Usando Utils.calcularColunaParte corretamente
                                                         const origem = Utils.formatarOrigemDado(
                                                             aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                                             aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2583,10 +2613,19 @@
                                                             0
                                                         );
                                                         
+                                                        // CORREÇÃO DO PROBLEMA 1: Mostrar "-" se não tem nota, "0" se passou o prazo
+                                                        let exibirNota = '-';
+                                                        let corNota = 'text-gray-400';
+                                                        
+                                                        if (media > 0) {
+                                                            exibirNota = Utils.formatarNota(media);
+                                                            corNota = Utils.obterCorMedia(media);
+                                                        }
+                                                        
                                                         return `
                                                             <td class="px-4 py-3 text-center border-b group relative">
-                                                                <span class="${Utils.obterCorMedia(media)} cursor-help group relative" title="${origem}">
-                                                                    ${Utils.formatarNota(media)}
+                                                                <span class="${corNota} cursor-help group relative" title="${origem}">
+                                                                    ${exibirNota}
                                                                     <div class="tooltip-origem">
                                                                         ${origem}
                                                                     </div>
@@ -2670,7 +2709,6 @@
                             // Médias dos períodos
                             medias.forEach((media, idx) => {
                                 const periodo = idx + 1;
-                                // CORREÇÃO DO PROBLEMA 3: Usando Utils.calcularColunaParte corretamente
                                 const origem = Utils.formatarOrigemDado(
                                     aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
                                     aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
@@ -2680,10 +2718,18 @@
                                     0
                                 );
                                 
+                                let exibirNota = '-';
+                                let corNota = 'text-gray-400';
+                                
+                                if (media > 0) {
+                                    exibirNota = Utils.formatarNota(media);
+                                    corNota = Utils.obterCorMedia(media);
+                                }
+                                
                                 relatorioTurmaHTML += `
                                     <td class="px-1 py-3 text-center border-b group relative">
-                                        <span class="${Utils.obterCorMedia(media)} cursor-help group relative" title="${origem}">
-                                            ${Utils.formatarNota(media)}
+                                        <span class="${corNota} cursor-help group relative" title="${origem}">
+                                            ${exibirNota}
                                             <div class="tooltip-origem">
                                                 ${origem}
                                             </div>
@@ -2699,10 +2745,42 @@
                                 tarefasPeriodo.forEach((tarefa, tarefaIndex) => {
                                     for (let parte = 1; parte <= 4; parte++) {
                                         const chaveNota = `P${parte}_T${tarefaIndex + 1}_P${periodoNum}`;
-                                        let notaParte = parseFloat(aluno[chaveNota]) || 0;
-                                        notaParte = Utils.validarNota(notaParte);
+                                        let valorNota = aluno[chaveNota];
+                                        let exibirNota = '-';
+                                        let corNota = 'text-gray-400';
                                         
-                                        // CORREÇÃO DO PROBLEMA 3: Usando Utils.calcularColunaParte corretamente
+                                        // Verificar se a tarefa tem prazo expirado
+                                        const agora = new Date();
+                                        const dataAula = new Date(tarefa.DataAula);
+                                        let diasOffset = 0;
+                                        switch(parte) {
+                                            case 1: diasOffset = 0; break;
+                                            case 2: diasOffset = 7; break;
+                                            case 3: diasOffset = 14; break;
+                                            case 4: diasOffset = 28; break;
+                                        }
+                                        
+                                        const diaEntrega = new Date(dataAula);
+                                        diaEntrega.setDate(diaEntrega.getDate() + diasOffset);
+                                        const fim = new Date(diaEntrega);
+                                        fim.setHours(22, 0, 0, 0);
+                                        
+                                        // Se passou o prazo e não tem nota, mostrar 0
+                                        if (agora > fim && (!valorNota || valorNota === '')) {
+                                            exibirNota = '0';
+                                            corNota = 'text-red-500 font-bold';
+                                        }
+                                        // Se tem nota válida
+                                        else if (valorNota !== undefined && valorNota !== null && valorNota !== '') {
+                                            const notaNum = parseFloat(valorNota);
+                                            if (!isNaN(notaNum) && notaNum > 0) {
+                                                exibirNota = Utils.formatarNota(notaNum);
+                                                corNota = notaNum === 2.5 ? 'text-green-600 font-semibold' : 
+                                                         notaNum === 2 ? 'text-blue-600' : 
+                                                         'text-gray-600';
+                                            }
+                                        }
+                                        
                                         const origem = Utils.formatarOrigemDado(
                                             chaveNota,
                                             aluno,
@@ -2713,8 +2791,8 @@
                                         
                                         relatorioTurmaHTML += `
                                             <td class="px-1 py-3 text-center border-b group relative">
-                                                <span class="text-gray-600 cursor-help" title="${origem}">
-                                                    ${notaParte > 0 ? Utils.formatarNota(notaParte) : '-'}
+                                                <span class="${corNota} cursor-help" title="${origem}">
+                                                    ${exibirNota}
                                                 </span>
                                                 <div class="tooltip-origem">
                                                     ${origem}
@@ -3039,166 +3117,5 @@
         window.limparCache = limparCache;
         window.toggleMenu = toggleMenu;
     </script>   
-    
-    <style>
-        /* Estilos para o menu lateral */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 250px;
-            height: 100vh;
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            padding: 20px;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .sidebar:not(.hidden) {
-            transform: translateX(0);
-        }
-        
-        .menu-item {
-            display: block;
-            width: 100%;
-            padding: 12px 16px;
-            text-align: left;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-bottom: 8px;
-        }
-        
-        .menu-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Overlay para o menu */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-        
-        .sidebar-overlay.active {
-            display: block;
-        }
-        
-        /* Ajustes para o conteúdo principal quando o menu está aberto */
-        .sidebar-open .app-container {
-            margin-left: 250px;
-            transition: margin-left 0.3s ease;
-        }
-        
-        /* Estilos para o botão menu */
-        #menu-button-container {
-            transition: opacity 0.3s ease;
-        }
-        
-        /* Contador estilos */
-        .contador {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 12px;
-        }
-        
-        .contador.disponivel {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-        
-        .contador.aguardando {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .contador.expirado {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-        
-        /* Estilos para as partes da tarefa */
-        .retencao-aviso {
-            font-size: 11px;
-            padding: 1px 6px;
-            border-radius: 10px;
-            margin-left: 8px;
-        }
-        
-        .retencao-50 {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .retencao-25 {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .retencao-15 {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-        
-        .retencao-10 {
-            background-color: #f3e8ff;
-            color: #7c3aed;
-        }
-        
-        /* Estilos para os links */
-        .link-salvo-clicavel {
-            color: #1d4ed8;
-            text-decoration: underline;
-        }
-        
-        .link-salvo-clicavel:hover {
-            color: #1e40af;
-        }
-        
-        .link-salvo-texto {
-            color: #374151;
-        }
-        
-        .nota-parte {
-            font-size: 14px;
-        }
-        
-        /* Estilos para os tooltips */
-        .tooltip-origem {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1f2937;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 10;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        
-        .group:hover .tooltip-origem {
-            opacity: 1;
-            visibility: visible;
-        }
-    </style>
-    
 </body>
 </html>
