@@ -25,6 +25,237 @@
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+    
+    <!-- Estilos CSS -->
+    <style>
+        /* Estilos para a tabela de relatório */
+        .relatorio-tabela-container {
+            max-width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .relatorio-tabela {
+            min-width: 100%;
+            table-layout: fixed;
+        }
+        
+        .relatorio-tabela .nome-aluno {
+            white-space: nowrap;
+            min-width: 200px;
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 10;
+        }
+        
+        .relatorio-tabela th {
+            position: sticky;
+            top: 0;
+            background: #f9fafb;
+            z-index: 20;
+        }
+        
+        .relatorio-tabela th.nome-aluno {
+            left: 0;
+            z-index: 30;
+        }
+        
+        /* Estilos para links salvos */
+        .link-salvo-clicavel {
+            color: #2563eb;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .link-salvo-clicavel:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        
+        .link-salvo-texto {
+            word-break: break-all;
+            color: #374151;
+        }
+        
+        /* Estilos para horário de entrega */
+        .horario-info {
+            margin-top: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .horario-maxima {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        
+        .horario-regular {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        .horario-fora {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        
+        /* Outros estilos */
+        .partes-tarefa-container {
+            border-top: 1px solid #e5e7eb;
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+        
+        .nota-tarefa-aluno {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .conteudo-formatado {
+            line-height: 1.5;
+        }
+        
+        .conteudo-formatado br {
+            display: block;
+            content: "";
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Estilos para status de contador */
+        .contador {
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+        }
+        
+        .contador.disponivel {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .contador.aguardando {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .contador.expirado {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Estilos para mensagens de retenção */
+        .retencao-aviso {
+            font-size: 0.75rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            margin-left: 0.5rem;
+        }
+        
+        .retencao-50 {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .retencao-25 {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .retencao-15 {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .retencao-10 {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        /* Estilos para campos de formulário */
+        .link-input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            width: 100%;
+        }
+        
+        .link-input:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: #ef4444;
+            border-color: #ef4444;
+        }
+        
+        .link-input:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        /* Estilos para botões */
+        .btn-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primario {
+            background-color: #b91c1c;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primario:hover {
+            background-color: #991b1b;
+        }
+        
+        .btn-primario:disabled {
+            background-color: #fca5a5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secundario {
+            background-color: #f3f4f6;
+            color: #374151;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-secundario:hover {
+            background-color: #e5e7eb;
+        }
+        
+        /* Estilos para spinner de carregamento */
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #b91c1c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
     <div id="app-container" class="w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-6 sm:p-8 transition-all duration-300">
@@ -1748,7 +1979,7 @@
                 if (horaAtual >= 17 && horaAtual < 20) {
                     horarioInfo = '<div class="horario-info horario-maxima">Nota máxima (17h-20h) 2.5</div>';
                 } else if ((horaAtual >= 7 && horaAtual < 17) || (horaAtual >= 20 && horaAtual < 22)) {
-                    horarioInfo = '<div class="horario-info">Nota regular (7h-17h ou 20h-22h) 2.0</div>';
+                    horarioInfo = '<div class="horario-info horario-regular">Nota regular (7h-17h ou 20h-22h) 2.0</div>';
                 } else {
                     horarioInfo = '<div class="horario-info horario-fora">Fora do horário de entrega (7h-22h)</div>';
                 }
@@ -1782,6 +2013,7 @@
             }
             
             let linkHTML = '';
+            
             if (temDadosSalvos) {
                 // Botão de excluir sempre visível quando há link
                 const botaoExcluirHTML = `
@@ -1838,32 +2070,39 @@
                         </div>
                     </div>
                 `;
-            } else {
-                const botaoSalvarHTML = status.liberada ? `
-                    <button class="btn-primario btn-link" 
-                            onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
-                            id="btn-salvar-${tarefa.ID}-${numeroParte}">
-                        Salvar Link
-                    </button>
-                ` : '';
-                
+            } else if (status.liberada) {
+                // Parte liberada e dentro do prazo
                 linkHTML = `
                     <div class="link-container mt-3">
-                        <div class="mb-2 text-sm font-medium text-gray-700">Insira seu link:</div>
                         <div class="flex space-x-2">
                             <input type="text" 
                                    class="link-input flex-1" 
-                                   placeholder="${status.expirado ? 'Prazo expirado' : 'Cole o link da atividade aqui'}" 
+                                   placeholder="Cole o link da atividade aqui" 
                                    id="${inputId}"
-                                   value=""
-                                   ${status.expirado || !status.liberada ? 'disabled' : ''}>
-                            ${botaoSalvarHTML}
+                                   value="">
+                            <button class="btn-primario btn-link" 
+                                    onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                                    id="btn-salvar-${tarefa.ID}-${numeroParte}">
+                                Salvar Link
+                            </button>
                         </div>
-                        ${status.expirado ? 
-                            '<p class="text-red-500 text-sm mt-1">⚠️ Prazo expirado - não é mais possível enviar</p>' : 
-                            ''}
                     </div>
                 `;
+            } else {
+                // Parte não liberada (expirada ou aguardando)
+                if (status.expirado) {
+                    linkHTML = `
+                        <div class="link-container mt-3">
+                            <p class="text-red-500 text-sm">Esta parte expirou e não é mais possível enviar.</p>
+                        </div>
+                    `;
+                } else {
+                    linkHTML = `
+                        <div class="link-container mt-3">
+                            <p class="text-yellow-600 text-sm">Esta parte será liberada em breve.</p>
+                        </div>
+                    `;
+                }
             }
             
             return `
@@ -2577,12 +2816,12 @@
                     if (periodosComTarefas.length === 0) {
                         // Sem tarefas, mostrar apenas médias
                         relatorioTurmaHTML += `
-                            <div class="overflow-x-auto border border-gray-200 rounded-lg mt-4">
-                                <table class="min-w-full compact-table" id="tabela-relatorio">
+                            <div class="relatorio-tabela-container">
+                                <table class="relatorio-tabela compact-table" id="tabela-relatorio">
                                     <thead>
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">Nº</th>
-                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50">Aluno</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50 nome-aluno">Aluno</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">1º Período</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">2º Período</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">3º Período</th>
@@ -2601,7 +2840,7 @@
                                             return `
                                                 <tr class="hover:bg-gray-50">
                                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
-                                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                                    <td class="px-4 py-3 font-medium text-gray-900 border-b nome-aluno" style="white-space: nowrap;">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                                                     ${medias.map((media, idx) => {
                                                         const periodo = idx + 1;
                                                         const origem = Utils.formatarOrigemDado(
@@ -2643,12 +2882,12 @@
                     } else {
                         // Com tarefas, mostrar tabela completa
                         relatorioTurmaHTML += `
-                            <div class="overflow-x-auto border border-gray-200 rounded-lg mt-4">
-                                <table class="min-w-full compact-table" id="tabela-relatorio">
+                            <div class="relatorio-tabela-container">
+                                <table class="relatorio-tabela compact-table" id="tabela-relatorio">
                                     <thead>
                                         <tr>
                                             <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50" rowspan="2">Nº</th>
-                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50" rowspan="2">Aluno</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50 nome-aluno" rowspan="2">Aluno</th>
                                             <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50" colspan="4">Médias por Período</th>
                         `;
                         
@@ -2703,7 +2942,7 @@
                             relatorioTurmaHTML += `
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-3 text-center border-b">${aluno.Numero || ''}</td>
-                                    <td class="px-4 py-3 font-medium text-gray-900 border-b">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900 border-b nome-aluno" style="white-space: nowrap;">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                             `;
                             
                             // Médias dos períodos
