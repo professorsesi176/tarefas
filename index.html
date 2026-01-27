@@ -95,7 +95,7 @@
             <div id="content-area"></div>
 
             <footer class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-                Desenvolvido por Geovane Modena | Versão 36
+                Desenvolvido por Geovane Modena | Versão 37
             </footer>
         </div>
     </div>
@@ -803,7 +803,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v36.0.3 - Sistema de 4 Períodos...');
+                console.log('Inicializando sistema v37.0.0 - Sistema de 4 Períodos...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1391,8 +1391,8 @@
                                         return `
                                             <div class="text-center">
                                                 <div class="text-sm text-gray-600">${periodo}º Período</div>
-                                                <div class="text-lg font-bold ${Utils.obterCorMedia(media)}" id="media-${periodo}periodo">
-                                                    ${Utils.formatarNota(media)}
+                                                <div class="text-lg font-bold text-black" id="media-${periodo}periodo">
+                                                    Média: ${Utils.formatarNota(media)}
                                                 </div>
                                             </div>
                                         `;
@@ -1646,7 +1646,7 @@
                 <div class="mb-8">
                     <div class="flex items-center mb-4">
                         <h4 class="text-xl font-bold text-gray-800">${periodoNome}</h4>
-                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-medium ${Utils.obterCorFundoMedia(mediaAluno)} ${Utils.obterCorMedia(mediaAluno)}">
+                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-medium ${Utils.obterCorFundoMedia(mediaAluno)} text-black">
                             Média: ${Utils.formatarNota(mediaAluno)}
                         </span>
                     </div>
@@ -1684,7 +1684,7 @@
                             </div>
                             <div class="flex items-center space-x-4">
                                 <span class="text-sm text-gray-600">${Utils.formatarData(tarefa.DataAula)}</span>
-                                <span class="nota-tarefa-aluno font-semibold ${Utils.obterCorMedia(notaTotal)}">Nota: ${Utils.formatarNota(notaTotal)}</span>
+                                <span class="nota-tarefa-aluno font-semibold text-black">Nota: ${Utils.formatarNota(notaTotal)}</span>
                             </div>
                         </div>
                         
@@ -1798,36 +1798,35 @@
                 const notaFormatada = Utils.formatarNota(notaParte);
                 
                 let linkDisplay = '';
-                if (linkSalvo && Utils.validarLink(linkSalvo)) {
+                if (linkSalvo && linkSalvo.toString().trim() !== '') {
                     const linkTratado = linkSalvo.toString().trim();
                     const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
+                    
+                    // CORREÇÃO DO PROBLEMA 2: Sempre mostrar o link visível
                     linkDisplay = `
                         <div class="mb-2">
-                            <a href="${Utils.escapeHTML(linkTratado)}" 
-                               target="_blank" 
-                               class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
+                            <span class="link-salvo-texto font-medium break-all">
                                 🔗 ${linkFormatado}
-                            </a>
+                            </span>
                         </div>
                     `;
-                } else if (linkSalvo) {
-                    // CORREÇÃO DO PROBLEMA 2: Sempre mostrar o link, mesmo se não for validado
-                    const linkTratado = linkSalvo.toString().trim();
-                    const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
-                    // Tentar criar um link válido
-                    let linkFinal = linkTratado;
-                    if (!/^https?:\/\//i.test(linkTratado)) {
-                        linkFinal = 'https://' + linkTratado;
+                    
+                    // Se o link for válido, também criar um link clicável
+                    if (Utils.validarLink(linkSalvo)) {
+                        let linkFinal = linkTratado;
+                        if (!/^https?:\/\//i.test(linkTratado)) {
+                            linkFinal = 'https://' + linkTratado;
+                        }
+                        linkDisplay = `
+                            <div class="mb-2">
+                                <a href="${Utils.escapeHTML(linkFinal)}" 
+                                   target="_blank" 
+                                   class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
+                                    🔗 ${linkFormatado}
+                                </a>
+                            </div>
+                        `;
                     }
-                    linkDisplay = `
-                        <div class="mb-2">
-                            <a href="${Utils.escapeHTML(linkFinal)}" 
-                               target="_blank" 
-                               class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
-                                🔗 ${linkFormatado}
-                            </a>
-                        </div>
-                    `;
                 }
                 
                 linkHTML = `
@@ -1837,7 +1836,7 @@
                                 <div class="text-sm font-semibold text-green-800 mb-1">Link enviado:</div>
                                 ${linkDisplay}
                             </div>
-                            <span class="nota-parte font-bold ${notaParte === 2.5 ? 'text-green-700' : 'text-green-600'}">
+                            <span class="nota-parte font-bold text-black">
                                 Nota: ${notaFormatada}
                             </span>
                         </div>
@@ -2565,7 +2564,7 @@
                 
                 let relatorioTurmaHTML = `
                     <div class="relatorio-header mb-4">
-                        <h4 class="text-lg font-semibold text-red-800">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
+                        <h4 class="text-lg font-semibold text-black">Relatório da Turma ${Utils.escapeHTML(turma)}</h4>
                     </div>
                     <div class="relatorio-info mt-2 mb-4 text-sm text-gray-600">
                         Total de alunos: ${relatorio.alunos?.length || 0} | Total de tarefas: ${relatorio.tarefas?.length || 0} | Última atualização em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
@@ -2599,12 +2598,12 @@
                                 <table class="relatorio-tabela compact-table" id="tabela-relatorio">
                                     <thead>
                                         <tr>
-                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">Nº</th>
-                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50 nome-aluno">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">1º Período</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">2º Período</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">3º Período</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50">4º Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50 nome-aluno text-black">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black">1º Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black">2º Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black">3º Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black">4º Período</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2665,9 +2664,9 @@
                                 <table class="relatorio-tabela compact-table" id="tabela-relatorio">
                                     <thead>
                                         <tr>
-                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50" rowspan="2">Nº</th>
-                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50 nome-aluno" rowspan="2">Aluno</th>
-                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50" colspan="4">Médias por Período</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black" rowspan="2">Nº</th>
+                                            <th class="px-4 py-3 text-left font-semibold border-b bg-gray-50 nome-aluno text-black" rowspan="2">Aluno</th>
+                                            <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black" colspan="4">Médias por Período</th>
                         `;
                         
                         // Adicionar cabeçalhos para cada período
@@ -2675,7 +2674,7 @@
                             const periodoNome = CONFIG.PERIODOS[periodoNum] || `Período ${periodoNum}`;
                             const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
                             relatorioTurmaHTML += `
-                                <th class="px-2 py-3 text-center font-semibold border-b bg-gray-50 relatorio-tarefa-header" colspan="${tarefasPeriodo.length * 4}">
+                                <th class="px-2 py-3 text-center font-semibold border-b bg-gray-50 relatorio-tarefa-header text-black" colspan="${tarefasPeriodo.length * 4}">
                                     ${periodoNome}
                                 </th>
                             `;
@@ -2685,10 +2684,10 @@
                         
                         // Cabeçalhos das médias
                         relatorioTurmaHTML += `
-                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header">1º Período</th>
-                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header">2º Período</th>
-                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header">3º Período</th>
-                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header">4º Período</th>
+                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">1º Período</th>
+                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">2º Período</th>
+                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">3º Período</th>
+                            <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">4º Período</th>
                         `;
                         
                         // Cabeçalhos das partes por tarefa
@@ -2697,7 +2696,7 @@
                             tarefasPeriodo.forEach((tarefa, tarefaIndex) => {
                                 for (let parte = 1; parte <= 4; parte++) {
                                     relatorioTurmaHTML += `
-                                        <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header">P${parte}</th>
+                                        <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">P${parte}</th>
                                     `;
                                 }
                             });
@@ -2919,7 +2918,7 @@
                     html: table,
                     startY: 30,
                     styles: { fontSize: 7 },
-                    headStyles: { fillColor: [185, 28, 28] }
+                    headStyles: { fillColor: [41, 41, 41] } // Preto para cabeçalho
                 });
 
                 doc.save(`relatorio_turma_${turma}.pdf`);
@@ -3395,8 +3394,8 @@ textarea {
 }
 
 .compact-table th {
-    background-color: var(--cor-primaria);
-    color: var(--cor-branco);
+    background-color: #f9fafb; /* Fundo cinza claro */
+    color: #000000; /* Texto preto */
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
@@ -3468,6 +3467,7 @@ textarea {
     top: 0;
     background: #f9fafb;
     z-index: 20;
+    color: #000000; /* Texto preto para cabeçalhos */
 }
 
 .relatorio-tabela th.nome-aluno {
@@ -3496,10 +3496,12 @@ textarea {
     width: 40px !important;
     min-width: 40px !important;
     max-width: 40px !important;
+    color: #000000 !important; /* Texto preto */
 }
 
 #tabela-relatorio .relatorio-tarefa-header {
     min-width: 160px !important; /* 4 partes * 40px */
+    color: #000000 !important; /* Texto preto */
 }
 
 #tabela-relatorio .nome-aluno {
@@ -3513,6 +3515,7 @@ textarea {
 
 #tabela-relatorio th.nome-aluno {
     z-index: 30 !important;
+    color: #000000 !important; /* Texto preto */
 }
 
 /* ==================== LINKS ==================== */
@@ -3530,6 +3533,7 @@ textarea {
 .link-salvo-texto {
     word-break: break-all;
     color: #374151;
+    font-weight: 500;
 }
 
 /* ==================== HORÁRIOS ==================== */
@@ -3955,6 +3959,10 @@ textarea {
 }
 
 /* ==================== CORES UTILITÁRIAS ==================== */
+.text-black {
+    color: #000000 !important;
+}
+
 .text-red-600 {
     color: #dc2626;
 }
