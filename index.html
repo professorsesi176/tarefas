@@ -11,7 +11,7 @@
     <link rel="dns-prefetch" href="https://script.google.com">
     
     <!-- CSS Externo -->
-    <!--<link rel="stylesheet" href="style.css">-->
+    <!-- <link rel="stylesheet" href="style.css"> -->
     
     <!-- Bibliotecas JavaScript -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -95,7 +95,7 @@
             <div id="content-area"></div>
 
             <footer class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-                Desenvolvido por Geovane Modena | Versão 37
+                Desenvolvido por Geovane Modena | Versão 38
             </footer>
         </div>
     </div>
@@ -803,7 +803,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v37.0.0 - Sistema de 4 Períodos...');
+                console.log('Inicializando sistema v38.0.0 - Sistema de 4 Períodos...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1802,7 +1802,7 @@
                     const linkTratado = linkSalvo.toString().trim();
                     const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
                     
-                    // CORREÇÃO DO PROBLEMA 2: Sempre mostrar o link visível
+                    // Sempre mostrar o link visível
                     linkDisplay = `
                         <div class="mb-2">
                             <span class="link-salvo-texto font-medium break-all">
@@ -1859,7 +1859,7 @@
                                    id="${inputId}"
                                    value="">
                             <button class="btn-primario btn-link" 
-                                    onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
+                                    onclick="salvarLinkAlunoCorreto('${tarefa.ID}', ${numeroParte}, this)"
                                     id="btn-salvar-${tarefa.ID}-${numeroParte}">
                                 Salvar Link
                             </button>
@@ -1977,8 +1977,8 @@
             `;
         }
 
-        async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
-            console.log('=== SALVAR LINK ALUNO - INÍCIO ===');
+        async function salvarLinkAlunoCorreto(idTarefa, parte, botaoSalvar) {
+            console.log('=== SALVAR LINK ALUNO CORRETO - INÍCIO ===');
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             let link = input ? input.value.trim() : '';
             
@@ -2003,21 +2003,25 @@
                 Utils.setButtonLoading(botaoSalvar, true);
                 botaoSalvar.textContent = "Salvando...";
                 
-                console.log('Enviando para API:', {
+                // CORREÇÃO DO PROBLEMA 2: Enviar os dados corretamente mapeados
+                console.log('Enviando para API com mapeamento correto:', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte,
-                    Link: link
+                    Link: link,
+                    // Nota será calculada no backend com base no horário
                 });
                 
-                const response = await apiPost('entregarTarefa', {
+                const response = await apiPost('entregarTarefaCorreto', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     NomeAluno: STATE.usuarioLogado.NomeCompleto,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte,
                     Link: link
+                    // DataHora será gerada no backend
+                    // Nota será calculada no backend
                 });
                 
                 console.log('Resposta da API:', response);
@@ -2055,7 +2059,7 @@
             } finally {
                 Utils.setButtonLoading(botaoSalvar, false);
                 botaoSalvar.textContent = "Salvar Link";
-                console.log('=== SALVAR LINK ALUNO - FIM ===');
+                console.log('=== SALVAR LINK ALUNO CORRETO - FIM ===');
             }
         }
 
@@ -2641,7 +2645,7 @@
                                                         
                                                         return `
                                                             <td class="px-4 py-3 text-center border-b group relative">
-                                                                <span class="${corNota} cursor-help group relative" title="${origem}">
+                                                                <span class="${corNota} cursor-default group relative">
                                                                     ${exibirNota}
                                                                     <div class="tooltip-origem">
                                                                         ${origem}
@@ -2745,7 +2749,7 @@
                                 
                                 relatorioTurmaHTML += `
                                     <td class="px-1 py-3 text-center border-b group relative">
-                                        <span class="${corNota} cursor-help group relative" title="${origem}">
+                                        <span class="${corNota} cursor-default group relative">
                                             ${exibirNota}
                                             <div class="tooltip-origem">
                                                 ${origem}
@@ -2808,7 +2812,7 @@
                                         
                                         relatorioTurmaHTML += `
                                             <td class="px-1 py-3 text-center border-b group relative">
-                                                <span class="${corNota} cursor-help" title="${origem}">
+                                                <span class="${corNota} cursor-default">
                                                     ${exibirNota}
                                                 </span>
                                                 <div class="tooltip-origem">
@@ -3155,7 +3159,7 @@
         window.excluirTarefaDireto = excluirTarefaDireto;
         window.editarTarefa = editarTarefa;
         window.limparFormulario = limparFormulario;
-        window.salvarLinkAluno = salvarLinkAluno;
+        window.salvarLinkAlunoCorreto = salvarLinkAlunoCorreto;
         window.excluirLinkAluno = excluirLinkAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
@@ -3490,6 +3494,7 @@ textarea {
     font-size: 12px !important;
     min-width: 40px !important;
     max-width: 150px !important;
+    cursor: default !important; /* Remover cursor de ajuda */
 }
 
 #tabela-relatorio .relatorio-parte-header {
@@ -3516,6 +3521,15 @@ textarea {
 #tabela-relatorio th.nome-aluno {
     z-index: 30 !important;
     color: #000000 !important; /* Texto preto */
+}
+
+/* Remover setinha preta e ponto de interrogação ao passar o mouse */
+#tabela-relatorio td span {
+    cursor: default !important;
+}
+
+#tabela-relatorio td span:hover {
+    text-decoration: none !important;
 }
 
 /* ==================== LINKS ==================== */
@@ -3905,7 +3919,7 @@ textarea {
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
-    white-space: nowrap;
+    white-space: normal;
     z-index: 100;
     opacity: 0;
     visibility: hidden;
@@ -3914,8 +3928,8 @@ textarea {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     max-width: 300px;
     word-wrap: break-word;
-    white-space: normal;
     text-align: center;
+    width: max-content;
 }
 
 .tooltip-origem::after {
