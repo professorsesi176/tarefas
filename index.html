@@ -11,7 +11,7 @@
     <link rel="dns-prefetch" href="https://script.google.com">
     
     <!-- CSS Externo -->
-    <!-- <link rel="stylesheet" href="style.css"> -->
+    <!--<link rel="stylesheet" href="style.css">-->
     
     <!-- Bibliotecas JavaScript -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -95,7 +95,7 @@
             <div id="content-area"></div>
 
             <footer class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-                Desenvolvido por Geovane Modena | Versão 38
+                Desenvolvido por Geovane Modena | Versão 37
             </footer>
         </div>
     </div>
@@ -803,7 +803,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v38.0.0 - Sistema de 4 Períodos...');
+                console.log('Inicializando sistema v37.0.0 - Sistema de 4 Períodos...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1802,11 +1802,14 @@
                     const linkTratado = linkSalvo.toString().trim();
                     const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
                     
-                    // Sempre mostrar o link visível
+                    // CORREÇÃO DO PROBLEMA 2: Sempre mostrar o link visível com nota
                     linkDisplay = `
-                        <div class="mb-2">
+                        <div class="mb-2 flex items-center justify-between">
                             <span class="link-salvo-texto font-medium break-all">
                                 🔗 ${linkFormatado}
+                            </span>
+                            <span class="nota-parte font-bold text-black ml-4">
+                                Nota: ${notaFormatada}
                             </span>
                         </div>
                     `;
@@ -1818,12 +1821,15 @@
                             linkFinal = 'https://' + linkTratado;
                         }
                         linkDisplay = `
-                            <div class="mb-2">
+                            <div class="mb-2 flex items-center justify-between">
                                 <a href="${Utils.escapeHTML(linkFinal)}" 
                                    target="_blank" 
                                    class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
                                     🔗 ${linkFormatado}
                                 </a>
+                                <span class="nota-parte font-bold text-black ml-4">
+                                    Nota: ${notaFormatada}
+                                </span>
                             </div>
                         `;
                     }
@@ -1831,16 +1837,8 @@
                 
                 linkHTML = `
                     <div class="link-container mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex-1 mr-4">
-                                <div class="text-sm font-semibold text-green-800 mb-1">Link enviado:</div>
-                                ${linkDisplay}
-                            </div>
-                            <span class="nota-parte font-bold text-black">
-                                Nota: ${notaFormatada}
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center">
+                        ${linkDisplay}
+                        <div class="flex justify-between items-center mt-2">
                             <p class="text-green-700 text-sm">
                                 ✓ Dados salvos ${dataFormatada ? 'em ' + dataFormatada : ''}
                             </p>
@@ -1859,7 +1857,7 @@
                                    id="${inputId}"
                                    value="">
                             <button class="btn-primario btn-link" 
-                                    onclick="salvarLinkAlunoCorreto('${tarefa.ID}', ${numeroParte}, this)"
+                                    onclick="salvarLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
                                     id="btn-salvar-${tarefa.ID}-${numeroParte}">
                                 Salvar Link
                             </button>
@@ -1977,8 +1975,8 @@
             `;
         }
 
-        async function salvarLinkAlunoCorreto(idTarefa, parte, botaoSalvar) {
-            console.log('=== SALVAR LINK ALUNO CORRETO - INÍCIO ===');
+        async function salvarLinkAluno(idTarefa, parte, botaoSalvar) {
+            console.log('=== SALVAR LINK ALUNO - INÍCIO ===');
             const input = document.getElementById(`link-${idTarefa}-${parte}`);
             let link = input ? input.value.trim() : '';
             
@@ -2003,25 +2001,21 @@
                 Utils.setButtonLoading(botaoSalvar, true);
                 botaoSalvar.textContent = "Salvando...";
                 
-                // CORREÇÃO DO PROBLEMA 2: Enviar os dados corretamente mapeados
-                console.log('Enviando para API com mapeamento correto:', {
+                console.log('Enviando para API:', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte,
-                    Link: link,
-                    // Nota será calculada no backend com base no horário
+                    Link: link
                 });
                 
-                const response = await apiPost('entregarTarefaCorreto', {
+                const response = await apiPost('entregarTarefa', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     NomeAluno: STATE.usuarioLogado.NomeCompleto,
                     Turma: STATE.usuarioLogado.Turma,
                     Parte: parte,
                     Link: link
-                    // DataHora será gerada no backend
-                    // Nota será calculada no backend
                 });
                 
                 console.log('Resposta da API:', response);
@@ -2059,7 +2053,7 @@
             } finally {
                 Utils.setButtonLoading(botaoSalvar, false);
                 botaoSalvar.textContent = "Salvar Link";
-                console.log('=== SALVAR LINK ALUNO CORRETO - FIM ===');
+                console.log('=== SALVAR LINK ALUNO - FIM ===');
             }
         }
 
@@ -2598,7 +2592,7 @@
                     if (periodosComTarefas.length === 0) {
                         // Sem tarefas, mostrar apenas médias
                         relatorioTurmaHTML += `
-                            <div class="relatorio-tabela-container">
+                            <div class="relatorio-tabela-container" style="overflow-x: auto;">
                                 <table class="relatorio-tabela compact-table" id="tabela-relatorio">
                                     <thead>
                                         <tr>
@@ -2644,12 +2638,9 @@
                                                         }
                                                         
                                                         return `
-                                                            <td class="px-4 py-3 text-center border-b group relative">
-                                                                <span class="${corNota} cursor-default group relative">
+                                                            <td class="px-4 py-3 text-center border-b">
+                                                                <span class="${corNota}">
                                                                     ${exibirNota}
-                                                                    <div class="tooltip-origem">
-                                                                        ${origem}
-                                                                    </div>
                                                                 </span>
                                                             </td>
                                                         `;
@@ -2664,7 +2655,7 @@
                     } else {
                         // Com tarefas, mostrar tabela completa
                         relatorioTurmaHTML += `
-                            <div class="relatorio-tabela-container">
+                            <div class="relatorio-tabela-container" style="overflow-x: auto;">
                                 <table class="relatorio-tabela compact-table" id="tabela-relatorio">
                                     <thead>
                                         <tr>
@@ -2748,12 +2739,9 @@
                                 }
                                 
                                 relatorioTurmaHTML += `
-                                    <td class="px-1 py-3 text-center border-b group relative">
-                                        <span class="${corNota} cursor-default group relative">
+                                    <td class="px-1 py-3 text-center border-b">
+                                        <span class="${corNota}">
                                             ${exibirNota}
-                                            <div class="tooltip-origem">
-                                                ${origem}
-                                            </div>
                                         </span>
                                     </td>
                                 `;
@@ -2811,13 +2799,10 @@
                                         );
                                         
                                         relatorioTurmaHTML += `
-                                            <td class="px-1 py-3 text-center border-b group relative">
-                                                <span class="${corNota} cursor-default">
+                                            <td class="px-1 py-3 text-center border-b">
+                                                <span class="${corNota}">
                                                     ${exibirNota}
                                                 </span>
-                                                <div class="tooltip-origem">
-                                                    ${origem}
-                                                </div>
                                             </td>
                                         `;
                                     }
@@ -2836,35 +2821,6 @@
                 }
                 
                 document.getElementById('relatorio-turma-container').innerHTML = relatorioTurmaHTML;
-                
-                // CORREÇÃO DO PROBLEMA 1: Aplicar estilos para evitar quebra de linha
-                const tabela = document.getElementById('tabela-relatorio');
-                if (tabela) {
-                    // Forçar todas as células a ficarem em uma linha
-                    const todasCelulas = tabela.querySelectorAll('th, td');
-                    todasCelulas.forEach(celula => {
-                        celula.style.whiteSpace = 'nowrap';
-                        celula.style.overflow = 'hidden';
-                        celula.style.textOverflow = 'ellipsis';
-                        celula.style.padding = '4px 6px';
-                        celula.style.fontSize = '12px';
-                    });
-                    
-                    // Ajustar largura das colunas de partes
-                    const partesHeaders = tabela.querySelectorAll('.relatorio-parte-header');
-                    partesHeaders.forEach(header => {
-                        header.style.width = '40px';
-                        header.style.minWidth = '40px';
-                        header.style.maxWidth = '40px';
-                    });
-                    
-                    // Ajustar nome do aluno
-                    const nomesAlunos = tabela.querySelectorAll('.nome-aluno');
-                    nomesAlunos.forEach(nome => {
-                        nome.style.minWidth = '150px';
-                        nome.style.maxWidth = '150px';
-                    });
-                }
                 
             } catch (error) {
                 console.error('Erro ao carregar relatório:', error);
@@ -3159,7 +3115,7 @@
         window.excluirTarefaDireto = excluirTarefaDireto;
         window.editarTarefa = editarTarefa;
         window.limparFormulario = limparFormulario;
-        window.salvarLinkAlunoCorreto = salvarLinkAlunoCorreto;
+        window.salvarLinkAluno = salvarLinkAluno;
         window.excluirLinkAluno = excluirLinkAluno;
         window.toggleFundamentoCientifico = toggleFundamentoCientifico;
         window.togglePartesTarefa = togglePartesTarefa;
@@ -3479,7 +3435,7 @@ textarea {
     z-index: 30;
 }
 
-/* CORREÇÃO DO PROBLEMA 1: Ajustes específicos para tabela de relatório */
+/* CORREÇÃO DO PROBLEMA 1: Remover tooltips e cursor de interrogação */
 #tabela-relatorio {
     table-layout: fixed;
     width: 100%;
@@ -3494,7 +3450,7 @@ textarea {
     font-size: 12px !important;
     min-width: 40px !important;
     max-width: 150px !important;
-    cursor: default !important; /* Remover cursor de ajuda */
+    cursor: default !important; /* Remove setinha e interrogação */
 }
 
 #tabela-relatorio .relatorio-parte-header {
@@ -3510,8 +3466,8 @@ textarea {
 }
 
 #tabela-relatorio .nome-aluno {
-    min-width: 150px !important;
-    max-width: 150px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
     position: sticky !important;
     left: 0 !important;
     background: white !important;
@@ -3523,13 +3479,14 @@ textarea {
     color: #000000 !important; /* Texto preto */
 }
 
-/* Remover setinha preta e ponto de interrogação ao passar o mouse */
-#tabela-relatorio td span {
-    cursor: default !important;
+/* Remover tooltips que causam interrogação */
+.tooltip-origem,
+.group:hover .tooltip-origem {
+    display: none !important;
 }
 
-#tabela-relatorio td span:hover {
-    text-decoration: none !important;
+.cursor-help {
+    cursor: default !important;
 }
 
 /* ==================== LINKS ==================== */
@@ -3919,7 +3876,7 @@ textarea {
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
-    white-space: normal;
+    white-space: nowrap;
     z-index: 100;
     opacity: 0;
     visibility: hidden;
@@ -3928,8 +3885,8 @@ textarea {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     max-width: 300px;
     word-wrap: break-word;
+    white-space: normal;
     text-align: center;
-    width: max-content;
 }
 
 .tooltip-origem::after {
