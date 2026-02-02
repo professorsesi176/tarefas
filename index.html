@@ -10,9 +10,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://script.google.com">
     
-    <!-- CSS Externo -->
-    <!--<link rel="stylesheet" href="style.css">-->
-    
     <!-- Bibliotecas JavaScript -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -73,7 +70,7 @@
                     
                     <button onclick="mostrarPainelDiagnostico()" class="menu-item flex items-center p-3 hover:bg-red-700 rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 126.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                         </svg>
                         Diagnóstico
                     </button>
@@ -95,7 +92,7 @@
             <div id="content-area"></div>
 
             <footer class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-                Desenvolvido por Geovane Modena | Versão 37
+                Desenvolvido por Geovane Modena | Versão 38.1.0 (Corrigido)
             </footer>
         </div>
     </div>
@@ -127,7 +124,7 @@
 
         // ==================== ESTRUTURA DA TAREFA ====================
         const ESTRUTURA_TAREFA = {
-            COLUNAS_POR_TAREFA: 12,
+            COLUNAS_POR_TAREFA: 13,
             COLUNAS_POR_PARTE: 3,
             NUMERO_PARTES: 4,
             COLUNAS_MEDIAS: 4
@@ -334,16 +331,13 @@
             formatarOrigemDado: (chave, aluno, tarefaIndex, periodoNum, parte) => {
                 if (!chave) return 'Origem desconhecida';
                 
-                // Determinar a planilha baseada no período
                 const planilha = `Período ${periodoNum}`;
                 
-                // Tentar encontrar a linha do aluno
                 let linha = 'N/A';
                 if (aluno && aluno.Numero) {
-                    linha = `Linha ${parseInt(aluno.Numero) + 1}`; // +1 para considerar cabeçalho
+                    linha = `Linha ${parseInt(aluno.Numero) + 1}`;
                 }
                 
-                // Determinar coluna baseada na chave
                 let coluna = '';
                 if (chave.includes('1º Período') || chave.includes('1º Bim')) {
                     coluna = 'Coluna F (1º Período)';
@@ -354,7 +348,6 @@
                 } else if (chave.includes('4º Período') || chave.includes('4º Bim')) {
                     coluna = 'Coluna I (4º Período)';
                 } else if (chave.includes('_P')) {
-                    // Chave de parte específica
                     const partes = chave.split('_');
                     if (partes.length >= 2) {
                         const parteNum = partes[0]?.replace('P', '') || '';
@@ -369,13 +362,10 @@
             },
 
             calcularColunaParte: (tarefaNum, parteNum, periodoNum) => {
-                // Cálculo baseado na estrutura da planilha
-                // Cada tarefa tem 4 partes, cada parte ocupa 3 colunas (Link, Data, Nota)
-                const colunaBase = 19 + ((periodoNum - 1) * 48); // Começa na coluna S (19)
-                const offsetTarefa = (tarefaNum - 1) * 12; // 12 colunas por tarefa
-                const offsetParte = (parteNum - 1) * 3; // 3 colunas por parte
+                const colunaBase = 19 + ((periodoNum - 1) * 48);
+                const offsetTarefa = (tarefaNum - 1) * 12;
+                const offsetParte = (parteNum - 1) * 3;
                 
-                // Converter para letra de coluna Excel
                 const colunaNum = colunaBase + offsetTarefa + offsetParte;
                 return Utils.numeroParaLetraExcel(colunaNum);
             },
@@ -401,13 +391,12 @@
                 const callbackName = 'jsonp_callback_' + ApiManager.jsonpCallbackId++;
                 const inicio = performance.now();
                 
-                // Timeout aumentado para 30 segundos
                 const timeout = setTimeout(() => {
                     if (window[callbackName]) {
                         delete window[callbackName];
                         callback(new Error('Timeout: A requisição demorou muito para responder (30s)'));
                     }
-                }, 30000); // 30 segundos
+                }, 30000);
                 
                 window[callbackName] = function(data) {
                     const fim = performance.now();
@@ -803,7 +792,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v37.0.0 - Sistema de 4 Períodos...');
+                console.log('Inicializando sistema v38.1.0 - Sistema de 4 Períodos (Corrigido)...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1370,7 +1359,6 @@
                 return;
             }
             
-            // Calcular quais períodos têm nota
             const periodosComNota = [];
             for (let i = 1; i <= 4; i++) {
                 const media = STATE.usuarioLogado.Medias?.[`periodo${i}`] || 0;
@@ -1483,7 +1471,6 @@
             try {
                 console.log('Carregando tarefas para aluno:', STATE.usuarioLogado.Email, 'Turma:', STATE.usuarioLogado.Turma);
                 
-                // Buscar tarefas da turma do aluno
                 const response = await apiGet('getTarefasPorTurma', { turma: STATE.usuarioLogado.Turma }, true);
                 console.log('Resposta da API getTarefasPorTurma:', response);
                 
@@ -1492,7 +1479,6 @@
                     return;
                 }
 
-                // Agrupar tarefas por período
                 const tarefasPorPeriodo = {};
                 response.data.forEach(tarefa => {
                     if (!tarefasPorPeriodo[tarefa.Periodo]) {
@@ -1501,7 +1487,6 @@
                     tarefasPorPeriodo[tarefa.Periodo].push(tarefa);
                 });
 
-                // Buscar dados completos do aluno
                 let alunoData = null;
                 let entregas = [];
                 
@@ -1522,7 +1507,6 @@
                 console.log('Tarefas carregadas:', response.data.length);
                 console.log('Entregas encontradas:', entregas.length);
                 
-                // Renderizar tarefas agrupadas por período
                 renderTarefasAlunoAgrupadasPorPeriodo(tarefasPorPeriodo, entregas, alunoData, container);
                 
             } catch (error) {
@@ -1541,7 +1525,6 @@
             if (!alunoData || !tarefas) return entregas;
             
             try {
-                // Buscar dados atualizados da planilha
                 const dadosAtualizados = await apiGet('getDadosAlunoCompleto', { 
                     email: STATE.usuarioLogado.Email, 
                     turma: STATE.usuarioLogado.Turma 
@@ -1599,7 +1582,6 @@
                             }
                         }
                         
-                        // Validar nota
                         nota = Utils.validarNota(nota);
                         
                         if (link && link.toString().trim() !== '') {
@@ -1633,7 +1615,6 @@
 
             let html = '';
             
-            // Ordenar períodos
             const periodosOrdenados = Object.keys(tarefasPorPeriodo).sort((a, b) => a - b);
             
             periodosOrdenados.forEach(periodoNum => {
@@ -1655,20 +1636,17 @@
                 tarefasPeriodo.forEach((tarefa, index) => {
                     const entregaTarefa = entregas.filter(e => e.ID_Tarefa === tarefa.ID);
                     
-                    // Buscar nota total da tarefa
                     let notaTotal = 0;
                     if (alunoData) {
                         const chaveNotaTarefa = `Nota${index + 1}_P${periodoNum}`;
                         if (alunoData[chaveNotaTarefa] !== undefined && alunoData[chaveNotaTarefa] !== null) {
                             notaTotal = parseFloat(alunoData[chaveNotaTarefa]) || 0;
                         } else {
-                            // Fallback: calcular soma das partes
                             entregaTarefa.forEach(entrega => {
                                 notaTotal += parseFloat(entrega.Nota) || 0;
                             });
                         }
                     } else {
-                        // Sem dados do aluno, calcular das entregas
                         entregaTarefa.forEach(entrega => {
                             notaTotal += parseFloat(entrega.Nota) || 0;
                         });
@@ -1703,7 +1681,6 @@
             
             container.innerHTML = html;
             
-            // Atualizar contadores
             TimeManager.iniciarAtualizacaoContadores();
         }
 
@@ -1721,7 +1698,6 @@
                 notaParte = parseFloat(entrega.Nota) || 0;
             }
             
-            // Validar nota da parte
             notaParte = Utils.validarNota(notaParte);
             
             const inputId = `link-${tarefa.ID}-${numeroParte}`;
@@ -1785,7 +1761,6 @@
             let linkHTML = '';
             
             if (temDadosSalvos) {
-                // Botão de excluir sempre visível quando há link
                 const botaoExcluirHTML = `
                     <button class="btn-secundario btn-link" 
                             onclick="excluirLinkAluno('${tarefa.ID}', ${numeroParte}, this)"
@@ -1802,7 +1777,6 @@
                     const linkTratado = linkSalvo.toString().trim();
                     const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
                     
-                    // CORREÇÃO DO PROBLEMA 2: Sempre mostrar o link visível com nota
                     linkDisplay = `
                         <div class="mb-2 flex items-center justify-between">
                             <span class="link-salvo-texto font-medium break-all">
@@ -1814,7 +1788,6 @@
                         </div>
                     `;
                     
-                    // Se o link for válido, também criar um link clicável
                     if (Utils.validarLink(linkSalvo)) {
                         let linkFinal = linkTratado;
                         if (!/^https?:\/\//i.test(linkTratado)) {
@@ -1847,7 +1820,6 @@
                     </div>
                 `;
             } else if (status.liberada) {
-                // Parte liberada e dentro do prazo
                 linkHTML = `
                     <div class="link-container mt-3">
                         <div class="flex space-x-2">
@@ -1865,7 +1837,6 @@
                     </div>
                 `;
             } else {
-                // Parte não liberada (expirada ou aguardando)
                 if (status.expirado) {
                     linkHTML = `
                         <div class="link-container mt-3">
@@ -1944,7 +1915,6 @@
                         }
                     }
                     
-                    // Validar nota
                     nota = Utils.validarNota(nota);
                     
                     if (link && link.toString().trim() !== '') {
@@ -2009,7 +1979,8 @@
                     Link: link
                 });
                 
-                const response = await apiPost('entregarTarefa', {
+                // CORREÇÃO APLICADA: Alterado de 'entregarTarefa' para 'entregarTarefaCorreto'
+                const response = await apiPost('entregarTarefaCorreto', {
                     ID_Tarefa: idTarefa,
                     Email_Aluno: STATE.usuarioLogado.Email,
                     NomeAluno: STATE.usuarioLogado.NomeCompleto,
@@ -2024,7 +1995,6 @@
                     console.log('Cache limpo, recarregando tarefas...');
                     CacheManager.clear();
                     
-                    // Forçar recarregamento completo
                     STATE.tarefas = [];
                     await carregarTarefasAluno();
                     
@@ -2035,7 +2005,6 @@
                     
                     UIManager.showModal('Sucesso', `Link da parte ${parte} salvo com sucesso!\n\nPeríodo: ${periodoNome}\nNota: ${Utils.formatarNota(nota)}\nHorário: ${new Date(dataHora).toLocaleString('pt-BR')}\n\nMédia do período atualizada automaticamente na planilha.`);
                     
-                    // Scroll para a parte atualizada
                     setTimeout(() => {
                         const elementoParte = document.getElementById(`parte-${idTarefa}-${parte}`);
                         if (elementoParte) {
@@ -2107,7 +2076,6 @@
                 const periodoHeaders = container.querySelectorAll('h4');
                 if (!periodoHeaders) return;
                 
-                // Atualizar contadores para cada tarefa dentro do período
                 const tarefaContainers = container.querySelectorAll('.tarefa-aluno-container');
                 tarefaContainers.forEach(tarefaContainer => {
                     const tema = tarefaContainer.querySelector('h5')?.textContent;
@@ -2132,7 +2100,7 @@
             });
         }
 
-        // ==================== PAINEL DE GRÁFICOS (apenas para professor) ====================
+        // ==================== PAINEL DE GRÁFICOS ====================
         async function mostrarPainelGraficos() {
             UIManager.hideSidebar();
             UIManager.elements.contentArea.innerHTML = `
@@ -2179,14 +2147,12 @@
                 
                 const dados = response.data;
                 
-                // Verificar estrutura dos dados e adaptar se necessário
                 let dadosPeriodos = [];
                 if (dados.dadosPeriodos && Array.isArray(dados.dadosPeriodos)) {
                     dadosPeriodos = dados.dadosPeriodos;
                 } else if (Array.isArray(dados)) {
                     dadosPeriodos = dados;
                 } else {
-                    // Criar estrutura básica se não houver dados
                     for (let i = 1; i <= 4; i++) {
                         dadosPeriodos.push({
                             periodo: i,
@@ -2253,7 +2219,6 @@
                     </div>
                 `;
                 
-                // Renderizar gráficos
                 renderGraficoComparativoPeriodos(dadosPeriodos);
                 renderGraficoEvolucaoTurma(dadosPeriodos);
                 renderGraficoDistribuicaoNotas(dados, dadosPeriodos);
@@ -2386,9 +2351,8 @@
             
             const canvas = ctx.getContext('2d');
             
-            // Calcular distribuição para o último período
             const ultimoPeriodo = dadosPeriodos[dadosPeriodos.length - 1] || { medias: [] };
-            const distribuicao = [0, 0, 0, 0]; // 0-4, 4-6, 6-8, 8-10
+            const distribuicao = [0, 0, 0, 0];
             
             if (ultimoPeriodo.medias && Array.isArray(ultimoPeriodo.medias)) {
                 ultimoPeriodo.medias.forEach(media => {
@@ -2447,12 +2411,10 @@
             
             const canvas = ctx.getContext('2d');
             
-            // Se não houver dados de alunos, criar dados fictícios baseados nas médias
             let alunos = [];
             if (dados.alunos && Array.isArray(dados.alunos)) {
                 alunos = dados.alunos;
             } else {
-                // Criar dados de exemplo baseados nas médias
                 const nomesExemplo = ['Ana Silva', 'Carlos Santos', 'Beatriz Oliveira', 'Daniel Costa', 
                                     'Eduarda Lima', 'Felipe Souza', 'Gabriela Rocha', 'Henrique Alves',
                                     'Isabela Mendes', 'João Pereira'];
@@ -2460,11 +2422,10 @@
                 alunos = nomesExemplo.map((nome, index) => ({
                     id: index + 1,
                     nome: nome,
-                    mediaGeral: (Math.random() * 2 + 7).toFixed(1) // Entre 7 e 9
+                    mediaGeral: (Math.random() * 2 + 7).toFixed(1)
                 }));
             }
             
-            // Ordenar por média e pegar top 10
             const topAlunos = alunos
                 .sort((a, b) => parseFloat(b.mediaGeral) - parseFloat(a.mediaGeral))
                 .slice(0, 10);
@@ -2576,7 +2537,6 @@
                         </div>
                     `;
                 } else {
-                    // Agrupar tarefas por período
                     const tarefasPorPeriodo = {};
                     if (relatorio.tarefas) {
                         relatorio.tarefas.forEach(tarefa => {
@@ -2590,7 +2550,6 @@
                     const periodosComTarefas = Object.keys(tarefasPorPeriodo).sort((a, b) => a - b);
                     
                     if (periodosComTarefas.length === 0) {
-                        // Sem tarefas, mostrar apenas médias
                         relatorioTurmaHTML += `
                             <div class="relatorio-tabela-container" style="overflow-x: auto;">
                                 <table class="relatorio-tabela compact-table" id="tabela-relatorio">
@@ -2619,16 +2578,7 @@
                                                     <td class="px-4 py-3 font-medium text-gray-900 border-b nome-aluno" style="white-space: nowrap;">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                                                     ${medias.map((media, idx) => {
                                                         const periodo = idx + 1;
-                                                        const origem = Utils.formatarOrigemDado(
-                                                            aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
-                                                            aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
-                                                            aluno,
-                                                            0,
-                                                            periodo,
-                                                            0
-                                                        );
                                                         
-                                                        // CORREÇÃO DO PROBLEMA 1: Mostrar "-" se não tem nota, "0" se passou o prazo
                                                         let exibirNota = '-';
                                                         let corNota = 'text-gray-400';
                                                         
@@ -2653,7 +2603,6 @@
                             </div>
                         `;
                     } else {
-                        // Com tarefas, mostrar tabela completa
                         relatorioTurmaHTML += `
                             <div class="relatorio-tabela-container" style="overflow-x: auto;">
                                 <table class="relatorio-tabela compact-table" id="tabela-relatorio">
@@ -2664,7 +2613,6 @@
                                             <th class="px-4 py-3 text-center font-semibold border-b bg-gray-50 text-black" colspan="4">Médias por Período</th>
                         `;
                         
-                        // Adicionar cabeçalhos para cada período
                         periodosComTarefas.forEach(periodoNum => {
                             const periodoNome = CONFIG.PERIODOS[periodoNum] || `Período ${periodoNum}`;
                             const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
@@ -2677,7 +2625,6 @@
                         
                         relatorioTurmaHTML += `</tr><tr>`;
                         
-                        // Cabeçalhos das médias
                         relatorioTurmaHTML += `
                             <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">1º Período</th>
                             <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">2º Período</th>
@@ -2685,7 +2632,6 @@
                             <th class="px-1 py-2 text-center border-b bg-gray-50 relatorio-parte-header text-black">4º Período</th>
                         `;
                         
-                        // Cabeçalhos das partes por tarefa
                         periodosComTarefas.forEach(periodoNum => {
                             const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
                             tarefasPeriodo.forEach((tarefa, tarefaIndex) => {
@@ -2703,7 +2649,6 @@
                             <tbody>
                         `;
                         
-                        // Dados dos alunos
                         relatorio.alunos.forEach((aluno) => {
                             const medias = [
                                 parseFloat(aluno['1º Período'] || aluno['1º Bim']) || 0,
@@ -2718,17 +2663,8 @@
                                     <td class="px-4 py-3 font-medium text-gray-900 border-b nome-aluno" style="white-space: nowrap;">${Utils.escapeHTML(aluno.NomeCompleto)}</td>
                             `;
                             
-                            // Médias dos períodos
                             medias.forEach((media, idx) => {
                                 const periodo = idx + 1;
-                                const origem = Utils.formatarOrigemDado(
-                                    aluno[`${periodo}º Período`] !== undefined ? `${periodo}º Período` : 
-                                    aluno[`${periodo}º Bim`] !== undefined ? `${periodo}º Bim` : '',
-                                    aluno,
-                                    0,
-                                    periodo,
-                                    0
-                                );
                                 
                                 let exibirNota = '-';
                                 let corNota = 'text-gray-400';
@@ -2747,7 +2683,6 @@
                                 `;
                             });
                             
-                            // Notas das tarefas por período
                             periodosComTarefas.forEach(periodoNum => {
                                 const tarefasPeriodo = tarefasPorPeriodo[periodoNum];
                                 
@@ -2758,7 +2693,6 @@
                                         let exibirNota = '-';
                                         let corNota = 'text-gray-400';
                                         
-                                        // Verificar se a tarefa tem prazo expirado
                                         const agora = new Date();
                                         const dataAula = new Date(tarefa.DataAula);
                                         let diasOffset = 0;
@@ -2774,12 +2708,10 @@
                                         const fim = new Date(diaEntrega);
                                         fim.setHours(22, 0, 0, 0);
                                         
-                                        // Se passou o prazo e não tem nota, mostrar 0
                                         if (agora > fim && (!valorNota || valorNota === '')) {
                                             exibirNota = '0';
                                             corNota = 'text-red-500 font-bold';
                                         }
-                                        // Se tem nota válida
                                         else if (valorNota !== undefined && valorNota !== null && valorNota !== '') {
                                             const notaNum = parseFloat(valorNota);
                                             if (!isNaN(notaNum) && notaNum > 0) {
@@ -2789,14 +2721,6 @@
                                                          'text-gray-600';
                                             }
                                         }
-                                        
-                                        const origem = Utils.formatarOrigemDado(
-                                            chaveNota,
-                                            aluno,
-                                            tarefaIndex + 1,
-                                            periodoNum,
-                                            parte
-                                        );
                                         
                                         relatorioTurmaHTML += `
                                             <td class="px-1 py-3 text-center border-b">
@@ -2878,7 +2802,7 @@
                     html: table,
                     startY: 30,
                     styles: { fontSize: 7 },
-                    headStyles: { fillColor: [41, 41, 41] } // Preto para cabeçalho
+                    headStyles: { fillColor: [41, 41, 41] }
                 });
 
                 doc.save(`relatorio_turma_${turma}.pdf`);
@@ -3354,8 +3278,8 @@ textarea {
 }
 
 .compact-table th {
-    background-color: #f9fafb; /* Fundo cinza claro */
-    color: #000000; /* Texto preto */
+    background-color: #f9fafb;
+    color: #000000;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
@@ -3427,7 +3351,7 @@ textarea {
     top: 0;
     background: #f9fafb;
     z-index: 20;
-    color: #000000; /* Texto preto para cabeçalhos */
+    color: #000000;
 }
 
 .relatorio-tabela th.nome-aluno {
@@ -3435,7 +3359,6 @@ textarea {
     z-index: 30;
 }
 
-/* CORREÇÃO DO PROBLEMA 1: Remover tooltips e cursor de interrogação */
 #tabela-relatorio {
     table-layout: fixed;
     width: 100%;
@@ -3450,19 +3373,19 @@ textarea {
     font-size: 12px !important;
     min-width: 40px !important;
     max-width: 150px !important;
-    cursor: default !important; /* Remove setinha e interrogação */
+    cursor: default !important;
 }
 
 #tabela-relatorio .relatorio-parte-header {
     width: 40px !important;
     min-width: 40px !important;
     max-width: 40px !important;
-    color: #000000 !important; /* Texto preto */
+    color: #000000 !important;
 }
 
 #tabela-relatorio .relatorio-tarefa-header {
-    min-width: 160px !important; /* 4 partes * 40px */
-    color: #000000 !important; /* Texto preto */
+    min-width: 160px !important;
+    color: #000000 !important;
 }
 
 #tabela-relatorio .nome-aluno {
@@ -3476,10 +3399,9 @@ textarea {
 
 #tabela-relatorio th.nome-aluno {
     z-index: 30 !important;
-    color: #000000 !important; /* Texto preto */
+    color: #000000 !important;
 }
 
-/* Remover tooltips que causam interrogação */
 .tooltip-origem,
 .group:hover .tooltip-origem {
     display: none !important;
