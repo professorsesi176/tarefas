@@ -1773,13 +1773,32 @@
                 const notaFormatada = Utils.formatarNota(notaParte);
                 
                 let linkDisplay = '';
-                if (linkSalvo && linkSalvo.toString().trim() !== '') {
-                    const linkTratado = linkSalvo.toString().trim();
-                    const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
-                    
+                const linkTratado = linkSalvo.toString().trim();
+                const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
+                
+                // Sempre exibir o link, mesmo se a validação falhar
+                if (Utils.validarLink(linkSalvo)) {
+                    let linkFinal = linkTratado;
+                    if (!/^https?:\/\//i.test(linkTratado)) {
+                        linkFinal = 'https://' + linkTratado;
+                    }
                     linkDisplay = `
                         <div class="mb-2 flex items-center justify-between">
-                            <span class="link-salvo-texto font-medium break-all">
+                            <a href="${Utils.escapeHTML(linkFinal)}" 
+                               target="_blank" 
+                               class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
+                                🔗 ${linkFormatado}
+                            </a>
+                            <span class="nota-parte font-bold text-black ml-4">
+                                Nota: ${notaFormatada}
+                            </span>
+                        </div>
+                    `;
+                } else {
+                    // Exibir como texto se não for um link válido
+                    linkDisplay = `
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="link-salvo-texto font-medium break-all text-gray-800">
                                 🔗 ${linkFormatado}
                             </span>
                             <span class="nota-parte font-bold text-black ml-4">
@@ -1787,25 +1806,6 @@
                             </span>
                         </div>
                     `;
-                    
-                    if (Utils.validarLink(linkSalvo)) {
-                        let linkFinal = linkTratado;
-                        if (!/^https?:\/\//i.test(linkTratado)) {
-                            linkFinal = 'https://' + linkTratado;
-                        }
-                        linkDisplay = `
-                            <div class="mb-2 flex items-center justify-between">
-                                <a href="${Utils.escapeHTML(linkFinal)}" 
-                                   target="_blank" 
-                                   class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
-                                    🔗 ${linkFormatado}
-                                </a>
-                                <span class="nota-parte font-bold text-black ml-4">
-                                    Nota: ${notaFormatada}
-                                </span>
-                            </div>
-                        `;
-                    }
                 }
                 
                 linkHTML = `
