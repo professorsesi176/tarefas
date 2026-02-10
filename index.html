@@ -92,7 +92,7 @@
             <div id="content-area"></div>
 
             <footer class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-                Desenvolvido por Geovane Modena | Versão 38.2.0 (Correção de Link e Nota)
+                Desenvolvido por Geovane Modena | Versão 38.2.1 (Correção de Link Sem Restrições)
             </footer>
         </div>
     </div>
@@ -264,16 +264,7 @@
                 let linkTrimmed = link.trim();
                 if (linkTrimmed === '') return false;
                 
-                if (!/^https?:\/\//i.test(linkTrimmed)) {
-                    linkTrimmed = 'https://' + linkTrimmed;
-                }
-                
-                try {
-                    new URL(linkTrimmed);
-                    return linkTrimmed.length >= 5;
-                } catch {
-                    return false;
-                }
+                return true; // REMOVIDA A VALIDAÇÃO RESTRITIVA - ACEITA QUALQUER STRING NÃO VAZIA
             },
 
             isDateString: (value) => {
@@ -740,7 +731,7 @@
 
         async function init() {
             try {
-                console.log('Inicializando sistema v38.2.0 - Correção de Link e Nota...');
+                console.log('Inicializando sistema v38.2.1 - Correção de Link Sem Restrições...');
                 renderLogin();
             } catch (error) {
                 console.error('Erro ao inicializar:', error);
@@ -1737,35 +1728,26 @@
                     const linkTratado = linkSalvo.toString().trim();
                     const linkFormatado = Utils.escapeHTML(linkTratado.substring(0, 60)) + (linkTratado.length > 60 ? '...' : '');
                     
+                    // MODIFICAÇÃO CRÍTICA: SEMPRE EXIBIR COMO LINK, MESMO SE NÃO FOR UM URL VÁLIDO
+                    // Tentar criar um link clicável, mesmo que não seja um URL válido
+                    let linkFinal = linkTratado;
+                    // Se não tiver protocolo, adiciona https:// por padrão
+                    if (!/^https?:\/\//i.test(linkTratado)) {
+                        linkFinal = 'https://' + linkTratado;
+                    }
+                    
                     linkDisplay = `
                         <div class="mb-2 flex items-center justify-between">
-                            <span class="link-salvo-texto font-medium break-all">
+                            <a href="${Utils.escapeHTML(linkFinal)}" 
+                               target="_blank" 
+                               class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
                                 🔗 ${linkFormatado}
-                            </span>
+                            </a>
                             <span class="nota-parte font-bold text-black ml-4">
                                 Nota: ${notaFormatada}
                             </span>
                         </div>
                     `;
-                    
-                    if (Utils.validarLink(linkSalvo)) {
-                        let linkFinal = linkTratado;
-                        if (!/^https?:\/\//i.test(linkTratado)) {
-                            linkFinal = 'https://' + linkTratado;
-                        }
-                        linkDisplay = `
-                            <div class="mb-2 flex items-center justify-between">
-                                <a href="${Utils.escapeHTML(linkFinal)}" 
-                                   target="_blank" 
-                                   class="link-salvo-clicavel text-blue-600 hover:text-blue-800 hover:underline font-medium break-all">
-                                    🔗 ${linkFormatado}
-                                </a>
-                                <span class="nota-parte font-bold text-black ml-4">
-                                    Nota: ${notaFormatada}
-                                </span>
-                            </div>
-                        `;
-                    }
                 }
                 
                 linkHTML = `
@@ -1920,11 +1902,14 @@
                 return;
             }
 
-            if (!Utils.validarLink(link)) {
-                UIManager.showModal('Atenção', 'Link inválido. Certifique-se de que é um link válido (ex: https://exemplo.com).');
-                return;
-            }
+            // MODIFICAÇÃO: REMOVIDA A VALIDAÇÃO RESTRITIVA DO LINK
+            // Aceita qualquer string não vazia como link válido
+            // if (!Utils.validarLink(link)) {
+            //     UIManager.showModal('Atenção', 'Link inválido. Certifique-se de que é um link válido (ex: https://exemplo.com).');
+            //     return;
+            // }
 
+            // Apenas adicionar o protocolo se não tiver para facilitar o clique
             if (!/^https?:\/\//i.test(link)) {
                 link = 'https://' + link;
                 console.log('Link com protocolo adicionado:', link);
